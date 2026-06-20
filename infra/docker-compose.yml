@@ -21,8 +21,8 @@ services:
     build:
       context: ../backend/ResursPortal
       dockerfile: Dockerfile
-    ports:
-      - "8083:8083"
+    expose:
+      - "8083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/resurs
       - SPRING_DATASOURCE_USERNAME=resurs
