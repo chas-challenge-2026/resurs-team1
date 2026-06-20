@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Dokument – Resurs</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <a class="navbar-brand" style="color:#fff;" href="/">Resurs Kreditansökan</a>
+        <div class="navbar-right" style="padding:15px;">
+            <a href="/applications" style="color:#aac;">Mina ansökningar</a>
+            &nbsp;|&nbsp;
+            <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Dokument – Ansökan #<span th:text="${applicationId}">0</span></h2>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">Ladda upp dokument</div>
+                <div class="panel-body">
+                    <p>Ladda upp årsredovisning (PDF) och F-skatteintyg.</p>
+                    <!-- TODO: implement PDF parsing in v2 (see native/README.md) -->
+                    <!-- Uploaded files are stored but content is NOT read or validated -->
+                    <form method="post" action="/document/upload" enctype="multipart/form-data">
+                        <input type="hidden" name="applicationId" th:value="${applicationId}"/>
+                        <div class="form-group">
+                            <label>Dokumenttyp</label>
+                            <select class="form-control" name="docType" required>
+                                <option value="arsredovisning">Årsredovisning</option>
+                                <option value="fskattebevis">F-skattebevis</option>
+                                <option value="bolagsordning">Bolagsordning</option>
+                                <option value="ovrigt">Övrigt</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fil (PDF)</label>
+                            <input type="file" name="file" accept=".pdf,.PDF" required/>
+                            <p class="help-block text-muted" style="font-size:11px;">
+                                Max 10 MB. Filen sparas men parsas inte automatiskt.
+                            </p>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-upload"></span> Ladda upp
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">Uppladdade dokument</div>
+                <div class="panel-body">
+                    <div th:if="${documents == null or documents.isEmpty()}" class="text-muted">
+                        Inga dokument uppladdade.
+                    </div>
+                    <table class="table table-condensed" th:if="${documents != null and !documents.isEmpty()}">
+                        <thead>
+                            <tr><th>Fil</th><th>Typ</th><th>Uppladdad</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="doc : ${documents}">
+                                <td th:text="${doc.filename}">fil.pdf</td>
+                                <td th:text="${doc.doc_type}">typ</td>
+                                <td th:text="${doc.uploaded_at}">datum</td>
+                                <td>
+                                    <a th:href="'/document/' + ${doc.id}" class="btn btn-xs btn-default">
+                                        <span class="glyphicon glyphicon-download"></span>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="alert alert-warning" style="font-size:12px;">
+                <strong>OBS:</strong> PDF-innehåll läses inte automatiskt i v1.
+                <!-- TODO: implement PDF parsing in v2 (see native/README.md) -->
+                Handläggare granskar dokumenten manuellt.
+            </div>
+        </div>
+    </div>
+
+    <a th:href="'/status/' + ${applicationId}" class="btn btn-default">
+        <span class="glyphicon glyphicon-arrow-left"></span> Tillbaka till ansökan
+    </a>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>

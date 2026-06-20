@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Ansökningsstatus – Resurs</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+        .timeline { position: relative; padding-left: 30px; margin: 20px 0; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #ddd; }
+        .timeline-item { position: relative; margin-bottom: 25px; }
+        .timeline-item .dot { position: absolute; left: -25px; width: 14px; height: 14px; border-radius: 50%; top: 4px; }
+        .dot-DONE { background: #5cb85c; }
+        .dot-CURRENT { background: #f0ad4e; border: 2px solid #e09030; }
+        .dot-PENDING { background: #ddd; }
+        .timeline-item .content { background: #fff; border-radius: 4px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .badge-PENDING_DOCS { background-color: #888; }
+        .badge-UNDER_REVIEW { background-color: #f0ad4e; }
+        .badge-APPROVED { background-color: #5cb85c; }
+        .badge-REJECTED { background-color: #d9534f; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" style="color:#fff;" href="/">Resurs Kreditansökan</a>
+        </div>
+        <div class="navbar-right" style="padding:15px;">
+            <a href="/applications" style="color:#aac;">Mina ansökningar</a>
+            &nbsp;|&nbsp;
+            <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Ansökan #<span th:text="${application.id}">000</span></h2>
+
+            <!-- Status badge -->
+            <p>
+                Status:
+                <span class="badge" th:classappend="'badge-' + ${application.status}"
+                      th:text="${application.status}">STATUS</span>
+            </p>
+
+            <!-- Decision box -->
+            <div th:if="${application.decision != null}"
+                 th:class="${application.decision == 'APPROVED'} ? 'alert alert-success' : 'alert alert-danger'">
+                <h4 th:text="${application.decision == 'APPROVED'} ? 'Ansökan godkänd' : 'Ansökan avslagen'">Beslut</h4>
+                <p th:text="${application.decision_reason}">Anledning</p>
+            </div>
+
+            <!-- Scoring result -->
+            <div th:if="${application.scoring_result != null}" class="panel panel-default">
+                <div class="panel-heading">Scoringresultat</div>
+                <div class="panel-body">
+                    <code th:text="${application.scoring_result}">scoring</code>
+                </div>
+            </div>
+
+            <!-- Timeline with hardcoded ETAs -->
+            <h3>Statusflöde</h3>
+            <div class="timeline">
+                <div class="timeline-item" th:each="step : ${steps}">
+                    <div th:class="'dot dot-' + ${step.status}"></div>
+                    <div class="content">
+                        <strong th:text="${step.name}">Steg</strong>
+                        <span th:if="${step.status == 'CURRENT'}" class="label label-warning">Pågår</span>
+                        <span th:if="${step.status == 'DONE'}" class="label label-success">Klart</span>
+                        <span th:if="${step.status == 'PENDING'}" class="label label-default">Väntar</span>
+                        <br/>
+                        <small th:text="${step.description}">Beskrivning</small>
+                        <!-- Hardcoded ETA regardless of actual state -->
+                        <span th:if="${step.eta != '—'}">
+                            <br/><small class="text-muted">Beräknad handläggningstid: <strong th:text="${step.eta}">X dagar</strong></small>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">Ansökningsdetaljer</div>
+                <div class="panel-body">
+                    <p><strong>Företag:</strong><br/><span th:text="${application.company_name}">-</span></p>
+                    <p><strong>Org.nummer:</strong><br/><span th:text="${application.org_number}">-</span></p>
+                    <p><strong>Kreditbelopp:</strong><br/>
+                        <span th:text="${#numbers.formatDecimal(application.requested_amount, 0, 'COMMA', 0, 'POINT')} + ' kr'">0 kr</span>
+                    </p>
+                    <p><strong>Syfte:</strong><br/><span th:text="${application.purpose}">-</span></p>
+                    <p><strong>Inlämnad:</strong><br/>
+                        <span th:text="${application.created_at}">-</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Documents panel -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Dokument
+                    <a th:href="'/documents/' + ${application.id}" class="btn btn-xs btn-primary pull-right">Ladda upp</a>
+                </div>
+                <div class="panel-body">
+                    <div th:if="${documents == null or documents.isEmpty()}" class="text-muted">
+                        Inga dokument uppladdade ännu.
+                    </div>
+                    <ul class="list-unstyled" th:if="${documents != null and !documents.isEmpty()}">
+                        <li th:each="doc : ${documents}">
+                            <span class="glyphicon glyphicon-file"></span>
+                            <a th:href="'/document/' + ${doc.id}" th:text="${doc.filename}">fil.pdf</a>
+                            <small class="text-muted" th:text="'(' + ${doc.doc_type} + ')'"></small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Audit log — raw JSON blob displayed to user -->
+            <div class="panel panel-default">
+                <div class="panel-heading">Händelselogg</div>
+                <div class="panel-body" style="font-size:11px; max-height:200px; overflow-y:auto;">
+                    <!-- Raw JSON blob — no structured rendering -->
+                    <pre th:text="${auditLogRaw}">[]</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin-top:15px;">
+        <div class="col-md-12">
+            <a href="/applications" class="btn btn-default">
+                <span class="glyphicon glyphicon-arrow-left"></span> Tillbaka till mina ansökningar
+            </a>
+            <a th:href="'/documents/' + ${application.id}" class="btn btn-primary">
+                <span class="glyphicon glyphicon-upload"></span> Ladda upp dokument
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>

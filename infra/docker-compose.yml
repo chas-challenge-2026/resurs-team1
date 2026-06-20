@@ -1,0 +1,35 @@
+version: "3.9"
+name: resurs
+
+services:
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: resurs
+      POSTGRES_USER: resurs
+      POSTGRES_PASSWORD: resurs123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resurs"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ../backend/ResursPortal
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/resurs
+      - SPRING_DATASOURCE_USERNAME=resurs
+      - SPRING_DATASOURCE_PASSWORD=resurs123
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

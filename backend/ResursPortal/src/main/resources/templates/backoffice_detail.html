@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Ansökningsdetalj – Backoffice</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <a class="navbar-brand" style="color:#fff;" href="/backoffice">Resurs Backoffice</a>
+        <div class="navbar-right" style="padding:15px;">
+            <a href="/backoffice" style="color:#aac;">Tillbaka till kön</a>
+            &nbsp;|&nbsp;
+            <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2>Ansökan #<span th:text="${application.id}">0</span> – Detaljvy</h2>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="panel panel-default">
+                <div class="panel-heading">Företagsuppgifter</div>
+                <div class="panel-body">
+                    <!-- PII displayed in plaintext — TODO: encrypt PII before go-live -->
+                    <p><strong>Företagsnamn:</strong> <span th:text="${application.company_name}">-</span></p>
+                    <p><strong>Org.nummer:</strong> <span th:text="${application.org_number}">-</span></p>
+                    <p><strong>Firmatecknare:</strong> <span th:text="${application.authorized_signatory}">-</span></p>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Kreditdetaljer</div>
+                <div class="panel-body">
+                    <p><strong>Belopp:</strong>
+                        <span th:text="${#numbers.formatDecimal(application.requested_amount, 0, 'COMMA', 0, 'POINT')} + ' kr'">0 kr</span>
+                    </p>
+                    <p><strong>Syfte:</strong> <span th:text="${application.purpose}">-</span></p>
+                    <p><strong>Status:</strong>
+                        <span class="label label-warning" th:text="${application.status}">STATUS</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Scoringresultat</div>
+                <div class="panel-body">
+                    <code th:text="${application.scoring_result}">-</code>
+                    <hr/>
+                    <p th:text="${application.decision_reason}">Anledning</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <!-- Besluts-panel -->
+            <div class="panel panel-warning" th:if="${application.status == 'UNDER_REVIEW'}">
+                <div class="panel-heading"><strong>Fatta beslut</strong></div>
+                <div class="panel-body">
+                    <form method="post" action="/backoffice/decide">
+                        <input type="hidden" name="applicationId" th:value="${application.id}"/>
+                        <div class="form-group">
+                            <label>Kommentar</label>
+                            <textarea class="form-control" name="comment" rows="3"
+                                      placeholder="Motivering till beslutet"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <input type="hidden" name="decision" id="decisionField" value="APPROVED"/>
+                        </div>
+                        <button type="submit" class="btn btn-success"
+                                onclick="document.getElementById('decisionField').value='APPROVED'; return confirm('Godkänn ansökan?')">
+                            <span class="glyphicon glyphicon-ok"></span> Godkänn
+                        </button>
+                        <button type="submit" class="btn btn-danger"
+                                onclick="document.getElementById('decisionField').value='REJECTED'; return confirm('Avslå ansökan?')">
+                            <span class="glyphicon glyphicon-remove"></span> Avslå
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Dokument -->
+            <div class="panel panel-default">
+                <div class="panel-heading">Uppladdade dokument</div>
+                <div class="panel-body">
+                    <div th:if="${documents == null or documents.isEmpty()}" class="text-muted">
+                        Inga dokument.
+                    </div>
+                    <ul class="list-unstyled" th:if="${documents != null and !documents.isEmpty()}">
+                        <li th:each="doc : ${documents}" style="margin-bottom:5px;">
+                            <span class="glyphicon glyphicon-file"></span>
+                            <a th:href="'/document/' + ${doc.id}" th:text="${doc.filename}">fil.pdf</a>
+                            <small class="label label-default" th:text="${doc.doc_type}">typ</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Audit log raw blob -->
+            <div class="panel panel-default">
+                <div class="panel-heading">Händelselogg (rådata)</div>
+                <div class="panel-body" style="font-size:11px; max-height:250px; overflow-y:auto;">
+                    <pre th:text="${auditLogRaw}">[]</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>
