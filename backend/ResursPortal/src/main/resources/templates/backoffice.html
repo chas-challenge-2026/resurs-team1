@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Backoffice – Resurs Kreditansökan</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+        .table-review th { background-color: #003366; color: #fff; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <a class="navbar-brand" style="color:#fff;" href="/backoffice">Resurs Backoffice</a>
+        <div class="navbar-right" style="padding:15px;">
+            <span style="color:#aac;" th:text="'Inloggad: ' + ${workerName}">Handläggare</span>
+            &nbsp;|&nbsp;
+            <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>
+                Handläggarkö
+                <span class="badge" th:text="${reviewCount}" style="background:#f0ad4e;">0</span>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Ansökningar i UNDER_REVIEW -->
+    <div class="panel panel-warning">
+        <div class="panel-heading"><strong>Ansökningar för granskning (UNDER_REVIEW)</strong></div>
+        <div class="panel-body" th:if="${reviewApplications == null or reviewApplications.isEmpty()}">
+            <p class="text-muted">Inga ansökningar väntar på granskning.</p>
+        </div>
+        <table class="table table-bordered table-review"
+               th:if="${reviewApplications != null and !reviewApplications.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Företag</th>
+                    <th>Org.nr</th>
+                    <th>Belopp</th>
+                    <th>Syfte</th>
+                    <th>Scoring</th>
+                    <th>Inlämnad</th>
+                    <th>Beslut</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="app : ${reviewApplications}">
+                    <td th:text="${app.id}">0</td>
+                    <td th:text="${app.company_name}">Företag AB</td>
+                    <td th:text="${app.org_number}">556000-0000</td>
+                    <td th:text="${#numbers.formatDecimal(app.requested_amount, 0, 'COMMA', 0, 'POINT')} + ' kr'">0 kr</td>
+                    <td th:text="${app.purpose}">Syfte</td>
+                    <td>
+                        <small th:text="${app.scoring_result}">-</small>
+                    </td>
+                    <td th:text="${app.created_at}">datum</td>
+                    <td>
+                        <!-- Approve/Reject inline, no email notification sent -->
+                        <!-- TODO: skicka e-post till företaget vid beslut -->
+                        <form method="post" action="/backoffice/decide" style="display:inline;">
+                            <input type="hidden" name="applicationId" th:value="${app.id}"/>
+                            <input type="hidden" name="decision" value="APPROVED"/>
+                            <input type="text" name="comment" placeholder="Kommentar (valfri)" class="form-control" style="display:inline;width:140px;margin-right:4px;"/>
+                            <button type="submit" class="btn btn-success btn-sm"
+                                    onclick="return confirm('Godkänn ansökan #' + this.form.applicationId.value + '?')">
+                                Godkänn
+                            </button>
+                        </form>
+                        <form method="post" action="/backoffice/decide" style="display:inline;margin-left:4px;">
+                            <input type="hidden" name="applicationId" th:value="${app.id}"/>
+                            <input type="hidden" name="decision" value="REJECTED"/>
+                            <input type="hidden" name="comment" value="Manuellt avslagen av handläggare."/>
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Avslå ansökan #' + this.form.applicationId.value + '?')">
+                                Avslå
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Historik — senaste 20 avgjorda -->
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Senaste beslut (max 20)</strong></div>
+        <div class="panel-body" th:if="${decidedApplications == null or decidedApplications.isEmpty()}">
+            <p class="text-muted">Inga avgjorda ansökningar ännu.</p>
+        </div>
+        <table class="table table-condensed table-striped"
+               th:if="${decidedApplications != null and !decidedApplications.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>#</th><th>Företag</th><th>Belopp</th>
+                    <th>Status</th><th>Beslut</th><th>Datum</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="app : ${decidedApplications}">
+                    <td th:text="${app.id}">0</td>
+                    <td th:text="${app.company_name}">-</td>
+                    <td th:text="${#numbers.formatDecimal(app.requested_amount, 0, 'COMMA', 0, 'POINT')} + ' kr'">0 kr</td>
+                    <td>
+                        <span class="label"
+                              th:classappend="${app.status == 'APPROVED'} ? 'label-success' : 'label-danger'"
+                              th:text="${app.status}">STATUS</span>
+                    </td>
+                    <td th:text="${app.decision}">-</td>
+                    <td th:text="${app.updated_at}">-</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>

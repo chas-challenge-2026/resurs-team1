@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Startpage – Resurs Kreditansökan</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <a class="navbar-brand" style="color:#fff;" href="/">Resurs Kreditansökan</a>
+        <div class="navbar-right" style="padding:15px;">
+            <span style="color:#aac;" th:text="'Inloggad som: ' + ${companyName}">Företag</span>
+            &nbsp;|&nbsp;
+            <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="jumbotron" style="background:#fff; margin-top:20px;">
+        <h1>Välkommen, <span th:text="${companyName}">Företag AB</span>!</h1>
+        <p>Ansök om företagskredit hos Resurs Bank via denna portal.</p>
+        <a href="/apply" class="btn btn-primary btn-lg">
+            <span class="glyphicon glyphicon-plus"></span> Ny kreditansökan
+        </a>
+        <a href="/applications" class="btn btn-default btn-lg">
+            <span class="glyphicon glyphicon-list"></span> Mina ansökningar
+        </a>
+    </div>
+
+    <div th:if="${applications != null and !applications.isEmpty()}">
+        <h3>Senaste ansökningar</h3>
+        <table class="table table-bordered" style="background:#fff;">
+            <thead style="background:#003366; color:#fff;">
+                <tr><th>#</th><th>Belopp</th><th>Status</th><th>Datum</th><th></th></tr>
+            </thead>
+            <tbody>
+                <tr th:each="app : ${applications}">
+                    <td th:text="${app.id}">0</td>
+                    <td th:text="${#numbers.formatDecimal(app.requested_amount, 0, 'COMMA', 0, 'POINT')} + ' kr'">0</td>
+                    <td>
+                        <span class="label"
+                              th:classappend="${app.status == 'APPROVED'} ? 'label-success' :
+                                             (${app.status == 'REJECTED'} ? 'label-danger' :
+                                             (${app.status == 'UNDER_REVIEW'} ? 'label-warning' : 'label-default'))"
+                              th:text="${app.status}">-</span>
+                    </td>
+                    <td th:text="${app.created_at}">-</td>
+                    <td><a th:href="'/status/' + ${app.id}" class="btn btn-xs btn-info">Visa</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>

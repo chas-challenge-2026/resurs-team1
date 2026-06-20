@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Ny kreditansökan – Resurs</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+        .step-indicator { display: flex; margin-bottom: 30px; }
+        .step-indicator .step-item { flex: 1; text-align: center; padding: 10px; border-bottom: 3px solid #ddd; }
+        .step-indicator .step-item.active { border-bottom-color: #003366; color: #003366; font-weight: bold; }
+        .step-indicator .step-item.done { border-bottom-color: #5cb85c; color: #5cb85c; }
+        .form-section { background: #fff; border-radius: 4px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-default navbar-fixed-top" style="background:#003366; border:none;">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" style="color:#fff;" href="/">Resurs Kreditansökan</a>
+        </div>
+        <div class="navbar-right" style="padding:15px;">
+            <span style="color:#ccc;" th:text="'Inloggad som: ' + ${session.companyName}">Företagsnamn</span>
+            &nbsp; <a href="/logout" style="color:#aac;">Logga ut</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 style="margin-bottom:25px;">Ny kreditansökan</h2>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- Step indicator — purely visual, not tied to real state machine -->
+    <div class="step-indicator" id="stepIndicator">
+        <div class="step-item active" id="ind1">1. Företagsuppgifter</div>
+        <div class="step-item" id="ind2">2. Finansiella nyckeltal</div>
+        <div class="step-item" id="ind3">3. Kreditbelopp</div>
+        <div class="step-item" id="ind4">4. Bekräftelse</div>
+    </div>
+
+    <form method="post" action="/apply" id="applyForm">
+        <!-- Hidden field for current step — state stored in DOM, not properly managed -->
+        <input type="hidden" id="hiddenStep" name="hiddenStep" value="1"/>
+
+        <!-- STEP 1: Företagsuppgifter -->
+        <div class="step form-section" id="step1">
+            <h3>Steg 1: Företagsuppgifter</h3>
+            <p class="text-muted">Kontrollera att uppgifterna stämmer överens med era registrerade uppgifter.</p>
+            <div class="form-group">
+                <label>Organisationsnummer</label>
+                <input type="text" class="form-control" name="orgNumber"
+                       th:value="${session.orgNumber}" readonly/>
+            </div>
+            <div class="form-group">
+                <label>Företagsnamn</label>
+                <input type="text" class="form-control" name="companyName"
+                       th:value="${session.companyName}" required/>
+            </div>
+            <div class="form-group">
+                <label>Firmatecknare (för- och efternamn)</label>
+                <input type="text" class="form-control" name="authorizedSignatory"
+                       placeholder="Anna Andersson" required/>
+                <!-- TODO: encrypt PII before go-live -->
+            </div>
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                Nästa <span class="glyphicon glyphicon-arrow-right"></span>
+            </button>
+        </div>
+
+        <!-- STEP 2: Finansiella nyckeltal -->
+        <div class="step form-section" id="step2" style="display:none;">
+            <h3>Steg 2: Finansiella nyckeltal</h3>
+            <p class="text-muted">Hämta värdena från senaste årsredovisningen (belopp i SEK).</p>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Eget kapital (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="egetKapital"
+                               placeholder="2500000" required/>
+                        <p class="help-block">Summa eget kapital</p>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Totalt kapital (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="totaltKapital"
+                               placeholder="8000000" required/>
+                        <p class="help-block">Balansomslutning</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Omsättningstillgångar (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="omsattningstillgangar"
+                               placeholder="3000000" required/>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Kortfristiga skulder (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="kortfristigaSkulder"
+                               placeholder="2000000" required/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Totala skulder (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="totalaSkulder"
+                               placeholder="5500000" required/>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label>Rörelseresultat (SEK)</label>
+                        <input type="number" step="1" class="form-control" name="rorelseresultat"
+                               placeholder="450000" required/>
+                        <p class="help-block">EBIT</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nettoomsättning (SEK)</label>
+                <input type="number" step="1" class="form-control" name="nettoomsattning"
+                       placeholder="9500000" required/>
+            </div>
+            <button type="button" class="btn btn-default" onclick="prevStep(1)">
+                <span class="glyphicon glyphicon-arrow-left"></span> Tillbaka
+            </button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                Nästa <span class="glyphicon glyphicon-arrow-right"></span>
+            </button>
+        </div>
+
+        <!-- STEP 3: Kreditbelopp och syfte -->
+        <div class="step form-section" id="step3" style="display:none;">
+            <h3>Steg 3: Kreditbelopp och syfte</h3>
+            <div class="form-group">
+                <label>Önskat kreditbelopp (SEK)</label>
+                <input type="number" step="1000" min="50000" max="10000000"
+                       class="form-control" name="requestedAmount"
+                       placeholder="500000" required/>
+                <p class="help-block">Minsta belopp: 50 000 kr. Maxbelopp: 10 000 000 kr.</p>
+            </div>
+            <div class="form-group">
+                <label>Syfte med krediten</label>
+                <textarea class="form-control" name="purpose" rows="4"
+                          placeholder="Beskriv kortfattat vad krediten ska användas till (expansion, rörelsekapital, investering, etc.)" required></textarea>
+            </div>
+            <button type="button" class="btn btn-default" onclick="prevStep(2)">
+                <span class="glyphicon glyphicon-arrow-left"></span> Tillbaka
+            </button>
+            <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+                Granska ansökan <span class="glyphicon glyphicon-arrow-right"></span>
+            </button>
+        </div>
+
+        <!-- STEP 4: Bekräftelse -->
+        <div class="step form-section" id="step4" style="display:none;">
+            <h3>Steg 4: Bekräftelse</h3>
+            <div class="alert alert-info">
+                <p><strong>Kontrollera uppgifterna innan du skickar in ansökan.</strong></p>
+                <p>Ansökan kommer behandlas av Resurs Kreditavdelning. Du kan följa statusen i portalen.</p>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Sammanfattning</div>
+                <div class="panel-body">
+                    <p><strong>Företag:</strong> <span th:text="${session.companyName}">Företagsnamn</span></p>
+                    <p><strong>Org.nummer:</strong> <span th:text="${session.orgNumber}">556000-0000</span></p>
+                    <p class="text-muted" style="font-size:11px;">
+                        Dina uppgifter lagras för kreditbedömning.
+                        <!-- TODO: encrypt PII before go-live -->
+                    </p>
+                </div>
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" required/>
+                    Jag intygar att de finansiella uppgifterna är korrekta och hämtade från senaste årsredovisningen.
+                </label>
+            </div>
+            <button type="button" class="btn btn-default" onclick="prevStep(3)">
+                <span class="glyphicon glyphicon-arrow-left"></span> Tillbaka
+            </button>
+            <button type="submit" class="btn btn-success btn-lg">
+                <span class="glyphicon glyphicon-send"></span> Skicka in ansökan
+            </button>
+        </div>
+    </form>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script th:src="@{/steps.js}"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Resurs Kreditansökan</title>
+    <!-- Bootstrap 3 CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 70px; background-color: #f5f5f5; }
+        .navbar-brand { font-weight: bold; color: #000000 !important; }
+        .navbar { background-color: #ffffff; border-bottom: 3px solid #00aeef; }
+        .navbar .navbar-nav > li > a { color: #333333 !important; }
+        .navbar .navbar-nav > .active > a { color: #00aeef !important; background-color: transparent; }
+        .footer { margin-top: 50px; padding: 20px; background-color: #00aeef; color: #ffffff; text-align: center; }
+        .status-badge-PENDING_DOCS { background-color: #888; }
+        .status-badge-UNDER_REVIEW { background-color: #f0ad4e; }
+        .status-badge-APPROVED { background-color: #5cb85c; }
+        .status-badge-REJECTED { background-color: #d9534f; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/"><img src="/images/logo.png" alt="Resurs Bank" style="height:28px;vertical-align:middle;"></a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar">
+            <!-- Role shown in navbar — identifies whether Företag or Handläggare -->
+            <ul class="nav navbar-nav navbar-right">
+                <li th:if="${session.role == 'company'}">
+                    <a href="/apply"><span class="glyphicon glyphicon-plus"></span> Ny ansökan</a>
+                </li>
+                <li th:if="${session.role == 'company'}">
+                    <a href="/applications"><span class="glyphicon glyphicon-list"></span> Mina ansökningar</a>
+                </li>
+                <li th:if="${session.role == 'caseWorker'}">
+                    <a href="/backoffice"><span class="glyphicon glyphicon-briefcase"></span> Backoffice</a>
+                </li>
+                <li th:if="${session.userId != null}" class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <span class="glyphicon glyphicon-user"></span>
+                        <span th:text="${session.role == 'company'} ? 'Företag: ' + ${session.companyName} : 'Handläggare: ' + ${session.workerName}">Användare</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/logout">Logga ut</a></li>
+                    </ul>
+                </li>
+                <li th:if="${session.userId == null}">
+                    <a href="/login">Logga in</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Main content injected by child templates -->
+    <div th:replace="${content}">Content placeholder</div>
+</div>
+
+<div class="footer">
+    <p>Resurs Kreditansökan &copy; 2026 &mdash; Intern testversion</p>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script th:src="@{/steps.js}"></script>
+</body>
+</html>

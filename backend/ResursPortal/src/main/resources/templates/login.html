@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Logga in – Resurs Kreditansökan</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <style>
+        body { padding-top: 80px; background-color: #003366; }
+        .login-box { background: #fff; border-radius: 6px; padding: 30px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .login-logo { text-align: center; margin-bottom: 20px; color: #003366; }
+        .login-logo h2 { font-weight: bold; }
+        .nav-tabs > li > a { color: #003366; }
+        .bankid-icon { font-size: 2em; color: #003366; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="login-box">
+        <div class="login-logo">
+            <h2>Resurs Kreditansökan</h2>
+            <p class="text-muted">Logga in för att fortsätta</p>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <!-- Two tabs: Företagsinloggning and Handläggare -->
+        <ul class="nav nav-tabs" id="loginTabs">
+            <li th:classappend="${activeTab == 'caseWorker'} ? '' : 'active'">
+                <a data-toggle="tab" href="#companyTab">
+                    <span class="glyphicon glyphicon-briefcase"></span> Företagsinloggning
+                </a>
+            </li>
+            <li th:classappend="${activeTab == 'caseWorker'} ? 'active' : ''">
+                <a data-toggle="tab" href="#workerTab">
+                    <span class="glyphicon glyphicon-user"></span> Handläggare
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content" style="padding-top:20px;">
+            <!-- Företagsinloggning via BankID mock -->
+            <div id="companyTab" th:class="${activeTab == 'caseWorker'} ? 'tab-pane' : 'tab-pane active'">
+                <div class="text-center" style="margin-bottom:15px;">
+                    <span class="glyphicon glyphicon-lock bankid-icon"></span>
+                    <p class="text-muted" style="margin-top:8px;">Autentisering via BankID</p>
+                </div>
+                <form method="post" action="/login/company">
+                    <div class="form-group">
+                        <label for="orgNumber">Organisationsnummer</label>
+                        <input type="text"
+                               class="form-control"
+                               id="orgNumber"
+                               name="orgNumber"
+                               placeholder="556000-1234"
+                               required/>
+                        <p class="help-block">Ange organisationsnummer för BankID-autentisering</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span class="glyphicon glyphicon-lock"></span> Logga in med BankID
+                    </button>
+                </form>
+                <div class="alert alert-info" style="margin-top:15px; font-size:12px;">
+                    <strong>Testmiljö:</strong> Godkända org.nummer: 556000-1234, 556000-5678
+                </div>
+            </div>
+
+            <!-- Handläggare login med e-post/lösenord -->
+            <div id="workerTab" th:class="${activeTab == 'caseWorker'} ? 'tab-pane active' : 'tab-pane'">
+                <form method="post" action="/login/caseWorker">
+                    <div class="form-group">
+                        <label for="email">E-postadress</label>
+                        <input type="email"
+                               class="form-control"
+                               id="email"
+                               name="email"
+                               placeholder="karin@resurs.se"
+                               required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Lösenord</label>
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
+                               required/>
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-block">
+                        <span class="glyphicon glyphicon-log-in"></span> Logga in
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</body>
+</html>
