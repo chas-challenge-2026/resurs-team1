@@ -40,7 +40,7 @@ infra/
   seed.sql                       ← schema + seed-data
 
 native/
-  README.md                      ← v2 C/C++ moduler (PDF-parser, PII-kryptering)
+  README.md                      ← v2 C/C++ moduler (PII-kryptering, audit-signering)
 
 docs/
   architecture.md

@@ -14,7 +14,7 @@
 Ingen locking. Om två användare från samma org.nummer skickar ansökan samtidigt kan company-INSERT köras dubbelt (UNIQUE-constraint kastar exception) och lämna en halvfärdig application-rad.
 
 ### PDF-parsning saknas
-Systemet accepterar PDF-filer men läser dem aldrig. Scoring baseras på manuellt inmatade siffror — ett fel i formuläret kan leda till felaktigt beslut. Årsredovisningens faktiska innehåll verifieras aldrig.
+Systemet accepterar PDF-filer men läser dem aldrig. Scoring baseras på manuellt inmatade siffror, ett fel i formuläret kan leda till felaktigt beslut. Årsredovisningens faktiska innehåll verifieras aldrig automatiskt. PDF-parsning är inte del av v2-scopet (se docs/v2-targets.md), uppladdade dokument granskas istället manuellt av handläggare vid gränsfall.
 
 ### Audit log inte sökbar
 `audit_log TEXT` är ett JSON-blob. Går inte att köra `SELECT * FROM applications WHERE audit_log LIKE '%SCORING_RUN%'` effektivt. Full table scan. Kan inte aggregera händelsetyper.
