@@ -45,7 +45,7 @@ Uppdateras via manuell stränghackning: `currentLog.substring(0, currentLog.last
 ### 8. PDF parsas inte
 **Fil:** `DocumentController.java`
 **Kommentar:** `// TODO: implement PDF parsing in v2 (see native/README.md)`
-Filen sparas i /tmp/uploads/ men innehållet läses aldrig. Scoring baseras enbart på manuellt inmatade nyckeltal.
+Filen sparas i /tmp/uploads/ men innehållet läses aldrig. Scoring baseras enbart på manuellt inmatade nyckeltal. PDF-parsning är inte del av v2-scopet (se docs/v2-targets.md), uppladdade dokument granskas istället manuellt av handläggare.
 
 ## Driftsproblem
 

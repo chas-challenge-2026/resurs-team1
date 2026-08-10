@@ -1,57 +1,14 @@
-# native/ – C/C++ Moduler för v2
+# native/, C/C++ Moduler för v2
 
 Denna katalog innehåller (i v2) C/C++ nativmodulerna som anropas från Java via JNA (Java Native Access).
 
 ## Planerade moduler
 
-### 1. PDF-parser: `libresurs_pdf.so`
+### 1. PII-kryptering: `libresurs_crypto.so`
 
-Parsar K2- och K3-årsredovisningar samt F-skatteintyg i PDF-format.
+AES-256-GCM kryptering av känsliga uppgifter (org.nr, personuppgifter, finansiell info) på hot path.
 
-**Syfte:** I v1 sparas PDF-filer men parsas aldrig (`DocumentController.java`, kommentar: `// TODO: implement PDF parsing in v2`). Scoring baseras på manuellt inmatade nyckeltal utan verifiering mot faktisk årsredovisning.
-
-**Funktioner:**
-```c
-// Extrahera finansiella nyckeltal från K2/K3-årsredovisning
-int resurs_parse_arsredovisning(
-    const char* pdf_path,
-    double* eget_kapital,
-    double* totalt_kapital,
-    double* omsattningstillgangar,
-    double* kortfristiga_skulder,
-    double* totala_skulder,
-    double* rorelseresultat,
-    double* nettoomsattning
-);
-
-// Verifiera F-skatteintyg
-int resurs_verify_fskatt(
-    const char* pdf_path,
-    const char* org_number,
-    char* status_out,  // "ACTIVE" | "INACTIVE" | "INVALID"
-    size_t status_len
-);
-```
-
-**JNA Bridge (Java):**
-```java
-public interface ResursPdfLibrary extends Library {
-    ResursPdfLibrary INSTANCE = Native.load("resurs_pdf", ResursPdfLibrary.class);
-
-    int resurs_parse_arsredovisning(
-        String pdfPath,
-        DoubleByReference egetKapital,
-        DoubleByReference totaltKapital,
-        // ... övriga parametrar
-    );
-}
-```
-
-### 2. PII-kryptering: `libresurs_crypto.so`
-
-AES-256-GCM kryptering av PII-fält på hot path.
-
-**Syfte:** I v1 lagras firmanamn, organisationsnummer och firmatecknare i klartext (`ApplicationController.java`, kommentar: `// TODO: encrypt PII before go-live`).
+**Syfte:** I v1 lagras firmanamn, organisationsnummer och firmatecknare i klartext (`ApplicationController.java`, kommentar: `// TODO: encrypt PII before go-live`). Nyckeln ska lagras separat från databasen, inte i samma förvaringsutrymme som ciphertext.
 
 **Funktioner:**
 ```c
@@ -75,18 +32,91 @@ int resurs_decrypt_pii(
 );
 ```
 
+**JNA Bridge (Java):**
+```java
+public interface ResursCryptoLibrary extends Library {
+    ResursCryptoLibrary INSTANCE = Native.load("resurs_crypto", ResursCryptoLibrary.class);
+
+    int resurs_encrypt_pii(
+        String plaintext,
+        byte[] key,
+        byte[] nonce,
+        byte[] ciphertextOut,
+        IntByReference ciphertextLen
+    );
+}
+```
+
 **Nyckellagring:**
 - Nyckel lagras separat från databasen (HashiCorp Vault eller AWS KMS)
 - Nonce genereras per krypteringsoperation och lagras tillsammans med ciphertext
 
+### 2. Audit-signering: `libresurs_audit.so`
+
+Säker signering av audit-loggen med hashkedjor, för att upptäcka manipulation i efterhand.
+
+**Syfte:** I v1 är audit-loggen osignerad (JSON-blob i en kolumn utan index). En rad kan ändras eller raderas i efterhand utan att det syns. I v2 ska varje audit-post hashas ihop med föregående posts hash (hashkedja) och signeras, så att manipulation av en enskild post eller av kedjans ordning går att upptäcka vid verifiering.
+
+**Funktioner:**
+```c
+// Beräkna hash för en audit-post och kedja den till föregående post
+int resurs_audit_chain_entry(
+    const unsigned char* prev_hash,     // 32 bytes, SHA-256 av föregående post (NULL för första posten i kedjan)
+    const char* entry_json,             // audit-postens innehåll: tidsstämpel, regel-ID, indata, utfall
+    size_t entry_len,
+    unsigned char* hash_out,            // 32 bytes, SHA-256(prev_hash || entry_json)
+    unsigned char* signature_out,       // digital signatur av hash_out
+    size_t* signature_len
+);
+
+// Verifiera en kedja av audit-poster, hittar första manipulerade posten om någon
+int resurs_audit_verify_chain(
+    const unsigned char* hashes,        // entry_count * 32 bytes, hashkedjan i ordning
+    const unsigned char* signatures,    // signaturer i samma ordning
+    const size_t* signature_lens,
+    size_t entry_count,
+    const unsigned char* public_key,
+    int* first_invalid_index            // -1 om kedjan är giltig, annars index på första manipulerade posten
+);
+```
+
+**JNA Bridge (Java):**
+```java
+public interface ResursAuditLibrary extends Library {
+    ResursAuditLibrary INSTANCE = Native.load("resurs_audit", ResursAuditLibrary.class);
+
+    int resurs_audit_chain_entry(
+        byte[] prevHash,
+        String entryJson,
+        int entryLen,
+        byte[] hashOut,
+        byte[] signatureOut,
+        IntByReference signatureLen
+    );
+
+    int resurs_audit_verify_chain(
+        byte[] hashes,
+        byte[] signatures,
+        int[] signatureLens,
+        int entryCount,
+        byte[] publicKey,
+        IntByReference firstInvalidIndex
+    );
+}
+```
+
+**Nyckellagring:**
+- Signeringsnyckeln (privat nyckel) lagras separat från databasen, samma princip som för PII-kryptering
+- Publik nyckel kan distribueras fritt för verifiering, t.ex. till revisor eller tillsynsmyndighet
+
 ## Kompilering
 
 ```bash
-# PDF-parser (kräver libpoppler-dev)
-gcc -shared -fPIC -o libresurs_pdf.so resurs_pdf.c -lpoppler -lpoppler-glib
-
 # PII-kryptering (kräver libssl-dev)
 gcc -shared -fPIC -o libresurs_crypto.so resurs_crypto.c -lssl -lcrypto
+
+# Audit-signering (kräver libssl-dev)
+gcc -shared -fPIC -o libresurs_audit.so resurs_audit.c -lssl -lcrypto
 ```
 
 ## JNA Integration Guide
@@ -104,10 +134,10 @@ gcc -shared -fPIC -o libresurs_crypto.so resurs_crypto.c -lssl -lcrypto
 
 3. Definiera Java-interface som extends `Library`
 
-4. Anropa via `Native.load("resurs_pdf", ResursPdfLibrary.class)`
+4. Anropa via `Native.load("resurs_crypto", ResursCryptoLibrary.class)` respektive `Native.load("resurs_audit", ResursAuditLibrary.class)`
 
 ## Status
 
-- [ ] libresurs_pdf.so — ej implementerad (v2)
-- [ ] libresurs_crypto.so — ej implementerad (v2)
-- [ ] JNA bridge — ej implementerad (v2)
+- [ ] libresurs_crypto.so, ej implementerad (v2)
+- [ ] libresurs_audit.so, ej implementerad (v2)
+- [ ] JNA bridge, ej implementerad (v2)

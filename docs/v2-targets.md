@@ -8,11 +8,11 @@
 | Java | 11 | 21 |
 | Databasåtkomst | JdbcTemplate i controllers | JPA/Hibernate, repository-pattern |
 | Frontend | Thymeleaf + Bootstrap 3 + jQuery | React 18 wizard |
-| Auth | BankID mock (hardcoded) | Riktig BankID-integration |
+| Auth | BankID mock (hardcoded) | BankID-mock lyft till egen service, utbytbar mot skarp integration senare |
 | Lösenord | MD5 | bcrypt via Spring Security |
-| Audit log | JSON-blob i TEXT-kolumn | Separat audit_log-tabell med index |
-| PDF-parsning | Ej implementerad | C/C++ via JNA (se native/README.md) |
-| PII | Klartext | Krypterat på hot path |
+| Audit log | JSON-blob i TEXT-kolumn | Separat audit_log-tabell med index, hashkedja för manipulationsdetektion |
+| Företagsvalidering | Mockad utan felhantering | Egen service med tydligt klientgränssnitt, mockat i MVP, utbytbart mot skarpa anrop |
+| PII | Klartext | Krypterat på hot path (AES-256 eller motsvarande, C/C++ via JNA, se native/README.md) |
 | Transaktioner | Ingen | @Transactional på service-lager |
 | Session-check | Copy-paste i varje metod | Spring Security filter chain |
 
@@ -26,9 +26,11 @@ Browser (React 18)
                   ├── Service (@Transactional, affärslogik)
                   │    ├── ScoringService (konfigurerbara tröskeltar)
                   │    ├── AuditService (skriver till audit_log-tabell)
+                  │    ├── CompanyValidationService (klientgränssnitt, mockat i MVP)
+                  │    ├── BankIdService (mockad klient, utbytbar)
                   │    └── NotificationService (e-post via Spring Mail)
                   ├── Repository (JPA, Spring Data)
-                  └── JNA Bridge → native/libresurs.so (PDF-parser, PII-kryptering)
+                  └── JNA Bridge → native/libresurs.so (PII-kryptering, audit-signering)
 ```
 
 ## Specifika refaktoreringsuppgifter
@@ -58,14 +60,14 @@ CREATE TABLE audit_events (
 - Implementera role-baserad åtkomst (`@PreAuthorize`)
 
 ### 4. JNA-integration (native/)
-- Bygg C/C++ PDF-parser för K2/K3-årsredovisningar
-- Exponera via JNA bridge (`libresurs.so`)
-- PII-kryptering på hot path med separat nyckellagring
+- Bygg C/C++-modul för kryptering av känsliga uppgifter (org.nr, personuppgifter, finansiell info) med AES-256 eller motsvarande, separat nyckellagring på hot path
+- Bygg C/C++-modul för säker audit-signering: hashkedjor som upptäcker manipulation av audit-loggen
+- Exponera båda via JNA bridge (`libresurs.so`)
 
-### 5. Riktig BankID
-- Integrera med Bankgirot/BankID Open API
-- Implementera QR-kod-flöde
-- Validera juridisk firmatecknarbehörighet
+### 5. BankID-mock som egen service
+- Lyft BankID-mock ur `AuthController` till en egen service med tydligt klientgränssnitt
+- Behåll mock (happy path) i v2, gör den utbytbar mot en skarp BankID-integration senare
+- Validera juridisk firmatecknarbehörighet i mock-flödet
 
 ### 6. @Transactional
 - Wrappa application-skapande (company + application + audit) i en transaktion
@@ -74,3 +76,7 @@ CREATE TABLE audit_events (
 ### 7. E-postnotifiering
 - Implementera Spring Mail
 - Skicka bekräftelse vid ansökan, notifiering vid beslut
+
+### 8. Extern företagsvalidering som egen service
+- Lyft företagsvalidering ur controller-lagret till en egen service med tydligt klientgränssnitt
+- Mocka i MVP (registreringsstatus, moms- och F-skattestatus), gör utbytbar mot skarpa anrop senare
