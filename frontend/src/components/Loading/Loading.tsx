@@ -25,27 +25,27 @@ function Loading({
   fullscreen,
   delay = true,
 }: LoadingProps) {
-  // the fullscreen stylinjg
   const content = (
     <span
-      className={delay ? `${styles.wrapper} ${styles.delayed}` : styles.wrapper}
-      role="status"
+    className={delay ? `${styles.wrapper} ${styles.delayed}` : styles.wrapper}
+    role="status"
     >
       <svg
         className={styles.arc}
         style={{ width: SIZES[size], height: SIZES[size] }}
         viewBox="0 0 50 50"
         aria-hidden="true"
-      >
-        <circle className={styles.arcTrack} cx="25" cy="25" r="20" />
+        >
+        <circle className={styles.arcTrack} cx="25" cy="25" r="20" /> 
         <circle className={styles.arcPath} cx="25" cy="25" r="20" />
       </svg>
       <span className={styles.label}>{label}</span>
     </span>
   );
-
+  
   if (!fullscreen) return content;
-
+  
+  // the fullscreen stylinjg
   return <div className={styles.overlay}>{content}</div>;
 }
 

@@ -6,7 +6,7 @@ function App() {
     <main>
       <h1 className="title">Titel</h1>
       <p className="subtitle">Undertitel</p>
-      <Loading fullscreen/>
+      <Loading fullscreen size="lg"/>
     </main>
     </>
   )
