@@ -1,18 +1,16 @@
 package se.comerit.resurs.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpSession;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import se.comerit.resurs.dto.CreditApplicationDetails;
+import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.service.BackofficeService;
+
 
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
@@ -24,131 +22,104 @@ import java.util.Map;
  *  - Session check copy-pasteat
  *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
-@Controller
+@RestController
+@RequestMapping("/backoffice")
 public class BackofficeController {
 
+    private final BackofficeService service;
+
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @GetMapping("/backoffice")
-    public String backofficeOverview(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        // Hämtar ALLA UNDER_REVIEW — ingen pagination, ingen sortering, inget index
-        // TODO: lägg till pagination och index på status-kolumnen
-        List<Map<String, Object>> reviewApps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.created_at, " +
-            "a.scoring_result, a.decision_reason, c.company_name, c.org_number " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id " +
-            "WHERE a.status = 'UNDER_REVIEW' ORDER BY a.created_at ASC"
-        );
-
-        // Also get approved/rejected for history — same query pattern, no reuse
-        List<Map<String, Object>> decidedApps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at, " +
-            "a.updated_at, c.company_name, c.org_number " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id " +
-            "WHERE a.status IN ('APPROVED', 'REJECTED') ORDER BY a.updated_at DESC LIMIT 20"
-        );
-
-        model.addAttribute("reviewApplications", reviewApps);
-        model.addAttribute("decidedApplications", decidedApps);
-        model.addAttribute("workerName", session.getAttribute("workerName"));
-        model.addAttribute("reviewCount", reviewApps.size());
-        return "backoffice";
+    public BackofficeController(BackofficeService service) {
+        this.service = service;
     }
 
-    @PostMapping("/backoffice/decide")
-    public String decide(@RequestParam("applicationId") Long applicationId,
+    @GetMapping
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(HttpSession session) {
+
+        // Session check copy-pasted in every method — should be an interceptor
+        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
+        if (session.getAttribute("userId") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (!"caseWorker".equals(session.getAttribute("role"))){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        BackOfficeListsDTO applicationLists = service.applicationsForReview();
+
+        /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
+        model.addAttribute("reviewApplications", applicationLists.reviewApplications());
+        model.addAttribute("decidedApplications", applicationLists.decidedApplications());
+        model.addAttribute("workerName", session.getAttribute("workerName"));
+        model.addAttribute("reviewCount", applicationLists.reviewApplications().size());
+        return "backoffice";
+        */
+
+        return ResponseEntity.ok(applicationLists);
+
+    }
+
+    @PostMapping("/decide")
+    public ResponseEntity<Void> decide(@RequestParam("applicationId") Long applicationId,
                          @RequestParam("decision") String decision,
                          @RequestParam(value = "comment", defaultValue = "") String comment,
-                         HttpSession session,
-                         Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
+                         HttpSession session) {
 
-        if (!"APPROVED".equals(decision) && !"REJECTED".equals(decision)) {
-            return "redirect:/backoffice";
+        // Session check copy-pasted in every method — should be an interceptor
+        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
+        if (session.getAttribute("userId") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (!"caseWorker".equals(session.getAttribute("role"))){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        //Any status other than Approved or Rejected results in a redirection.
+        //Update: REST-APIs should respond with bad request. /Jonathan
+        if (!ApplicationStatus.APPROVED.toString().equals(decision)
+                && !ApplicationStatus.REJECTED.toString().equals(decision)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         String workerName = (String) session.getAttribute("workerName");
-        String newStatus = "APPROVED".equals(decision) ? "APPROVED" : "REJECTED";
+        ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
-        // Update application status and decision
-        jdbcTemplate.update(
-            "UPDATE applications SET status = ?, decision = ?, updated_at = NOW() WHERE id = ?",
-            newStatus,
-            decision,
-            applicationId
-        );
-
-        // Append to audit log JSON blob — same string manipulation as elsewhere
-        // No email notification sent — TODO: skicka e-post till företaget
-        String auditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"MANUAL_DECISION\",\"decision\":\"" + decision
-            + "\",\"worker\":\"" + workerName.replace("\"", "'") + "\""
-            + (comment.isEmpty() ? "" : ",\"comment\":\"" + comment.replace("\"", "'") + "\"")
-            + "}";
-
-        String currentLog = jdbcTemplate.queryForObject(
-            "SELECT audit_log FROM applications WHERE id = ?",
-            String.class,
-            applicationId
-        );
-
-        String updatedLog;
-        if (currentLog == null || currentLog.equals("[]")) {
-            updatedLog = "[" + auditEntry + "]";
-        } else {
-            updatedLog = currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + auditEntry + "]";
-        }
-
-        jdbcTemplate.update(
-            "UPDATE applications SET audit_log = ? WHERE id = ?",
-            updatedLog,
-            applicationId
-        );
+        service.application_decision(applicationId,newStatus,workerName,comment);
 
         // No email notification — TODO: implement email via Spring Mail in v2
         // TODO: notify company via email when decision is made
 
-        return "redirect:/backoffice";
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/backoffice/application/{id}")
-    public String viewApplicationDetail(
-            @RequestParam(value = "id", required = false) Long pathId,
-            @org.springframework.web.bind.annotation.PathVariable("id") Long id,
-            HttpSession session,
-            Model model) {
+    @GetMapping("/application/{id}")
+    public ResponseEntity<CreditApplicationDetails> viewApplicationDetail(
+            @PathVariable("id") Long id,
+            HttpSession session) {
         // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.*, c.company_name, c.org_number, c.authorized_signatory " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id WHERE a.id = ?",
-            id
-        );
-
-        if (apps.isEmpty()) {
-            return "redirect:/backoffice";
+        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
+        if (session.getAttribute("userId") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        if (!"caseWorker".equals(session.getAttribute("role"))){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+        CreditApplicationDetails details = service.application_details(id);
+        /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
         model.addAttribute("auditLogRaw", app.get("audit_log"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
+        */
 
+        /* Update this once we have the document parts in place. /Jonathan
         List<Map<String, Object>> docs = jdbcTemplate.queryForList(
             "SELECT * FROM documents WHERE application_id = ? ORDER BY uploaded_at DESC",
             id
         );
         model.addAttribute("documents", docs);
-
-        return "backoffice_detail";
+        */
+        return ResponseEntity.ok(details);
     }
 }
