@@ -3,7 +3,6 @@ import s from "./Button.module.css"
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost";
-  className?: string
 }
 
 const Button = ({variant="primary", className, children, ...props}: ButtonProps) => {
