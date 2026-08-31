@@ -1,10 +1,10 @@
-
-
 function App() {
-
   return (
     <>
-    <h1>hi</h1>
+    <main>
+      <h1 className="title">Titel</h1>
+      <p className="subtitle">Undertitel</p>
+    </main>
     </>
   )
 }

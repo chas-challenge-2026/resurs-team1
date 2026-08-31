@@ -1,111 +1,105 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Color Palatte */
+  --bg-main: #FFFFFF;
+  --bg-secondary: #F7FAFA;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --border: #D9D9D9;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-primary: #117069;
+  --color-primary-light: #EAF4F4;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --color-secondary: #2B3E6E;
+
+  --color-warning: #FDFBED;
+  --color-warning-text: #82451E;
+  
+  --color-text-main: #000000;
+  --color-text-muted: #666666;
+  --color-error: #915A58;
+
+  /* Spacing */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-base: 24px;
+  --space-md: 32px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+
+  /* Radius */
+  --radius-xs: 8px;
+  --radius-sm: 16px;
+  --radius-base: 24px;
+  --radius-pill: 999px;
+
+  /* Font size */
+  --font-size-base: 1rem;
+  --font-size-title: 2rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* Resets */
+* {
   box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  transition: 
+    background-color 0.2s ease, 
+    border-color 0.2s ease, 
+    stroke 0.2s ease, 
+    box-shadow 0.2s ease;
 }
 
+/* System adjustments (iOS scale fix & smooth scroll) */
+html {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  scroll-behavior: smooth;
+}
+
+/* Core body defaults */
 body {
-  margin: 0;
+  min-height: 100vh;
+  font-size: var(--font-size-base);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+main {
+  justify-self: center;
+  width: 80%;
+  max-width: 1200px;
+  padding: var(--space-xl) 0;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+/* Fix responsive media layout breaking */
+img, picture, video, canvas, svg {
+  max-width: 100%;
+  display: block;
+}
+
+/* Prevent forms/buttons from breaking typography */
+input, button, textarea, select {
+  font: inherit;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  color: var(--color-text-main);
+  text-transform: capitalize;
+}
+
+.subtitle {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+/* TODO: Add global styleing for input-base */
+
+@media (min-width: 1024px) {
+  /* More padding on bigger screens */
+  main {
+    width: 60%;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }
