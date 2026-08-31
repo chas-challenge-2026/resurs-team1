@@ -1,0 +1,11 @@
+.textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 160px;
+}
+
+@media (min-width: 768px) {
+  .textarea {
+    min-height: 120px;
+  }
+}
