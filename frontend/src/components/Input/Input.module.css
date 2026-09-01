@@ -20,3 +20,10 @@
 .errorBorder {
   border-color: var(--color-error);
 }
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}

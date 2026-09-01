@@ -2,27 +2,35 @@ import type { InputHTMLAttributes } from "react";
 import { RiErrorWarningLine } from "react-icons/ri";
 import s from "./Input.module.css"
 
-interface BaseInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  error?: string
+/**
+ * Props for Input component.
+ */
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  /** Unique identifier linking the label, error message, and helper text to the input for accessibility (WCAG) */
+  id: string;
+  /** Text label for the input. Required for screen readers and accessibility */
+  label: string;
+  /** Visually hides the label while keeping it accessible to screen readers */
+  hideLabel?: boolean;
+  /** Error message string. Triggers error state (`aria-invalid="true"`) on the input */
+  error?: string;
+  /** Helper text rendered beneath the field (only displayed when no error is present) */
   information?: string
 }
 
-interface StandardInputProps extends BaseInputProps {
-  id: string;
-  label: string;
-}
-
-interface SearchInputProps extends BaseInputProps {
-  type: "search";
-  "aria-label": string;
-  id?: never;
-  label?: never;
-}
-
-type InputProps = StandardInputProps | SearchInputProps
-
-const Input = (props: InputProps) => {
-  const { type="text", label, error, information, className, id, ...rest } = props
+/**
+ * Accessible and reusable Input component.
+ * Handles labels, error states, helper texts, and WCAG accessibility bindings automatically.
+ *
+ * @example
+ * // Standard input with label
+ * <Input id="email" label="Email address" error={errors.email} />
+ *
+ * @example
+ * // Search input with visually hidden label
+ * <Input id="search" type="search" label="Search archive" hideLabel placeholder="Search..." />
+ */
+const Input = ({id, label, hideLabel, error, information, className, ...props}: InputProps) => {
 
   const combinedClassName = [s.input, "input-base", className, error && s.errorBorder].filter(Boolean).join(" ")
 
@@ -33,19 +41,16 @@ const Input = (props: InputProps) => {
 
   return(
     <div className={s.wrapper}>
-      {label && (
-        <label htmlFor={id}>
-          {label}
-        </label>
-      )}
+      <label htmlFor={id} className={hideLabel ? s.hidden : undefined}>
+        {label}
+      </label>
 
       <input
         id={id}
-        type={type}
         className={combinedClassName}
         aria-invalid={!!error}
         aria-describedby={describedBy}
-        {...rest}
+        {...props}
       />
 
       {information && !error && 
@@ -54,7 +59,7 @@ const Input = (props: InputProps) => {
 
       {error && 
         <span id={errorId} className={s.error}>
-          <span>{<RiErrorWarningLine aria-hidden={true}/>} </span>
+          <RiErrorWarningLine aria-hidden={true}/>
           <span>{error}</span>
         </span>
       }

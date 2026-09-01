@@ -1,7 +1,37 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
 .textarea {
   width: 100%;
   resize: vertical;
   min-height: 160px;
+}
+
+.information {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+.errorBorder {
+  border-color: var(--color-error);
 }
 
 @media (min-width: 768px) {
