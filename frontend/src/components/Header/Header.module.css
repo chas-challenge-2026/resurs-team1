@@ -1,0 +1,77 @@
+.header {
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+}
+
+/* same width rules as main to stay aligned */
+.inner {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.logo img {
+  height: 26px;
+  width: auto;
+}
+
+/* have to style nav to look similar to ghost button because it needs to be a navlink */
+/* if nav chioldren are added */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.nav a {
+  padding: var(--space-xs) 12px;
+  border-radius: var(--radius-xs);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-main);
+}
+
+.nav a[aria-current] {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.user {
+  text-align: right;
+  line-height: 1.25;
+}
+
+.user span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 0;
+  background-color: var(--border);
+}
+
+/* same breakpoint for width "padding" as the main field in index */
+@media (min-width: 1024px) {
+  .inner {
+    width: 60%;
+  }
+}
