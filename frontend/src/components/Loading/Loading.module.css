@@ -1,0 +1,94 @@
+/* Loading
+   ---------------------------------------------------------------
+   Sizing is set inline by Loading.tsx, colors come from the
+   tokens in index.css.
+*/
+
+.wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* The animation carries the meaning visually, the text carries it
+   for screen readers. Reduced motion makes it visible instead. */
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%); /*shrinks all sides making it invisible but still readable by screen readers*/
+}
+
+/* Nothing paints for the first 300ms, so a request that finishes
+   quickly never flashes a spinner at the user. */
+.delayed {
+  animation: fadeIn 1.2s ease 0.3s both;
+}
+
+.overlay {
+  animation: fadeIn 0.2s ease 0.3s both;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.75);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+}
+
+/* The ring rotates while the stroke grows and shrinks, which is what
+   makes the arc look like it speeds up and slows down. */
+.arc {
+  animation: spin 2s linear infinite;
+}
+
+.arcTrack {
+  fill: none;
+  stroke: var(--color-primary-light);
+  stroke-width: 4;
+}
+
+.arcPath {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 90 150;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% { stroke-dasharray: 1 150; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90 150; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90 150; stroke-dashoffset: -124; }
+}
+
+/* if user has reduced motion toggled on their device */
+@media (prefers-reduced-motion: reduce) {
+  .wrapper * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .arc {
+    opacity: 0.4;
+  }
+
+  .label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+    color: var(--color-text-muted);
+  }
+}
