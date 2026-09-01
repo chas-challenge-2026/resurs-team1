@@ -6,8 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import se.comerit.resurs.dto.CreditApplicationDetails;
+import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
+import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.service.BackofficeService;
 
@@ -113,13 +114,7 @@ public class BackofficeController {
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 
-        /* Update this once we have the document parts in place. /Jonathan
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ? ORDER BY uploaded_at DESC",
-            id
-        );
-        model.addAttribute("documents", docs);
-        */
+
         return ResponseEntity.ok(details);
     }
 }

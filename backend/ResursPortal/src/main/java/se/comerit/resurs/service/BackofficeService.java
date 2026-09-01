@@ -4,12 +4,15 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.dto.CreditApplicationDetails;
+import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
+import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.time.LocalDateTime;
@@ -20,10 +23,12 @@ import java.util.List;
 public class BackofficeService {
 
     private final CreditApplicationRepository creditRepo;
+    private final DocumentRepository documentRepo;
 
     @Autowired
-    public BackofficeService(CreditApplicationRepository creditRepo) {
+    public BackofficeService(CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
         this.creditRepo = creditRepo;
+        this.documentRepo = documentRepo;
     }
 
 
@@ -79,16 +84,17 @@ public class BackofficeService {
         application.setAudit_log(updatedLog);
 
         //Should we return something to the controller and by extention, the frontend? /Jonathan
-
+        return;
     }
 
     //Fetch Details
     public CreditApplicationDetails application_details(Long id){
 
         CreditApplication application = creditRepo.findById(id).orElseThrow();
+        List<DocumentDTO> linkedDocuments =
+                documentRepo.findByApplicationId(id).stream().map(DocumentDTO::new).toList();
 
-
-        return new CreditApplicationDetails(application);
+        return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
     }
 
 

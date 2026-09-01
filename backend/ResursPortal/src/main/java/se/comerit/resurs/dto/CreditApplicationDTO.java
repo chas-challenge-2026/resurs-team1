@@ -6,7 +6,7 @@ import se.comerit.resurs.persistence.model.CreditApplication;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public record CreditApplicationDetails(
+public record CreditApplicationDTO(
         Long id,
         BigDecimal requested_amount,
         String purpose,
@@ -22,7 +22,7 @@ public record CreditApplicationDetails(
         String authorized_signatory
 
 ) {
-    public CreditApplicationDetails(CreditApplication app) {
+    public CreditApplicationDTO(CreditApplication app) {
         this(app.getId(), app.getRequested_amount(), app.getPurpose(), app.getStatus(), app.getDecision(), app.getDecision_reason(), app.getScoring_result(), app.getAudit_log(), app.getCreated_at(), app.getUpdated_at(), app.getCompany().getCompany_name(), app.getCompany().getOrg_number(), app.getCompany().getAuthorized_signatory());
     }
 }

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class CreditApplication {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Using Internal postgres sequence, not letting JPA control it
     private Long id;
 
     @ManyToOne
