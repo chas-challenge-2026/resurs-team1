@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react"
+import { FiMenu, FiX } from "react-icons/fi"
 import Button from "../Button/Button"
-import textLogo from "../../assets/branding/resurs-wordmark.png"
-import logo from "../../assets/branding/resurs-mark.png"
+import logo from "../../assets/branding/resurs-wordmark.png"
 import s from "./Header.module.css"
 
 interface HeaderProps {
@@ -19,11 +19,7 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
       <header className={s.header}>
         <div className={s.inner}>
           <a className={s.logo} href="/">
-            {/* the browser picks one source, so only one file gets fetched */}
-            <picture>
-              <source media="(max-width: 1023px)" srcSet={logo} />
-              <img src={textLogo} alt="Resurs" />
-            </picture>
+            <img src={logo} alt="Resurs" />
           </a>
 
           {children && <nav className={s.nav}>{children}</nav>}
@@ -46,9 +42,7 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
             aria-controls="header-menu"
             onClick={() => setOpen(v => !v)}
           >
-            <span className={s.burgerBar} />
-            <span className={s.burgerBar} />
-            <span className={s.burgerBar} />
+            {open ? <FiX /> : <FiMenu />}
           </button>
         </div>
 
@@ -60,6 +54,10 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
           {/* click anywhere in the panel closes it, links navigate away anyway */}
           <div className={s.menu} onClick={() => setOpen(false)}>
             {children && <nav className={s.menuNav}>{children}</nav>}
+            <p className={s.user}>
+              <span>Inloggad som</span>
+              <strong>{company}</strong>
+            </p>
             <Button variant="ghost" onClick={onLogout}>Logga ut</Button>
           </div>
         </div>

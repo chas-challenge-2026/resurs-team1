@@ -6,9 +6,6 @@ function App() {
   return (
     <>
     <Header company="Coconut AB" onLogout={() => {}}>
-      <a href="/" aria-current="page">Översikt</a>
-      <a href="/ansokningar">Ansökningar</a>
-      <a href="/dokument">Dokument</a>
     </Header>
     <main>
       <h1 className="title">Titel</h1>
