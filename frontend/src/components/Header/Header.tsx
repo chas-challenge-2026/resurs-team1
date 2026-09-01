@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react"
 import Button from "../Button/Button"
-import wordmark from "../../assets/branding/resurs-wordmark.png"
-import mark from "../../assets/branding/resurs-logo.png"
+import textLogo from "../../assets/branding/resurs-wordmark.png"
+import logo from "../../assets/branding/resurs-mark.png"
 import s from "./Header.module.css"
 
 interface HeaderProps {
@@ -19,9 +19,11 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
       <header className={s.header}>
         <div className={s.inner}>
           <a className={s.logo} href="/">
-            {/* css picks one, only ever one is visible */}
-            <img className={s.logoWordmark} src={wordmark} alt="Resurs" />
-            <img className={s.logoMark} src={mark} alt="Resurs" />
+            {/* the browser picks one source, so only one file gets fetched */}
+            <picture>
+              <source media="(max-width: 1023px)" srcSet={logo} />
+              <img src={textLogo} alt="Resurs" />
+            </picture>
           </a>
 
           {children && <nav className={s.nav}>{children}</nav>}

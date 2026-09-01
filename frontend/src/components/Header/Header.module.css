@@ -18,13 +18,8 @@
 }
 
 .logo img {
-  height: 26px;
+  height: 32px;
   width: auto;
-}
-
-/* icon only version is the small screen one */
-.logoMark {
-  display: none;
 }
 
 /* have to style nav to look similar to ghost button because it needs to be a navlink */
@@ -35,11 +30,16 @@
   gap: var(--space-xs);
 }
 
+/* shared by the bar nav and the dropdown nav */
+.nav a,
+.menuNav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
 .nav a {
   padding: var(--space-xs) 12px;
   border-radius: var(--radius-xs);
-  color: var(--color-text-muted);
-  text-decoration: none;
 }
 
 .nav a:hover {
@@ -47,7 +47,8 @@
   color: var(--color-text-main);
 }
 
-.nav a[aria-current] {
+.nav a[aria-current],
+.menuNav a[aria-current] {
   color: var(--color-text-main);
   font-weight: 600;
 }
@@ -107,12 +108,9 @@
 
 /* --- small screens --- */
 @media (max-width: 1023px) {
-  .logoWordmark {
-    display: none;
-  }
-
-  .logoMark {
-    display: block;
+  /* round mark needs a bit more height to read as big as the wordmark */
+  .logo img {
+    height: 36px;
   }
 
   .inner {
@@ -177,13 +175,6 @@
 
   .menuNav a {
     padding: var(--space-xs) 0;
-    color: var(--color-text-muted);
-    text-decoration: none;
-  }
-
-  .menuNav a[aria-current] {
-    color: var(--color-text-main);
-    font-weight: 600;
   }
 
   /* dims the page under the header while the menu is open */
