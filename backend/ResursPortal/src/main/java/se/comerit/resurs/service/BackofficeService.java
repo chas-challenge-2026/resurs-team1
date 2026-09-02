@@ -39,10 +39,10 @@ public class BackofficeService {
         List<ReviewInfo> underReviewList;
         List<HistoricalReviewInfo> decidedReviewList;
 
-        underReviewList = creditRepo.findByStatusOrderByCreated_atAsc(ApplicationStatus.UNDER_REVIEW).stream()
+        underReviewList = creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW).stream()
                 .map(ReviewInfo::new).toList();
 
-        decidedReviewList = creditRepo.findByStatusInOrderByCreated_atAsc(
+        decidedReviewList = creditRepo.findByStatusInOrderByCreatedAtAsc(
                 List.of(ApplicationStatus.APPROVED,ApplicationStatus.REJECTED),
                 PageRequest.of(0, 20
                 )
@@ -60,7 +60,7 @@ public class BackofficeService {
 
         application.setStatus(decision);
         application.setDecision(decision.toString());
-        application.setUpdated_at(LocalDateTime.now());
+        application.setUpdatedAt(LocalDateTime.now());
 
 
         // Append to audit log JSON blob — same string manipulation as elsewhere
