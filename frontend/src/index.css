@@ -12,6 +12,8 @@
 
   --color-warning: #FDFBED;
   --color-warning-text: #82451E;
+  /* --color-warning is a near-white, added this forcontrast */
+  --color-warning-strong: #B4711A;
   
   --color-text-main: #000000;
   --color-text-muted: #666666;
