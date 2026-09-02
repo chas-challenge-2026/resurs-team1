@@ -52,7 +52,7 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
           className={`${s.menuWrap} ${open ? s.menuWrapOpen : ""}`}
         >
           {/* click anywhere in the panel closes it, links navigate away anyway */}
-          <div className={s.menu} onClick={() => setOpen(false)}>
+          <div className={s.menu}>
             {children && <nav className={s.menuNav}>{children}</nav>}
             <p className={s.user}>
               <span>Inloggad som</span>
