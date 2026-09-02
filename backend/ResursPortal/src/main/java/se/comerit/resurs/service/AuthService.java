@@ -1,43 +1,56 @@
 package se.comerit.resurs.service;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import se.comerit.resurs.dto.auth.CompanyLoginRequest;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
+import se.comerit.resurs.exception.auth.LoginFailedException;
+import se.comerit.resurs.exception.auth.LoginFailureReason;
+import se.comerit.resurs.persistence.CompanyRepository;
+import se.comerit.resurs.persistence.model.Company;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
+
+import java.util.Set;
 
 
 @Service
 public class AuthService {
 
-    private final
 
-    @GetMapping("/")
-    public String root() { return "redirect:/login"; }
+    // BankID-mock — TODO: ersätt med riktig BankID-integration
+    private static final Set<String> BANKID_APPROVED_ORG_NUMBERS =
+            Set.of("556000-1234", "556000-5678");
+
+    private final CompanyRepository companyRepository;
+
+    public AuthService(CompanyRepository companyRepository) {
+        this.companyRepository = companyRepository;
+    }
 
 
     // BankID mock — hardcoded org numbers, real BankID integration skipped
     // TODO: replace with real BankID integration
-    public CompanyLoginResponse loginCompany(CompanyLoginRequest loginRequest) {
+    public CompanyLoginResponse loginCompany(String orgNumber) {
+        if (!BANKID_APPROVED_ORG_NUMBERS.contains(orgNumber)) {
+            throw new LoginFailedException(LoginFailureReason.BANKID_REJECTED);
+        }
+            Company company = companyRepository.findByOrgNumber(orgNumber)
+                    .orElseThrow(() -> new LoginFailedException(LoginFailureReason.COMPANY_NOT_FOUND));
 
+            return new CompanyLoginResponse(
+                    company.getId(),
+                    "company"
+                    , company.getOrg_number(),
+                    company.getCompany_name()
+            );
+        }
 
 
 
         // TODO: replace with real BankID integration
 
 
-        }
-
-    // Case worker login with MD5 password — SQL built with string concat (injection surface)
-    // TODO: parameterize this query and use bcrypt
-    public String loginCaseWorker(@RequestParam("email") String email,
+        // Case worker login with MD5 password — SQL built with string concat (injection surface)
+        // TODO: parameterize this query and use bcrypt
+ /*   public String loginCaseWorker(@RequestParam("email") String email,
                                   @RequestParam("password") String password,
                                   HttpSession session,
                                   Model model) {
@@ -79,5 +92,6 @@ public class AuthService {
         }
     }
 }
+*/
+    }
 
-}
