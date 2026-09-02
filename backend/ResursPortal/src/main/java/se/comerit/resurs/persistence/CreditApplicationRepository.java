@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface CreditApplicationRepository extends JpaRepository<CreditApplication,Long> {
 
-    List<CreditApplication> findByStatusOrderByCreated_atAsc(ApplicationStatus status);
+    List<CreditApplication> findByStatusOrderByCreatedAtAsc(ApplicationStatus status);
 
     //Allows for a multiple statuses and limits with pagable
-    List<CreditApplication> findByStatusInOrderByCreated_atAsc(
+    List<CreditApplication> findByStatusInOrderByCreatedAtAsc(
             List<ApplicationStatus> statuses,
             Pageable pageable
     );

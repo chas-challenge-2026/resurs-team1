@@ -23,6 +23,6 @@ public record CreditApplicationDTO(
 
 ) {
     public CreditApplicationDTO(CreditApplication app) {
-        this(app.getId(), app.getRequested_amount(), app.getPurpose(), app.getStatus(), app.getDecision(), app.getDecision_reason(), app.getScoring_result(), app.getAudit_log(), app.getCreated_at(), app.getUpdated_at(), app.getCompany().getCompany_name(), app.getCompany().getOrg_number(), app.getCompany().getAuthorized_signatory());
+        this(app.getId(), app.getRequested_amount(), app.getPurpose(), app.getStatus(), app.getDecision(), app.getDecision_reason(), app.getScoring_result(), app.getAudit_log(), app.getCreatedAt(), app.getUpdatedAt(), app.getCompany().getCompany_name(), app.getCompany().getOrg_number(), app.getCompany().getAuthorized_signatory());
     }
 }

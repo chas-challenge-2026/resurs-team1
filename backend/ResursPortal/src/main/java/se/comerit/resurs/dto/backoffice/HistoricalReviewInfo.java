@@ -20,8 +20,8 @@ public record HistoricalReviewInfo(
                 application.getRequested_amount(),
                 application.getPurpose(),
                 application.getDecision(),
-                application.getCreated_at(),
-                application.getUpdated_at(),
+                application.getCreatedAt(),
+                application.getUpdatedAt(),
                 application.getCompany().getCompany_name(),
                 application.getCompany().getOrg_number());
     }

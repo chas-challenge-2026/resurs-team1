@@ -19,7 +19,7 @@ public record ReviewInfo(
         this(application.getId(),
                 application.getRequested_amount(),
                 application.getPurpose(),
-                application.getCreated_at(),
+                application.getCreatedAt(),
                 application.getScoring_result(),
                 application.getDecision_reason(),
                 application.getCompany().getCompany_name(),
