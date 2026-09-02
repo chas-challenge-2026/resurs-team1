@@ -68,8 +68,8 @@ body {
 
 main {
   justify-self: center;
-  width: 80%;
-  max-width: 1200px;
+  width: 90%;
+  max-width: 1024px;
   padding: var(--space-xl) 0;
 }
 

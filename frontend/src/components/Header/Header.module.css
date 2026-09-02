@@ -1,0 +1,208 @@
+.header {
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+  /* keeps header + dropdown painted above the backdrop */
+  position: relative;
+  z-index: 20;
+}
+
+/* same width rules as main to stay aligned */
+.inner {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.logo img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* have to style nav to look similar to ghost button because it needs to be a navlink */
+/* if nav chioldren are added */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* shared by the bar nav and the dropdown nav */
+.nav a,
+.menuNav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.nav a {
+  padding: var(--space-xs) 12px;
+  border-radius: var(--radius-xs);
+}
+
+.nav a:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-main);
+}
+
+.nav a[aria-current],
+.menuNav a[aria-current] {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.right .user {
+  text-align: right;
+}
+
+.user {
+  line-height: 1.25;
+}
+
+.user span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 0;
+  background-color: var(--border);
+}
+
+/* burger + dropdown only exist under the breakpoint */
+.burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  /* box stays 40px for the tap target even though the frame is gone */
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-main);
+  cursor: pointer;
+}
+
+.burger svg {
+  width: 24px;
+  height: 24px;
+}
+
+.menuWrap,
+.backdrop {
+  display: none;
+}
+
+/* --- small screens --- */
+@media (max-width: 1023px) {
+  .inner {
+    gap: var(--space-sm);
+  }
+
+  /* the whole bar cluster moves into the dropdown */
+  .nav,
+  .right {
+    display: none;
+  }
+
+  .burger {
+    display: flex;
+    margin-left: auto;
+  }
+
+  /* 0fr -> 1fr animates the height with no magic max-height number */
+  .menuWrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.25s ease;
+  }
+
+  .menuWrapOpen {
+    grid-template-rows: 1fr;
+  }
+
+  /* keeps no padding or border of its own so it can collapse to a true 0 */
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    width: 90%;
+    margin: 0 auto;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s;
+  }
+
+  .menuWrapOpen .menu {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* bottom spacing sits inside so it gets clipped while collapsed */
+  .menu > :last-child {
+    margin-bottom: var(--space-sm);
+  }
+
+  .menuNav,
+  .menu .user {
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border);
+  }
+
+  .menuNav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menuNav a {
+    padding: var(--space-xs) 0;
+  }
+
+  /* dims the page under the header while the menu is open */
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s;
+  }
+
+  .backdropOpen {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* same breakpoint for width "padding" as the main field in index */
+@media (min-width: 1024px) {
+  .inner {
+    width: 60%;
+  }
+}
+
+/* respect users who asked the OS for less motion */
+@media (prefers-reduced-motion: reduce) {
+  .menuWrap,
+  .menu,
+  .backdrop {
+    transition: none;
+  }
+}
