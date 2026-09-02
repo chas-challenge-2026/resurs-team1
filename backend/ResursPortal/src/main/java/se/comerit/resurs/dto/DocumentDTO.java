@@ -19,7 +19,7 @@ public record DocumentDTO(
                 document.getApplication().getId(),
                 document.getFilename(),
                 document.getDoc_type(),
-                document.getUploaded_at()
+                document.getUploadedAt()
         );
     }
 }

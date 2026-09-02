@@ -10,14 +10,14 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true )
-    private String org_number;
+    @Column(unique = true,name = "org_number" )
+    private String orgNumber;
 
-    @Column
-    private String company_name;
+    @Column(name = "company_name")
+    private String companyName;
 
-    @Column
-    private String authorized_signatory;
+    @Column(name = "authorized_signatory")
+    private String authorizedSignatory;
 
 
     public Long getId() {
@@ -29,26 +29,26 @@ public class Company {
     }
 
     public String getOrg_number() {
-        return org_number;
+        return orgNumber;
     }
 
     public void setOrg_number(String org_number) {
-        this.org_number = org_number;
+        this.orgNumber = org_number;
     }
 
     public String getCompany_name() {
-        return company_name;
+        return companyName;
     }
 
     public void setCompany_name(String company_name) {
-        this.company_name = company_name;
+        this.companyName = company_name;
     }
 
     public String getAuthorized_signatory() {
-        return authorized_signatory;
+        return authorizedSignatory;
     }
 
     public void setAuthorized_signatory(String authorized_signatory) {
-        this.authorized_signatory = authorized_signatory;
+        this.authorizedSignatory = authorized_signatory;
     }
 }

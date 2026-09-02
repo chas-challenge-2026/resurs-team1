@@ -97,7 +97,7 @@ class BackofficeServiceTests {
         assertThat(updated.getUpdatedAt())
                 .isNotNull();
 
-        assertThat(updated.getAudit_log())
+        assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"APPROVED\"")
                 .contains("\"worker\":\"test-worker\"")
@@ -130,7 +130,7 @@ class BackofficeServiceTests {
         assertThat(updated.getUpdatedAt())
                 .isNotNull();
 
-        assertThat(updated.getAudit_log())
+        assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"REJECTED\"")
                 .contains("\"worker\":\"test-worker\"")
@@ -142,7 +142,7 @@ class BackofficeServiceTests {
         CreditApplication application =
                 createApplication(ApplicationStatus.UNDER_REVIEW);
 
-        application.setAudit_log(
+        application.setAuditLog(
                 "[{\"action\":\"APPLICATION_CREATED\",\"worker\":\"System\"}]"
         );
 
@@ -158,7 +158,7 @@ class BackofficeServiceTests {
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        String auditLog = updated.getAudit_log();
+        String auditLog = updated.getAuditLog();
 
         assertThat(auditLog)
                 .startsWith("[")
@@ -189,7 +189,7 @@ class BackofficeServiceTests {
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        assertThat(updated.getAudit_log())
+        assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"APPROVED\"")
                 .contains("\"worker\":\"test-worker\"")
@@ -213,7 +213,7 @@ class BackofficeServiceTests {
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        assertThat(updated.getAudit_log())
+        assertThat(updated.getAuditLog())
                 .contains("\"worker\":\"test'worker\"")
                 .contains("\"comment\":\"Looks 'good'\"");
     }
@@ -255,7 +255,7 @@ class BackofficeServiceTests {
         document.setApplication(saved);
         document.setFilename("income.pdf");
         document.setDoc_type("INCOME_STATEMENT");
-        document.setUploaded_at(LocalDateTime.now());
+        document.setUploadedAt(LocalDateTime.now());
 
         documentRepo.save(document);
 
@@ -303,11 +303,11 @@ class BackofficeServiceTests {
 
         CreditApplication application = new CreditApplication();
         application.setCompany(savedCompany);
-        application.setRequested_amount(new BigDecimal("10000.00"));
+        application.setRequestedAmount(new BigDecimal("10000.00"));
         application.setPurpose("Test loan");
         application.setStatus(status);
         application.setCreatedAt(LocalDateTime.now());
-        application.setAudit_log("[]");
+        application.setAuditLog("[]");
 
         return application;
     }

@@ -17,11 +17,11 @@ public record ReviewInfo(
 ) {
     public ReviewInfo(CreditApplication application) {
         this(application.getId(),
-                application.getRequested_amount(),
+                application.getRequestedAmount(),
                 application.getPurpose(),
                 application.getCreatedAt(),
-                application.getScoring_result(),
-                application.getDecision_reason(),
+                application.getScoringResult(),
+                application.getDecisionReason(),
                 application.getCompany().getCompany_name(),
                 application.getCompany().getOrg_number());
     }

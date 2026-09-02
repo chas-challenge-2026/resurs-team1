@@ -72,7 +72,7 @@ public class BackofficeService {
                 + (comment.isEmpty() ? "" : ",\"comment\":\"" + comment.replace("\"", "'") + "\"")
                 + "}";
 
-        String currentLog = application.getAudit_log();
+        String currentLog = application.getAuditLog();
 
         String updatedLog;
         if (currentLog == null || currentLog.equals("[]")) {
@@ -81,7 +81,7 @@ public class BackofficeService {
             updatedLog = currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + newAuditEntry + "]";
         }
 
-        application.setAudit_log(updatedLog);
+        application.setAuditLog(updatedLog);
 
         //Should we return something to the controller and by extention, the frontend? /Jonathan
         return;

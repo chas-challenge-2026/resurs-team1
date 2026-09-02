@@ -17,7 +17,7 @@ public record HistoricalReviewInfo(
 ) {
     public HistoricalReviewInfo(CreditApplication application) {
         this(application.getId(),
-                application.getRequested_amount(),
+                application.getRequestedAmount(),
                 application.getPurpose(),
                 application.getDecision(),
                 application.getCreatedAt(),

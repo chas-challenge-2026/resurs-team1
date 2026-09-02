@@ -20,8 +20,8 @@ public class CreditApplication {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Column
-    private BigDecimal requested_amount;
+    @Column(name = "requested_amount" )
+    private BigDecimal requestedAmount;
 
     @Column
     private String purpose;
@@ -33,14 +33,14 @@ public class CreditApplication {
     @Column
     private String decision;
 
-    @Column
-    private String decision_reason;
+    @Column(name = "decision_reason")
+    private String decisionReason;
 
-    @Column
-    private String scoring_result;
+    @Column(name = "scoring_result")
+    private String scoringResult;
 
-    @Column
-    private String audit_log = "[]";
+    @Column(name = "audit_log")
+    private String auditLog = "[]";
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -66,12 +66,12 @@ public class CreditApplication {
         this.company = company;
     }
 
-    public BigDecimal getRequested_amount() {
-        return requested_amount;
+    public BigDecimal getRequestedAmount() {
+        return requestedAmount;
     }
 
-    public void setRequested_amount(BigDecimal requested_amount) {
-        this.requested_amount = requested_amount;
+    public void setRequestedAmount(BigDecimal requestedAmount) {
+        this.requestedAmount = requestedAmount;
     }
 
     public String getPurpose() {
@@ -98,28 +98,28 @@ public class CreditApplication {
         this.decision = decision;
     }
 
-    public String getDecision_reason() {
-        return decision_reason;
+    public String getDecisionReason() {
+        return decisionReason;
     }
 
-    public void setDecision_reason(String decision_reason) {
-        this.decision_reason = decision_reason;
+    public void setDecisionReason(String decisionReason) {
+        this.decisionReason = decisionReason;
     }
 
-    public String getScoring_result() {
-        return scoring_result;
+    public String getScoringResult() {
+        return scoringResult;
     }
 
-    public void setScoring_result(String scoring_result) {
-        this.scoring_result = scoring_result;
+    public void setScoringResult(String scoringResult) {
+        this.scoringResult = scoringResult;
     }
 
-    public String getAudit_log() {
-        return audit_log;
+    public String getAuditLog() {
+        return auditLog;
     }
 
-    public void setAudit_log(String audit_log) {
-        this.audit_log = audit_log;
+    public void setAuditLog(String auditLog) {
+        this.auditLog = auditLog;
     }
 
     public LocalDateTime getCreatedAt() {
