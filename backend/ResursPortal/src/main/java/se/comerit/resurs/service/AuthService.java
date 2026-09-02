@@ -1,13 +1,19 @@
 package se.comerit.resurs.service;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
+import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
+import se.comerit.resurs.persistence.model.CaseWorker;
 import se.comerit.resurs.persistence.model.Company;
 
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 
@@ -20,9 +26,11 @@ public class AuthService {
             Set.of("556000-1234", "556000-5678");
 
     private final CompanyRepository companyRepository;
+    private final CaseWorkerRepository caseWorkerRepository;
 
-    public AuthService(CompanyRepository companyRepository) {
+    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository) {
         this.companyRepository = companyRepository;
+        this.caseWorkerRepository = caseWorkerRepository;
     }
 
 
@@ -43,6 +51,22 @@ public class AuthService {
             );
         }
 
+        public CaseWorkerLoginResponse loginCaseWorker(String email, String password){
+            CaseWorker worker = caseWorkerRepository.findByEmail(email)
+                    .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
+
+
+            if (!worker.getPasswordHash().equals(md5Hash(password))){
+                throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
+            }
+            return new CaseWorkerLoginResponse(
+                    worker.getId(),
+                    "caseWorker",
+                    worker.getName(),
+                    worker.getEmail()
+            );
+        }
+
 
 
         // TODO: replace with real BankID integration
@@ -50,27 +74,7 @@ public class AuthService {
 
         // Case worker login with MD5 password — SQL built with string concat (injection surface)
         // TODO: parameterize this query and use bcrypt
- /*   public String loginCaseWorker(@RequestParam("email") String email,
-                                  @RequestParam("password") String password,
-                                  HttpSession session,
-                                  Model model) {
-        String md5 = md5Hash(password);
-        // SQL injection surface: email is directly concatenated
-        String sql = "SELECT * FROM case_workers WHERE email = '" + email + "' AND password_md5 = '" + md5 + "'";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-        if (!rows.isEmpty()) {
-            Map<String, Object> worker = rows.get(0);
-            session.setAttribute("userId", worker.get("id"));
-            session.setAttribute("role", "caseWorker");
-            session.setAttribute("workerName", worker.get("name"));
-            session.setAttribute("workerEmail", worker.get("email"));
-            return "redirect:/backoffice";
-        } else {
-            model.addAttribute("error", "Felaktigt användarnamn eller lösenord.");
-            model.addAttribute("activeTab", "caseWorker");
-            return "login";
-        }
-    }
+
 
     public String logout(HttpSession session) {
         session.invalidate();
@@ -78,6 +82,8 @@ public class AuthService {
     }
     // MD5 — weak, but matches DB seed
     // TODO: migrate to bcrypt before go-live
+
+
     private String md5Hash(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -92,6 +98,6 @@ public class AuthService {
         }
     }
 }
-*/
-    }
+
+
 

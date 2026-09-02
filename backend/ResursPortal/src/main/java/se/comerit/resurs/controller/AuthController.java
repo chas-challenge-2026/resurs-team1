@@ -10,10 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
-import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
-import se.comerit.resurs.dto.auth.CompanyLoginRequest;
-import se.comerit.resurs.dto.auth.CompanyLoginResponse;
-import se.comerit.resurs.dto.auth.CurrentUserResponse;
+import se.comerit.resurs.dto.auth.*;
 import se.comerit.resurs.service.AuthService;
 
 import java.security.MessageDigest;
@@ -55,7 +52,7 @@ public class AuthController {
                     (String) session.getAttribute("orgNumber")));
         }
 
-        //
+        //session.setattribute tas bort efter spring security har filter
         @PostMapping("/login/company")
     public ResponseEntity<CompanyLoginResponse>loginCompany(
                 @Valid @RequestBody CompanyLoginRequest request, HttpSession session
@@ -70,6 +67,25 @@ public class AuthController {
 
             return ResponseEntity.ok(response);
         }
+
+        @PostMapping("/login/caseworker")
+        public ResponseEntity<CaseWorkerLoginResponse>loginCaseWorker(@Valid @RequestBody CaseWorkerLoginRequest request, HttpSession session){
+            CaseWorkerLoginResponse response = authService.loginCaseWorker(request.email(), request.password());
+
+            session.setAttribute("userId", response.userId());
+            session.setAttribute("role", "caseWorker");
+            session.setAttribute("workerName", response.name());
+            session.setAttribute("workerEmail", response.email());
+            return ResponseEntity.ok(response);
+        }
+
+
+        @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(HttpSession session) {
+        session.invalidate();
+    }
+
 
 
     }
