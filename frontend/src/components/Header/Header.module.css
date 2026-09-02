@@ -1,5 +1,5 @@
 .header {
-  background-color: var(--bg-main);
+  background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   /* keeps header + dropdown painted above the backdrop */
   position: relative;
