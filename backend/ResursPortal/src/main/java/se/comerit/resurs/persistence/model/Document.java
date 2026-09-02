@@ -55,7 +55,7 @@ public class Document {
         this.uploaded_at = uploaded_at;
     }
 
-    @OneToMany
+    @ManyToOne
     @JoinColumn(name = "application_id")
     private CreditApplication application;
 
