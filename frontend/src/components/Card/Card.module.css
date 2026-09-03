@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-main);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-base);
   padding: var(--space-lg);
