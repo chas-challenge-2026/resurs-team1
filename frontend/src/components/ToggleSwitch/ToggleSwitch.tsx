@@ -3,7 +3,7 @@ import s from "./ToggleSwitch.module.css"
 /**
  * Represents a single choice option in the toggle switch.
  */
-export type Option<T extends string> = {
+export type SwitchOption<T extends string> = {
   /** The text displayed to the user */
   label: string;
   /** The value stored in state */
@@ -14,7 +14,7 @@ interface ToggleSwitchProps<T extends string> {
   /** Group name for the radio inputs (required for accessibility/WCAG) */
   name: string;
   /** List of selectable options */
-  options: Option<T>[];
+  options: SwitchOption<T>[];
   /** Currently active value */
   selectedValue: T;
   /** Callback fired when a new option is selected */
