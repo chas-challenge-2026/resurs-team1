@@ -88,11 +88,13 @@ input, button, textarea, select {
 
 .title {
   font-size: var(--font-size-title);
+  font-weight: 500;
   color: var(--color-text-main);
   text-transform: capitalize;
 }
 
 .subtitle {
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text-muted);
