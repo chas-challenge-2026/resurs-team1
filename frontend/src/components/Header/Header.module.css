@@ -2,16 +2,17 @@
   background-color: var(--bg-main);
   border-bottom: 1px solid var(--border);
   /* keeps header + dropdown painted above the backdrop */
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
 }
 
 /* same width rules as main to stay aligned */
 .inner {
-  width: 90%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 960px;
   margin: 0 auto;
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm) var(--space-base);
   display: flex;
   align-items: center;
   gap: var(--space-base);
@@ -108,7 +109,7 @@
 }
 
 /* --- small screens --- */
-@media (max-width: 1023px) {
+@media (max-width: 768px) {
   .inner {
     gap: var(--space-sm);
   }
@@ -140,7 +141,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    width: 90%;
+    width: 100%;
+    padding: 0 var(--space-base);
     margin: 0 auto;
     overflow: hidden;
     opacity: 0;
@@ -188,13 +190,6 @@
   .backdropOpen {
     opacity: 1;
     visibility: visible;
-  }
-}
-
-/* same breakpoint for width "padding" as the main field in index */
-@media (min-width: 1024px) {
-  .inner {
-    width: 60%;
   }
 }
 
