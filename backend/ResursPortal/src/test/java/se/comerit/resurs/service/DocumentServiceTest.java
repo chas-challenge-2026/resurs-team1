@@ -126,4 +126,12 @@ class DocumentServiceTest {
         File result = documentService.resolveFileForDownload(999L);
         assertThat(result).isNull();
     }
+    @Test
+    void findByApplicationId_unknownApplication_throwsIllegalArgumentException() {
+        when(creditApplicationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.findByApplicationId(999L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Application not found");
+    }
 }

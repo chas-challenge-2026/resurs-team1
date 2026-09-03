@@ -39,6 +39,9 @@ public class DocumentService {
         this.creditApplicationRepository = creditApplicationRepository;
     }
     public List<Document> findByApplicationId(Long applicationId) {
+        if (creditApplicationRepository.findById(applicationId).isEmpty()) {
+            throw new IllegalArgumentException("Application not found");
+        }
         return documentRepository.findByApplicationId(applicationId);
     }
 

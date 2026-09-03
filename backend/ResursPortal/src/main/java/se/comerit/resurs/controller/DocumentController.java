@@ -12,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
 import se.comerit.resurs.dto.DocumentDTO;
-import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.service.DocumentService;
 
 import java.io.File;
@@ -42,12 +41,10 @@ import java.util.List;
 public class DocumentController {
 
     private DocumentService documentService;
-    private CreditApplicationRepository creditApplicationRepository;
 
     @Autowired
-    public DocumentController(DocumentService documentService, CreditApplicationRepository creditApplicationRepository) {
+    public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
-        this.creditApplicationRepository = creditApplicationRepository;
     }
 
     @GetMapping("/documents/{applicationId}")
@@ -56,14 +53,14 @@ public class DocumentController {
         if (session.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (creditApplicationRepository.findById(applicationId).isEmpty()) {
+        try {
+            List<DocumentDTO> documents = documentService.findByApplicationId(applicationId).stream()
+                    .map(DocumentDTO::new)
+                    .toList();
+            return ResponseEntity.ok(documents);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
-
-        List<DocumentDTO> documents = documentService.findByApplicationId(applicationId).stream()
-                .map(DocumentDTO::new)
-                .toList();
-        return ResponseEntity.ok(documents);
     }
 // Old thymeleaf compatible method
 // Keeping the method as documentations for what was delivered to frontend
