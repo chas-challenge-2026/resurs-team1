@@ -5,7 +5,7 @@ import s from "./Input.module.css"
 /**
  * Props for Input component.
  */
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   /** Unique identifier linking the label, error message, and helper text to the input for accessibility (WCAG) */
   id: string;
   /** Text label for the input. Required for screen readers and accessibility */
@@ -15,7 +15,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Error message string. Triggers error state (`aria-invalid="true"`) on the input */
   error?: string;
   /** Helper text rendered beneath the field (only displayed when no error is present) */
-  information?: string
+  information?: string;
+  /** Visual scale of the input element. Defaults to 'md' */
+  size?: "sm" | "md";
 }
 
 /**
@@ -30,9 +32,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
  * // Search input with visually hidden label
  * <Input id="search" type="search" label="Search archive" hideLabel placeholder="Search..." />
  */
-const Input = ({id, label, hideLabel, error, information, className, ...props}: InputProps) => {
+const Input = ({id, label, hideLabel, error, information, size = "md", className, ...props}: InputProps) => {
 
-  const combinedClassName = [s.input, "input-base", className, error && s.errorBorder].filter(Boolean).join(" ")
+  const combinedClassName = [s.input, s[size], "input-base", className, error && s.errorBorder].filter(Boolean).join(" ")
 
   //Id for screen reader
   const errorId = id && error ? `${id}-error` : undefined

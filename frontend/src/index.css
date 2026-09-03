@@ -99,9 +99,17 @@ input, button, textarea, select {
 }
 
 .input-base {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: var(--space-sm);
+}
+
+.input-base:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 @media (min-width: 1024px) {
