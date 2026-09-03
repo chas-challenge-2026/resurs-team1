@@ -20,12 +20,12 @@
   --color-error: #a5231f;
 
   /* Spacing */
-  --space-xs: 8px;
-  --space-sm: 16px;
-  --space-base: 24px;
-  --space-md: 32px;
-  --space-lg: 40px;
-  --space-xl: 64px;
+  --space-xs: 0.5rem;   /* 8px */
+  --space-sm: 1rem;     /* 16px */
+  --space-base: 1.5rem; /* 24px */
+  --space-md: 2rem;     /* 32px */
+  --space-lg: 2.5rem;   /* 40px */
+  --space-xl: 4rem;     /* 64px */
 
   /* Radius */
   --radius-xs: 8px;
