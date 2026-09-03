@@ -1,7 +1,7 @@
 :root {
   /* Color Palatte */
-  --bg-main: #F7FAFA;
-  --bg-secondary: #FFFFFF;
+  --bg-main: #FFFFFF;
+  --bg-secondary: #F7FAFA;
 
   --border: #D9D9D9;
 
@@ -61,7 +61,6 @@ html {
 
 /* Core body defaults */
 body {
-  background-color: var(--bg-main);
   min-height: 100vh;
   font-size: var(--font-size-base);
   color: var(--color-text-main);
