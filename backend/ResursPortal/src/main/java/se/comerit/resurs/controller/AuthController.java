@@ -1,22 +1,14 @@
 package se.comerit.resurs.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import se.comerit.resurs.dto.auth.*;
 import se.comerit.resurs.service.AuthService;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/")
@@ -27,13 +19,6 @@ public class AuthController {
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @GetMapping("/")
-    public String root() { return "redirect:/login"; }
-
 
     //session skickas tilligt in i controller kommer senare att gå via filter i spring security
     @GetMapping("/me")
