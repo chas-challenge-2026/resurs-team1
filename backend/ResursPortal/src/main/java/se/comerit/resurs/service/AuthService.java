@@ -1,6 +1,5 @@
 package se.comerit.resurs.service;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
@@ -67,22 +66,7 @@ public class AuthService {
             );
         }
 
-
-
-        // TODO: replace with real BankID integration
-
-
-        // Case worker login with MD5 password — SQL built with string concat (injection surface)
         // TODO: parameterize this query and use bcrypt
-
-
-    public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/login";
-    }
-    // MD5 — weak, but matches DB seed
-    // TODO: migrate to bcrypt before go-live
-
 
     private String md5Hash(String input) {
         try {

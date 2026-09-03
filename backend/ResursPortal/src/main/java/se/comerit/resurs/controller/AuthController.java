@@ -20,7 +20,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    //session skickas tilligt in i controller kommer senare att gå via filter i spring security
+    //session skickas tillfälligt in i controller kommer senare att gå via filter i spring security
     @GetMapping("/me")
     public ResponseEntity<CurrentUserResponse>me(HttpSession session){
             Long userId = (Long) session.getAttribute("userId");
