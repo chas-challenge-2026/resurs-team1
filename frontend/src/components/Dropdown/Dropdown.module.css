@@ -1,0 +1,176 @@
+.dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* underline only, so the field sits in the form instead of boxing itself off.
+   input-base is skipped on purpose: it carries the full border and radius. */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 10px 2px;
+  text-align: left;
+  color: var(--color-text-main);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.trigger:hover:not(:disabled),
+.dropdown[data-open="true"] .trigger {
+  border-bottom-color: var(--color-primary);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder {
+  composes: value;
+  color: var(--color-text-muted);
+}
+
+.count {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-pill);
+}
+
+.chevron {
+  flex: none;
+  margin-left: auto;
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.count + .chevron {
+  margin-left: var(--space-xs);
+}
+
+.dropdown[data-open="true"] .chevron {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 260px;
+  margin-top: var(--space-xs);
+  padding: var(--space-xs);
+  overflow-y: auto;
+  list-style: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* tinted shadow so the list reads as ours, not as a grey system menu */
+  box-shadow: 0 12px 28px rgb(17 112 105 / 0.13);
+}
+
+.dropdown[data-open="true"] .menu {
+  animation: reveal 0.16s ease-out;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 12px;
+  color: var(--color-text-main);
+  /* transparent on every row, so nothing shifts when one lights up */
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+/* pointer and keyboard share one marker. data-active carries the keyboard
+   position, :hover the pointer, so neither waits on the other */
+.option:hover,
+.option[data-active="true"] {
+  border-left-color: var(--color-primary);
+}
+
+.box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.option[aria-selected="true"] .box {
+  color: var(--bg-secondary);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.check {
+  flex: none;
+  margin-left: auto;
+  color: var(--color-primary);
+}
+
+.information {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+.errorBorder {
+  border-bottom-color: var(--color-error);
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown[data-open="true"] .menu {
+    animation: none;
+  }
+
+  .chevron {
+    transition: none;
+  }
+}
