@@ -14,6 +14,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * DocumentService hanterar affärslogiken för dokumentuppladdning och nedladdning.
+ *
+ * Ansvarar för: validera filtyp, spara filen på disk och skapa en databaspost för den,
+ * uppdatera audit-loggen och flytta ansökans status till UNDER_REVIEW vid behov.
+ *
+ * Inte ansvarig för: HTTP-hantering (session, statuskoder, JSON) -> det sköts av DocumentController.
+ * /Robin
+ */
+
 @Service
 public class DocumentService {
     // Uploads dir — /tmp rensas vid omstart, ingen persistent lagring

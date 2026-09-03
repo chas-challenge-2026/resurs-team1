@@ -20,6 +20,12 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * DocumentController -> hanterar HTTP in och ut för dokument.
+ *
+ * Klassens ansvar: session-koll, ta emot requests, avgöra vilken statuskod/JSON som skickas tillbaka.
+ *
+ * Inte ansvarig för: All affärslogik (validering, filhantering, audit log, statusändringar) -> det gör DocumentService.
+ * /Robin
  * DocumentController – Hanterar dokumentuppladdning.
  *
  * VARNING: PDF sparas men parsas INTE.
