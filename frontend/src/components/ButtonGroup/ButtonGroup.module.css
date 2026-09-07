@@ -1,0 +1,56 @@
+.fieldset {
+  border: none;
+}
+
+.label {
+  padding-bottom: var(--space-xs);
+}
+
+.group {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.button {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-xs);
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.button:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.button:active {
+  transform: scale(0.98);
+  filter: brightness(0.9);
+}
+
+.isSelected {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+.errorBorder {
+  border-color: var(--color-error);
+}
