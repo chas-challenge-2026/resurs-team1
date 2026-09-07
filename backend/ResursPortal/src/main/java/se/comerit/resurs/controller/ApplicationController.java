@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.ApplicationShortDTO;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
@@ -23,6 +24,7 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.CompanyService;
+import se.comerit.resurs.service.DocumentService;
 import se.comerit.resurs.service.ScoringService;
 
 import java.math.BigDecimal;
@@ -52,12 +54,13 @@ import java.util.*;
 @RequestMapping("/application")
 public class ApplicationController {
 
-
+    private final DocumentService documentService;
     private final ApplicationService appService;
     private final CompanyService companyService; //Swap to CompanyService later
     private final ScoringService creditScoreService;
 
-    public ApplicationController(ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+    public ApplicationController(DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+        this.documentService = documentService;
         this.appService = appService;
         this.companyService = companyService;
         this.creditScoreService = creditScoreService;
@@ -98,8 +101,7 @@ public class ApplicationController {
             @RequestParam(value = "investeringsKassaflode", defaultValue = "") String investeringsKassaflodeStr,
             @RequestParam(value = "ranteKostnader", defaultValue = "") String ranteKostnaderStr,
             @RequestParam(value = "bransch", defaultValue = "") String bransch,
-            HttpSession session,
-            Model model) {
+            HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -129,10 +131,10 @@ public class ApplicationController {
             nettoomsattning = Double.parseDouble(nettoomsattningStr.replace(",", ".").trim());
             requestedAmount = new BigDecimal(requestedAmountStr.replace(",", ".").trim());
         } catch (NumberFormatException e) {
-            model.addAttribute("error", "Ogiltiga numeriska värden. Kontrollera dina inmatningar.");
+            /*model.addAttribute("error", "Ogiltiga numeriska värden. Kontrollera dina inmatningar.");
             model.addAttribute("companyName", companyName);
-            model.addAttribute("orgNumber", orgNumber);
-            ResponseEntity.badRequest();
+            model.addAttribute("orgNumber", orgNumber);*/
+            ResponseEntity.badRequest().build();
         }
 
         NewApplicationDTO scoredApplication = creditScoreService.ScoringEngine(
@@ -183,7 +185,7 @@ public class ApplicationController {
     // ============================================================
     // GET /application/{id} — visa enskild ansökan
     // ============================================================
-    @GetMapping("/application/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
                                                                        HttpSession session,
                                                                        Model model) {
@@ -224,10 +226,7 @@ public class ApplicationController {
         model.addAttribute("auditLogRaw", auditLogBlob);*/
 
         // Fetch documents for this application
-        //TODO Set this up with document service or make the documents/application relationship bidirectional
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ?", id
-        );
+        List<DocumentDTO> docs = documentService.findByApplicationId(id);
 
 
         ApplicationWithDocumentsDTO responseBody = new ApplicationWithDocumentsDTO(app,docs);
@@ -237,7 +236,7 @@ public class ApplicationController {
     // ============================================================
     // GET /applications — lista alla ansökningar för företaget
     // ============================================================
-    @GetMapping("/applications")
+    @GetMapping()
     public ResponseEntity<List<CreditApplicationDTO>> listApplications(HttpSession session) {
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
