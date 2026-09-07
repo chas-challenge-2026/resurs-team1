@@ -20,12 +20,12 @@
   --color-error: #a5231f;
 
   /* Spacing */
-  --space-xs: 8px;
-  --space-sm: 16px;
-  --space-base: 24px;
-  --space-md: 32px;
-  --space-lg: 40px;
-  --space-xl: 64px;
+  --space-xs:   0.5rem;  /* 8px */
+  --space-sm:   0.75rem; /* 12px */
+  --space-base: 1rem;    /* 16px */
+  --space-md:   1.25rem; /* 20px */
+  --space-lg:   1.75rem; /* 28px */
+  --space-xl:   2.5rem;  /* 40px */
 
   /* Radius */
   --radius-xs: 8px;
@@ -70,10 +70,10 @@ body {
 }
 
 main {
-  justify-self: center;
-  width: 90%;
-  max-width: 1024px;
-  padding: var(--space-xl) 0;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 960px;
+  padding: var(--space-md) var(--space-base);
 }
 
 /* Fix responsive media layout breaking */
@@ -89,25 +89,40 @@ input, button, textarea, select {
 
 .title {
   font-size: var(--font-size-title);
+  font-weight: 500;
   color: var(--color-text-main);
   text-transform: capitalize;
 }
 
 .subtitle {
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text-muted);
 }
 
 .input-base {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: var(--space-sm);
 }
 
-@media (min-width: 1024px) {
-  /* More padding on bigger screens */
-  main {
-    width: 60%;
+.input-base:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+
+@media (min-width: 768px) {
+  :root {
+    --space-xs: 0.5rem;   /* 8px */
+    --space-sm: 1rem;     /* 16px */
+    --space-base: 1.5rem; /* 24px */
+    --space-md: 2rem;     /* 32px */
+    --space-lg: 2.5rem;   /* 40px */
+    --space-xl: 4rem;     /* 64px */
   }
 }
