@@ -2,6 +2,7 @@ package se.comerit.resurs.service;
 
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.comerit.resurs.dto.CompanyDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Service
 public class ScoringService {
 
     private final CompanyRepository companyRepository;
