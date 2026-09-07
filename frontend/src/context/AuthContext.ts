@@ -2,6 +2,7 @@ import { createContext, useContext } from "react"
 
 export type UserRole = "COMPANY" | "AGENT"
 
+// perhaps add more later depending on cryptography
 export interface User {
   id: string
   name: string
