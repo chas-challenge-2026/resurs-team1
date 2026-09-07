@@ -6,6 +6,7 @@ import { getToken } from "./auth"
 // no proxy, so backend must answer on /api too "server.servlet.context-path=/api"
 const api = axios.create({
   baseURL: "/api",
+  timeout: 10000,
 })
 
 api.interceptors.request.use((config) => {
