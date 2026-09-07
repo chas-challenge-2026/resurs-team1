@@ -76,7 +76,7 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
     return result;
 };
 
-std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, 12> &iv, const std::array<unsigned char, 16> &tag)
+std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag)
 {
 
     // Resuse existing context, but reset/clear previous encryption state.
@@ -136,7 +136,8 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
     // for GCM, this is also where we verify atuthentication
     if (EVP_DecryptFinal_ex(ctx.get(), plaintext.data() + totalWritten, &written) != 1)
     {
-        throw std::runtime_error("authentication failed: invalid ciphertext, tag, IV or key");
+        throw AuthenticationError();
+        //throw std::runtime_error("authentication failed: invalid ciphertext, tag, IV or key");
     }
 
     totalWritten += written;
@@ -144,15 +145,3 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
 
     return std::string(reinterpret_cast<const char *>(plaintext.data()), plaintext.size());
 }
-/*
-int main()
-{
-    std::string text = "aaaaaaaabbbbbbbbbcccccccccccc";
-    std::array<uint8_t, 12> iv;
-    std::vector<uint8_t> cipher_text(text.size());
-    std::array<unsigned char, 16> tag;
-    int result = aes_256_gcm_encrypt(reinterpret_cast<uint8_t*>(text.data()), text.size(), iv.data(), cipher_text.data(), static_cast<int>(cipher_text.size()), tag.data());
-    std::cout << "Encrypted string: " << cipher_text.data() << std::endl << "Result: " << result;
-}
-
-*/

@@ -10,12 +10,30 @@
 #include <stdexcept>
 #include <memory>
 
+#include "crypto_types.h"
+
 struct EncryptionResult
 {
-    std::array<unsigned char, 16> tag;
-    std::array<unsigned char, 12> iv;
+    std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> tag;
+    std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> iv;
     std::vector<unsigned char> ciphertext;
 };
+
+enum CryptoStatus
+{
+    CRYPTO_OK = 0,
+    CRYPTO_INVALID_ARGUMENT = -1,
+    CRYPTO_BUFFER_TOO_SMALL = -2,
+    CRYPTO_AUTHENTICATION_FAILED = -3,
+    CRYPTO_INTERNAL_ERROR = -4
+};
+
+class AuthenticationError : public std::runtime_error
+{
+    public:
+        AuthenticationError() : std::runtime_error("authentication failed") {}
+};
+
 
 struct DecryptionResult
 {
@@ -42,10 +60,10 @@ public:
 
     //std::string AES256_Decrypt(const std::string &ciphertext, const std::string &key, const uint8_t iv, const std::string &plaintext);
     //DecryptionResult AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, 12> &iv, const std::array<unsigned char, 16> &tag);
-    std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, 12> &iv, const std::array<unsigned char, 16> &tag);
+    std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag);
 
 private:
-    std::array<unsigned char, 32> key =
+    std::array<unsigned char, resurs::crypto::AES_256_KEY_SIZE_BYTES> key =
         {0x52, 0x86, 0x5A, 0x9C, 0x22, 0xEE, 0x88, 0xE5,
          0x03, 0x25, 0x6B, 0x6D, 0x04, 0x01, 0x21, 0x6B,
          0xDE, 0xD4, 0x06, 0xA1, 0xFD, 0x88, 0x61, 0x6C,
