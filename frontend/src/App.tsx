@@ -27,7 +27,7 @@ type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 
 function App() {
   const [role, setRole] = useState<UserRole>("COMPANY");
-  const [tenure, setTenure] = useState<TenureValue | undefined>(undefined)
+  const [tenure, setTenure] = useState<TenureValue>()
 
   return (
     <>
