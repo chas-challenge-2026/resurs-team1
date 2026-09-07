@@ -19,18 +19,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
 
-    fetch(PROFILE_URL, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data: User) => {
+    async function loadUser(token: string) {
+      try {
+        const res = await fetch(PROFILE_URL, { headers: { Authorization: `Bearer ${token}` } })
+        if (!res.ok) throw new Error(String(res.status))
+        const data: User = await res.json()
         if (!cancelled) setUser(data)
-      })
-      // rejected token is not an error to report, it just means the session is gone
-      .catch(() => {
+      } catch {
+        // rejected token is not an error to report, it just means the session is gone
         if (!cancelled) removeToken()
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setIsLoading(false)
-      })
+      }
+    }
+
+    loadUser(token)
 
     return () => {
       cancelled = true
