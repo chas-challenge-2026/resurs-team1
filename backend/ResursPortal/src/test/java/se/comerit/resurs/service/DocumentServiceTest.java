@@ -1,44 +1,63 @@
 package se.comerit.resurs.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
+import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@Testcontainers
+@SpringBootTest
+@Transactional
 class DocumentServiceTest {
 
-    @Mock
-    private DocumentRepository documentRepository;
+    private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
+            .resolve("../../infra/seed.sql").normalize();
 
-    @Mock
-    private CreditApplicationRepository creditApplicationRepository;
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:12")
+            .withCopyFileToContainer(MountableFile.forHostPath(SEED_SQL), "/docker-entrypoint-initdb.d/seed.sql");
 
+    @Autowired
     private DocumentService documentService;
+    @Autowired
+    private DocumentRepository documentRepository;
+    @Autowired
+    private CreditApplicationRepository creditApplicationRepository;
+    @Autowired
+    private CompanyRepository companyRepository;
 
-    @BeforeEach
-    void setUp() {documentService = new DocumentService(documentRepository, creditApplicationRepository);}
-
-    private CreditApplication pendingApplication() {
+    private CreditApplication createApplication(ApplicationStatus status) {
+        Company company = companyRepository.findById(1L).orElseThrow();
         CreditApplication application = new CreditApplication();
-        application.setStatus(ApplicationStatus.PENDING_DOCS);
+        application.setCompany(company);
+        application.setRequestedAmount(new BigDecimal("100000.00"));
+        application.setPurpose("Testansökan");
+        application.setStatus(status);
         application.setAuditLog("[]");
-        return application;
+        return creditApplicationRepository.save(application);
     }
 
     @Test
@@ -46,12 +65,11 @@ class DocumentServiceTest {
         MockMultipartFile emptyFile = new MockMultipartFile("file", "test.pdf",
                 "application/pdf", new byte[0]);
 
-        assertThatThrownBy(() -> documentService.uploadDocument(1L, "balansrakning", emptyFile))
+        assertThatThrownBy(() -> documentService.uploadDocument(999L, "balansrakning", emptyFile))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("No chosen file");
 
-        verifyNoInteractions(documentRepository);
-        verifyNoInteractions(creditApplicationRepository);
+        assertThat(documentRepository.count()).isZero();
     }
 
     @Test
@@ -59,38 +77,47 @@ class DocumentServiceTest {
         MockMultipartFile txtFile = new MockMultipartFile("file", "test.txt",
                 "text/plain", "innehall".getBytes());
 
-        assertThatThrownBy(() -> documentService.uploadDocument(1L, "balansrakning", txtFile))
+        assertThatThrownBy(() -> documentService.uploadDocument(999L, "balansrakning", txtFile))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Only PDF-files");
 
-        verifyNoInteractions(documentRepository);
-        verifyNoInteractions(creditApplicationRepository);
+        assertThat(documentRepository.count()).isZero();
+    }
+
+    @Test
+    void uploadDocument_unknownApplicationId_throwsIllegalArgumentException() {
+        MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
+                "application/pdf", "innehall".getBytes());
+
+        assertThatThrownBy(() -> documentService.uploadDocument(999_999L, "balansrakning", file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Application not found");
     }
 
     @Test
     void uploadDocument_validPdf_savesViaRepository() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
-        when(creditApplicationRepository.findById(1L)).thenReturn(Optional.of(pendingApplication()));
+        CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
-        documentService.uploadDocument(1L, "balansrakning", file);
+        documentService.uploadDocument(application.getId(), "balansrakning", file);
 
-        ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-        verify(documentRepository).save(captor.capture());
-        assertThat(captor.getValue().getDoc_type()).isEqualTo("balansrakning");
-        assertThat(captor.getValue().getFilename()).isEqualTo("1_balansrakning.pdf");
+        List<Document> saved = documentRepository.findByApplicationId(application.getId());
+        assertThat(saved).hasSize(1);
+        assertThat(saved.get(0).getDoc_type()).isEqualTo("balansrakning");
+        assertThat(saved.get(0).getFilename()).isEqualTo(application.getId() + "_balansrakning.pdf");
     }
 
     @Test
     void uploadDocument_validPdf_updatesAuditLog() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
-        CreditApplication application = pendingApplication();
-        when(creditApplicationRepository.findById(1L)).thenReturn(Optional.of(application));
+        CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
-        documentService.uploadDocument(1L, "balansrakning", file);
+        documentService.uploadDocument(application.getId(), "balansrakning", file);
+        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
 
-        assertThat(application.getAuditLog())
+        assertThat(updated.getAuditLog())
                 .contains("DOCUMENT_UPLOADED")
                 .contains("balansrakning.pdf");
     }
@@ -99,38 +126,34 @@ class DocumentServiceTest {
     void uploadDocument_annualReport_updatesStatusToUnderReview() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "arsredovisning.pdf",
                 "application/pdf", "innehall".getBytes());
-        CreditApplication application = pendingApplication();
-        when(creditApplicationRepository.findById(1L)).thenReturn(Optional.of(application));
+        CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
-        documentService.uploadDocument(1L, "arsredovisning", file);
+        documentService.uploadDocument(application.getId(), "arsredovisning", file);
+        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
 
-        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
     }
 
     @Test
     void uploadDocument_otherDocType_doesNotAffectStatus() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
-        CreditApplication application = pendingApplication();
-        when(creditApplicationRepository.findById(1L)).thenReturn(Optional.of(application));
+        CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
-        documentService.uploadDocument(1L, "balansrakning", file);
-
-        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        documentService.uploadDocument(application.getId(), "balansrakning", file);
+        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
     }
 
     @Test
     void resolveFileForDownload_unknownId_returnsNull() {
-        when(documentRepository.findById(999L)).thenReturn(Optional.empty());
-
-        File result = documentService.resolveFileForDownload(999L);
+        File result = documentService.resolveFileForDownload(999_999L);
         assertThat(result).isNull();
     }
+
     @Test
     void findByApplicationId_unknownApplication_throwsIllegalArgumentException() {
-        when(creditApplicationRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> documentService.findByApplicationId(999L))
+        assertThatThrownBy(() -> documentService.findByApplicationId(999_999L))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Application not found");
     }
