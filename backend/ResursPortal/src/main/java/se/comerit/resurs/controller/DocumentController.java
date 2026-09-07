@@ -54,9 +54,7 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         try {
-            List<DocumentDTO> documents = documentService.findByApplicationId(applicationId).stream()
-                    .map(DocumentDTO::new)
-                    .toList();
+            List<DocumentDTO> documents = documentService.findByApplicationId(applicationId);
             return ResponseEntity.ok(documents);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
