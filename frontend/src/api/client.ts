@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios"
-import { getToken, removeToken } from "./auth"
+import { getToken, removeToken } from "../utils/auth"
 
 export interface ApiErrorPayload {
   status?: number;
