@@ -1,76 +1,18 @@
-import { useState } from "react"
-import Header from "./components/Header/Header"
-import Button from "./components/Button/Button"
-import Loading from "./components/Loading/Loading"
-import StatusTag from "./components/StatusTag/StatusTag"
-import ToggleSwitch from "./components/ToggleSwitch/ToggleSwitch"
-import type { SwitchOption } from "./components/ToggleSwitch/ToggleSwitch"
-import { Card } from "./components/Card/Card"
-import Dropdown from "./components/Dropdown/Dropdown"
-import type { DropdownOption } from "./components/Dropdown/Dropdown"
-import ButtonGroup from "./components/ButtonGroup/ButtonGroup"
-
-type UserRole = "COMPANY" | "AGENT";
-
-const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
-{ label: "Företag", value: "COMPANY" },
-{ label: "Handläggare", value: "AGENT" },
-]
-
-
-const reasonOptions: DropdownOption[] = [
-  { value: "renovering", label: "Renovering" },
-  { value: "fruktkop", label: "Fruktköp" },
-  { value: "ovrigt", label: "Övrigt" },
-]
-const TENURE_OPTIONS = [
-  { label: "12 mån", value: 12 },
-  { label: "24 mån", value: 24 },
-  { label: "36 mån", value: 36 },
-  { label: "48 mån", value: 48 },
-  { label: "60 mån", value: 60 },
-] as const
-
-type TenureValue = typeof TENURE_OPTIONS[number]["value"];
+import { Routes, Route } from "react-router-dom"
+import Layout from "./layout/layout"
+import LoginPage from "./pages/LoginPage"
+import NotFoundPage from "./pages/NotFoundPage"
+import TestPage from "./pages/TestPage"
 
 function App() {
-  const [role, setRole] = useState<UserRole>("COMPANY");
-  const [tenure, setTenure] = useState<TenureValue>()
-  const [reason, setReason] = useState("");
-
   return (
-    <>
-    <Header company="Coconut AB" onLogout={() => {}}>
-      <input type="search" />
-    </Header>
-    <main>
-      <Card>
-        <h1 className="title">Titel</h1>
-        <p className="subtitle">Undertitel</p>
-        <Loading size="lg"/>
-          test knapp
-        <Button variant="ghost">
-        <StatusTag status="approved"/>
-        </Button>
-      <Dropdown
-        id="selectReason"
-        label="Ange orsak för lån"
-        placeholder="Välj orsak..."
-        options={reasonOptions}
-        value={reason}
-        onChange={setReason}
-      />
-        <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
-        <ButtonGroup<TenureValue>
-          name="tenure"
-          label="Önskad återbetalningstid (månad)"
-          options={TENURE_OPTIONS}
-          selectedValue={tenure}
-          onChange={setTenure}
-        />
-      </Card>
-    </main>
-    </>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<LoginPage />} />
+        <Route path='test' element={<TestPage />} />
+        <Route path='*' element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   )
 }
 
