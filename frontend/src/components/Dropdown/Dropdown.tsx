@@ -17,11 +17,12 @@ export interface DropdownProps {
   error?: string;
   information?: string;
   disabled?: boolean;
+  size?: "sm" | "md";
 }
 
-const Dropdown = ({ id, label, options, value, onChange, placeholder = "Välj...", hideLabel, error, information, disabled }: DropdownProps) => {
+const Dropdown = ({ id, label, options, value, onChange, placeholder = "Välj...", hideLabel, error, information, disabled, size = "md" }: DropdownProps) => {
 
-  const combinedClassName = [s.select, "input-base", error && s.errorBorder].filter(Boolean).join(" ")
+  const combinedClassName = [s.select, s[size], "input-base", error && s.errorBorder].filter(Boolean).join(" ")
 
   const errorId = error ? `${id}-error` : undefined
   const infoId = information ? `${id}-info` : undefined
