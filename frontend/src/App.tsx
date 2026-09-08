@@ -9,6 +9,7 @@ import { Card } from "./components/Card/Card"
 import Dropdown from "./components/Dropdown/Dropdown"
 import type { DropdownOption } from "./components/Dropdown/Dropdown"
 import ButtonGroup from "./components/ButtonGroup/ButtonGroup"
+import Slider from "./components/Slider/Slider"
 
 type UserRole = "COMPANY" | "AGENT";
 
@@ -37,6 +38,7 @@ function App() {
   const [role, setRole] = useState<UserRole>("COMPANY");
   const [tenure, setTenure] = useState<TenureValue>()
   const [reason, setReason] = useState("");
+  const [amount, setAmount] = useState<number>(3000000);
 
   return (
     <>
@@ -67,6 +69,15 @@ function App() {
           options={TENURE_OPTIONS}
           selectedValue={tenure}
           onChange={setTenure}
+        />
+        <Slider
+          name="requestedAmount"
+          label="Önskat belopp"
+          min={50000}
+          max={5000000}
+          step={50000}
+          value={amount}
+          onChange={setAmount}
         />
       </Card>
     </main>
