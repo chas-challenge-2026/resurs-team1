@@ -1,13 +1,13 @@
 import { useState } from "react"
-import Button from "../components/Button/Button"
-import Loading from "../components/Loading/Loading"
-import StatusTag from "../components/StatusTag/StatusTag"
-import ToggleSwitch from "../components/ToggleSwitch/ToggleSwitch"
-import type { SwitchOption } from "../components/ToggleSwitch/ToggleSwitch"
-import { Card } from "../components/Card/Card"
-import Dropdown from "../components/Dropdown/Dropdown"
-import type { DropdownOption } from "../components/Dropdown/Dropdown"
-import ButtonGroup from "../components/ButtonGroup/ButtonGroup"
+import Button from "../../components/Button/Button"
+import Loading from "../../components/Loading/Loading"
+import StatusTag from "../../components/StatusTag/StatusTag"
+import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
+import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
+import { Card } from "../../components/Card/Card"
+import Dropdown from "../../components/Dropdown/Dropdown"
+import type { DropdownOption } from "../../components/Dropdown/Dropdown"
+import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 
 type UserRole = "COMPANY" | "AGENT";
 

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import ToggleSwitch from "../components/ToggleSwitch/ToggleSwitch"
-import type { SwitchOption } from "../components/ToggleSwitch/ToggleSwitch";
+import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
+import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch";
 import s from "./LoginPage.module.css"
-import Input from "../components/Input/Input";
-import Button from "../components/Button/Button";
+import Input from "../../components/Input/Input";
+import Button from "../../components/Button/Button";
 
 type UserRole = "COMPANY" | "AGENT";
 
