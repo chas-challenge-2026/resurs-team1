@@ -58,8 +58,6 @@ public:
 
     EncryptionResult AES256_Encrypt(std::string& plaintext);
 
-    //std::string AES256_Decrypt(const std::string &ciphertext, const std::string &key, const uint8_t iv, const std::string &plaintext);
-    //DecryptionResult AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, 12> &iv, const std::array<unsigned char, 16> &tag);
     std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag);
 
 private:
@@ -68,8 +66,7 @@ private:
          0x03, 0x25, 0x6B, 0x6D, 0x04, 0x01, 0x21, 0x6B,
          0xDE, 0xD4, 0x06, 0xA1, 0xFD, 0x88, 0x61, 0x6C,
          0x1A, 0x7A, 0x77, 0x92, 0x18, 0x76, 0xCF, 0x9C};
-    // std::unique_ptr<EVP_CIPHER_CTX> ctx;
-    // std::unique_ptr<EVP_CIPHER> cipher;
+    // CipherCtxPtr becomes an alias of the whole thing after, which is a unique pointer of a sepcific type(EVP_CIPHER_CTX) and a custom delete, the "&EVP_CIPHER_CTX_free"-part
     using CipherCtxPtr = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;
     using CipherPtr = std::unique_ptr<EVP_CIPHER, decltype(&EVP_CIPHER_free)>;
     CipherCtxPtr ctx;

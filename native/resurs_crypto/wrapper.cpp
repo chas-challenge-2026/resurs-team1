@@ -22,10 +22,15 @@ int aes_256_gcm_encrypt(const uint8_t *plaintext, int plaintext_len, uint8_t *iv
     // Then execute the code in a try-block, so we catch any errors and can return errors in a JNA-compatible way.
     try {
 
+        // Reintrepret_cast makes a kopia of the underlying bytes to plaintext_ and changes how it viewes the bytes.
+        // In this case the original pointer was a uint8_t, but we cast it do a const char*.
+        // And then plaintext_len is in case we get a null value byte in the middle, we know we will keep going until we read the whole length.
         std::string plaintext_(reinterpret_cast<const char *>(plaintext), plaintext_len);
         AES256_Encryption encryption;
         EncryptionResult encryption_result = encryption.AES256_Encrypt(plaintext_);
         
+        // static_cast does work in runtime.
+        // It just means which typeconvertion that should be done, which in this case i a convertion from ciphertext's lenth(std::size_t) to a int. 
         if (iv_len < static_cast<int>(encryption_result.iv.size())
         || (ciphertext_len < static_cast<int>(encryption_result.ciphertext.size()))
         || (tag_len < static_cast<int>(encryption_result.tag.size()))

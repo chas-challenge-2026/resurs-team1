@@ -13,29 +13,15 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
         throw std::runtime_error("failed to generate IV");
     }
 
-    // Fetch the implementation
-    // cipher = std::make_unique<EVP_CIPHER>(EVP_CIPHER_fetch(nullptr, "AES-256-GCM", nullptr), EVP_CIPHER_free);
-    // cipher.reset(EVP_CIPHER_fetch(nullptr, "AES-256-GCM", nullptr));
+    // The class constructor fetched the algoritm for us, so no need for specific code here.
 
-    // if (cipher == nullptr)
-    // {
-    //     throw std::runtime_error("failed to fetch aes-256-gcm");
-    // }
 
-    // We could supply key and IV directly, but for readability we will explicitcly set the IV length to 12 byte below, even though the default is 12.
-    if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), nullptr, nullptr, nullptr) != 1)
-    {
-        throw std::runtime_error("failed to init chipher");
-    }
 
-    if (EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(result.iv.size()), nullptr) != 1)
-    {
-        throw std::runtime_error("failed to set IV length");
-    }
+    // TODO - hämta key via Docker Secrets istället
 
-    // Här ska vi hämta key från docker secrets
 
-    if (EVP_EncryptInit_ex2(ctx.get(), nullptr, key.data(), result.iv.data(), nullptr) != 1)
+    // We supply the key and IV directly. The default length of the IV is already set to 12 bytes(96 bits), so no need to explicitly set it.
+    if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), key.data(), result.iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set key and IV");
     }
@@ -47,7 +33,6 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
     int totalWritten = 0;
 
     // Now encrypt the plaintext.
-
     if (!plaintext.empty())
     {
         if (EVP_EncryptUpdate(ctx.get(), result.ciphertext.data(), &written, reinterpret_cast<const unsigned char *>(plaintext.data()), static_cast<int>(plaintext.size())) != 1)
@@ -91,20 +76,9 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
         throw std::runtime_error("cipher not initalized");
     }
 
-    // init aes256gcm decryption
-    if (EVP_DecryptInit_ex2(ctx.get(), cipher.get(), nullptr, nullptr, nullptr) != 1)
-    {
-        throw std::runtime_error("failed to init decrypt");
-    }
 
-    // set IV bytes to 12 bytes
-    if (EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_IVLEN, static_cast<int>(iv.size()), nullptr) != 1)
-    {
-        throw std::runtime_error("failed to set IV length");
-    }
-
-    // now set key and IV
-    if (EVP_DecryptInit_ex2(ctx.get(), nullptr, key.data(), iv.data(), nullptr) != 1)
+    // init 
+    if (EVP_DecryptInit_ex2(ctx.get(), cipher(), key.data(), iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set KEY and IV");
     }
@@ -137,7 +111,6 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
     if (EVP_DecryptFinal_ex(ctx.get(), plaintext.data() + totalWritten, &written) != 1)
     {
         throw AuthenticationError();
-        //throw std::runtime_error("authentication failed: invalid ciphertext, tag, IV or key");
     }
 
     totalWritten += written;
