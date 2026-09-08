@@ -38,6 +38,7 @@ import java.util.List;
  *  - Session check copy-pasteat -> kvarstår, planerat att ersättas utav Spring Security, SecurityFilterChain.
  */
 @RestController
+@RequestMapping("/api/documents")
 public class DocumentController {
 
     private DocumentService documentService;
@@ -47,7 +48,7 @@ public class DocumentController {
         this.documentService = documentService;
     }
 
-    @GetMapping("/documents/{applicationId}")
+    @GetMapping("application/{applicationId}")
     public ResponseEntity<List<DocumentDTO>> listDocuments(@PathVariable("applicationId") Long applicationId,
                                                            HttpSession session) {
         if (session.getAttribute("userId") == null) {
@@ -79,7 +80,7 @@ public class DocumentController {
 //        return "documents";
 //    }
 
-    @PostMapping("/document/upload")
+    @PostMapping("/upload")
     public ResponseEntity<Void> uploadDocument(@RequestParam("applicationId") Long applicationId,
                                                @RequestParam("docType") String docType,
                                                @RequestParam("file") MultipartFile file,
@@ -110,7 +111,7 @@ public class DocumentController {
 //        return "redirect:/documents/" + applicationId;
 //    }
 
-    @GetMapping("/document/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Resource> downloadDocument(@PathVariable("id") Long documentId,
                                                      HttpSession session) {
         // Session check copy-pasted in every method — should be an interceptor

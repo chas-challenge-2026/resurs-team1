@@ -51,7 +51,7 @@ import java.util.*;
  *  - Magic numbers spridda i scoring-logiken
  */
 @RestController
-@RequestMapping("/application")
+@RequestMapping("api/application")
 public class ApplicationController {
 
     private final DocumentService documentService;

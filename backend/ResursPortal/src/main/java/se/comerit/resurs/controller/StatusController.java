@@ -30,7 +30,7 @@ import java.util.Map;
  *  - Statussteg beräknas inte dynamiskt — alltid samma ordning
  */
 @RestController
-@RequestMapping("/status")
+@RequestMapping("api/status")
 public class StatusController {
 
 

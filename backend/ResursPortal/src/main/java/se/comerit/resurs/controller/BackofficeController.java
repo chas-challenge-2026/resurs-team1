@@ -24,7 +24,7 @@ import se.comerit.resurs.service.BackofficeService;
  *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
 @RestController
-@RequestMapping("/backoffice")
+@RequestMapping("/api/backoffice")
 public class BackofficeController {
 
     private final BackofficeService service;
