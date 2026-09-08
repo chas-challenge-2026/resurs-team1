@@ -1,13 +1,18 @@
 import { Outlet } from "react-router-dom"
 import Header from "../components/Header/Header"
+import s from "./Layout.module.css"
 
-const Layout = () => {
+interface LayoutProps {
+  fullWidth?: boolean
+}
+
+const Layout = ({fullWidth = false}: LayoutProps) => {
   return(
     <div>
     <Header company="Coconut AB" onLogout={() => {}}>
       <input type="search" />
     </Header>
-      <main>
+      <main className={fullWidth ? s.mainFullWidth : s.main}>
         <Outlet />
       </main>
     </div>
