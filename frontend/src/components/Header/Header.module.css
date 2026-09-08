@@ -100,8 +100,10 @@
   min-width: 0;
 }
 
+/* element selector outranks the global .input-base radius without !important */
 .search input {
   width: 100%;
+  border-radius: var(--radius-pill);
 }
 
 /* burger + dropdown only exist under the breakpoint */
@@ -139,7 +141,8 @@
   /* .search is deliberately not here, it stays in the bar */
   .nav,
   .right,
-  .role {
+  .role,
+  .roleDivider {
     display: none;
   }
 

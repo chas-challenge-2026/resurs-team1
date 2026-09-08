@@ -10,8 +10,9 @@ import Dropdown from "./components/Dropdown/Dropdown"
 import type { DropdownOption } from "./components/Dropdown/Dropdown"
 import ButtonGroup from "./components/ButtonGroup/ButtonGroup"
 import Input from "./components/Input/Input"
-
-type UserRole = "COMPANY" | "AGENT";
+import { FiSearch } from "react-icons/fi"
+import { useAuth } from "./context/AuthContext"
+import type { UserRole } from "./context/AuthContext"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "COMPANY" },
@@ -35,6 +36,10 @@ const TENURE_OPTIONS = [
 type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 
 function App() {
+  const { user } = useAuth();
+  // case search is a caseworker tool, companies never see it
+  const isAgent = user?.role === "AGENT";
+
   const [role, setRole] = useState<UserRole>("COMPANY");
   const [tenure, setTenure] = useState<TenureValue>()
   const [reason, setReason] = useState("");
@@ -42,16 +47,17 @@ function App() {
   return (
     <>
     <Header
-      search={
+      search={isAgent ? (
         <Input
           id="caseSearch"
           type="search"
           label="Sök ärende"
           hideLabel
           size="sm"
+          icon={<FiSearch />}
           placeholder="Sök på ärendenummer eller org.nr..."
         />
-      }
+      ) : undefined}
     />
     <main>
       <Card>

@@ -14,6 +14,8 @@ interface HeaderProps {
 // TODO: connect with router later so it highlights correct button automatically.
 const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
+  // name and role come from GET /api/profile, which the backend does not serve yet,
+  // TEST IT THIS WAY ----> see comment in authprovider to "fake logged in view"
   const { user, logout } = useAuth()
 
   // agents get the role badge, companies are identified by their own name
@@ -37,7 +39,8 @@ const Header = ({ search, children }: HeaderProps) => {
 
           {roleLabel && (
             <>
-              <span className={s.divider} />
+              {/* own class so it can leave with the badge at the breakpoint */}
+              <span className={`${s.divider} ${s.roleDivider}`} />
               <span className={s.role}>{roleLabel}</span>
             </>
           )}
