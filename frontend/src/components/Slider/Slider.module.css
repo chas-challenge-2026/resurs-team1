@@ -35,6 +35,7 @@
 
 .rangeInput {
   appearance: none;
+  outline: none;
   height: 6px;
   border-radius: var(--radius-pill);
   margin: var(--space-xs) 0;
