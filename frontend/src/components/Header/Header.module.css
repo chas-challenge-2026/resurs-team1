@@ -83,6 +83,27 @@
   background-color: var(--border);
 }
 
+/* role badge sits next to the wordmark, mirrors the muted label styling */
+.role,
+.menuRole {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* eats the free space so the right cluster stays pinned to the edge */
+.search {
+  flex: 1;
+  min-width: 0;
+}
+
+.search input {
+  width: 100%;
+}
+
 /* burger + dropdown only exist under the breakpoint */
 .burger {
   display: none;
@@ -115,9 +136,17 @@
   }
 
   /* the whole bar cluster moves into the dropdown */
+  /* .search is deliberately not here, it stays in the bar */
   .nav,
-  .right {
+  .right,
+  .role {
     display: none;
+  }
+
+  /* the badge only shows up here once it left the bar */
+  .menuRole {
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border);
   }
 
   .burger {
@@ -164,6 +193,12 @@
   .menu .user {
     padding-top: var(--space-xs);
     border-top: 1px solid var(--border);
+  }
+
+  /* the badge already drew that line, a second one right under it looks broken */
+  .menuRole + .user {
+    padding-top: 0;
+    border-top: none;
   }
 
   .menuNav {

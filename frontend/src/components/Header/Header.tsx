@@ -2,17 +2,30 @@ import { useState, type ReactNode } from "react"
 import { FiMenu, FiX } from "react-icons/fi"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
+import { useAuth } from "../../context/AuthContext"
 import s from "./Header.module.css"
 
 interface HeaderProps {
-  company: string;
-  onLogout: () => void;
+  /** Stays in the bar on mobile instead of collapsing into the menu. */
+  search?: ReactNode;
   children?: ReactNode;
 }
 
 // TODO: connect with router later so it highlights correct button automatically.
-const Header = ({ company, onLogout, children }: HeaderProps) => {
+const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
+  const { user, logout } = useAuth()
+
+  // agents get the role badge, companies are identified by their own name
+  const roleLabel = user?.role === "AGENT" ? "Handläggare" : null
+
+  // the whole user cluster is meaningless before the profile resolves
+  const userBlock = user && (
+    <p className={s.user}>
+      <span>Inloggad som</span>
+      <strong>{user.name}</strong>
+    </p>
+  )
 
   return (
     <>
@@ -22,16 +35,23 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
             <img src={logo} alt="Resurs" />
           </a>
 
+          {roleLabel && (
+            <>
+              <span className={s.divider} />
+              <span className={s.role}>{roleLabel}</span>
+            </>
+          )}
+
+          {/* not inside .nav, it has to survive the mobile breakpoint */}
+          {search && <div className={s.search}>{search}</div>}
+
           {children && <nav className={s.nav}>{children}</nav>}
 
           {/* using .right styling to cluster togeather */}
-          <div className={s.right}> 
-            <p className={s.user}>
-              <span>Inloggad som</span>
-              <strong>{company}</strong>
-            </p>
+          <div className={s.right}>
+            {userBlock}
             <span className={s.divider} />
-            <Button variant="ghost" onClick={onLogout}>Logga ut</Button>
+            <Button variant="ghost" onClick={logout}>Logga ut</Button>
           </div>
 
           <button
@@ -54,11 +74,9 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
           {/* click anywhere in the panel closes it, links navigate away anyway */}
           <div className={s.menu}>
             {children && <nav className={s.menuNav}>{children}</nav>}
-            <p className={s.user}>
-              <span>Inloggad som</span>
-              <strong>{company}</strong>
-            </p>
-            <Button variant="ghost" onClick={onLogout}>Logga ut</Button>
+            {roleLabel && <span className={s.menuRole}>{roleLabel}</span>}
+            {userBlock}
+            <Button variant="ghost" onClick={logout}>Logga ut</Button>
           </div>
         </div>
       </header>

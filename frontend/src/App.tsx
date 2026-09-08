@@ -9,6 +9,7 @@ import { Card } from "./components/Card/Card"
 import Dropdown from "./components/Dropdown/Dropdown"
 import type { DropdownOption } from "./components/Dropdown/Dropdown"
 import ButtonGroup from "./components/ButtonGroup/ButtonGroup"
+import Input from "./components/Input/Input"
 
 type UserRole = "COMPANY" | "AGENT";
 
@@ -40,9 +41,18 @@ function App() {
 
   return (
     <>
-    <Header company="Coconut AB" onLogout={() => {}}>
-      <input type="search" />
-    </Header>
+    <Header
+      search={
+        <Input
+          id="caseSearch"
+          type="search"
+          label="Sök ärende"
+          hideLabel
+          size="sm"
+          placeholder="Sök på ärendenummer eller org.nr..."
+        />
+      }
+    />
     <main>
       <Card>
         <h1 className="title">Titel</h1>
