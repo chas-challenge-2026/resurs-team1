@@ -8,5 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface CompanyRepository extends JpaRepository<Company,Long> {
-    Optional<Company> findByOrgNumber(String orgNumber);
+
+    Optional<Company> findByOrgNumber(String org_number);
+
 }

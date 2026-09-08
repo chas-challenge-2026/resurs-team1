@@ -19,6 +19,16 @@ public class Company {
     @Column(name = "authorized_signatory")
     private String authorizedSignatory;
 
+    public Company() {
+
+    }
+
+    public Company(String orgNumber, String companyName, String authorizedSignatory) {
+        this.orgNumber = orgNumber;
+        this.companyName = companyName;
+        this.authorizedSignatory = authorizedSignatory;
+    }
+
 
     public Long getId() {
         return id;

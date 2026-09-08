@@ -19,5 +19,8 @@ public interface CreditApplicationRepository extends JpaRepository<CreditApplica
             Pageable pageable
     );
 
+    List<CreditApplication> findByCompanyId(Long companyID);
+    List<CreditApplication> findByCompanyIdOrderByCreatedAtDesc(Long companyID, Pageable pagable);
+
 
 }

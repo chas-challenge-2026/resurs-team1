@@ -3,6 +3,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
@@ -38,11 +39,11 @@ public class DocumentService {
         this.documentRepository = documentRepository;
         this.creditApplicationRepository = creditApplicationRepository;
     }
-    public List<Document> findByApplicationId(Long applicationId) {
+    public List<DocumentDTO> findByApplicationId(Long applicationId) {
         if (creditApplicationRepository.findById(applicationId).isEmpty()) {
             throw new IllegalArgumentException("Application not found");
         }
-        return documentRepository.findByApplicationId(applicationId);
+        return documentRepository.findByApplicationId(applicationId).stream().map(DocumentDTO::new).toList();
     }
 
     // Utan transactional så sparas document, audit-log och status var för sig till databasen, helt oberoende
