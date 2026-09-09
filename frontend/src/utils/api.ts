@@ -5,7 +5,7 @@ import { getToken } from "./auth"
 // prod: (backend has no json api as of writing this) -- sending json but not getting json back
 // no proxy, so backend must answer on /api too "server.servlet.context-path=/api"
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
 })
 
