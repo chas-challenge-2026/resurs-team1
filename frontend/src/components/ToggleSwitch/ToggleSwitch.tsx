@@ -29,12 +29,12 @@ interface ToggleSwitchProps<T extends string> {
  * import ToggleSwitch, { Option } from "./ToggleSwitch";
  * 
  * // 1. Define your backend/domain union type
- * type UserRole = "COMPANY" | "AGENT";
- * 
+ * type UserRole = "company" | "caseWorker";
+ *
  * // 2. Type your options array using the union type
  * const options: Option<UserRole>[] = [
- *   { label: "Företag", value: "COMPANY" },
- *   { label: "Handläggare", value: "AGENT" },
+ *   { label: "Företag", value: "company" },
+ *   { label: "Handläggare", value: "caseWorker" },
  * ];
  * 
  * // 3. Use the component passing the generic type parameter

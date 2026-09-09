@@ -28,13 +28,42 @@
   clip-path: inset(50%);
 }
 
+/* Icon */
+
+/* the input keeps its own border, this only anchors the icon on top of it */
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: var(--space-sm);
+  display: flex;
+  color: var(--color-text-muted);
+  /* clicks land on the input underneath instead of dying on the icon */
+  pointer-events: none;
+}
+
+.icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* element selector outranks the global .input-base padding without !important */
+.field input {
+  width: 100%;
+  padding-left: 2.25rem;
+}
+
 /* Sizes */
 .sm {
   height: 36px;
 }
 
 .md {
-  height: 48px;
+  height: 60px;
 }
 
 @media (min-width: 768px) {

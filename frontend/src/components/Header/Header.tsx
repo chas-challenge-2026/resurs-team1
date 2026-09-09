@@ -1,19 +1,39 @@
 import { useState, type ReactNode } from "react"
+import { useAuth } from "../../context/AuthContext"
+import { getUserDisplayName } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
 import s from "./Header.module.css"
 
 interface HeaderProps {
-  company: string;
-  onLogout: () => void;
+  /** Stays in the bar on mobile instead of collapsing into the menu. */
+  search?: ReactNode;
   children?: ReactNode;
 }
 
 // TODO: connect with router later so it highlights correct button automatically.
-const Header = ({ company, onLogout, children }: HeaderProps) => {
+const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
+  // name and role come from GET /api/profile, which the backend does not serve yet,
+  // TEST IT THIS WAY ----> see comment in authprovider to "fake logged in view"
+  const { user, logout } = useAuth()
 
+  // agents get the role badge, companies are identified by their own name
+  const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
+
+  // the whole user cluster is meaningless before the profile resolves
+  // no wrapper of its own, the bar and the dropdown lay it out differently
+  const userBlock = user && (
+    <>
+      <p className={s.user}>
+        <span>Inloggad som</span>
+        <strong>{getUserDisplayName(user)}</strong>
+      </p>
+      <span className={s.divider} />
+      <Button variant="ghost" onClick={logout}>Logga ut</Button>
+    </>
+  )
   return (
     <>
       <header className={s.header}>
@@ -22,17 +42,21 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
             <img src={logo} alt="Resurs" />
           </a>
 
+          {roleLabel && (
+            <>
+              {/* own class so it can leave with the badge at the breakpoint */}
+              <span className={`${s.divider} ${s.roleDivider}`} />
+              <span className={s.role}>{roleLabel}</span>
+            </>
+          )}
+
+          {/* not inside .nav, it has to survive the mobile breakpoint */}
+          {search && <div className={s.search}>{search}</div>}
+
           {children && <nav className={s.nav}>{children}</nav>}
 
-          {/* using .right styling to cluster togeather */}
-          <div className={s.right}> 
-            <p className={s.user}>
-              <span>Inloggad som</span>
-              <strong>{company}</strong>
-            </p>
-            <span className={s.divider} />
-            <Button variant="ghost" onClick={onLogout}>Logga ut</Button>
-          </div>
+          {/* displayed on desktop */}
+          {userBlock && <div className={s.right}>{userBlock}</div>}
 
           <button
             type="button"
@@ -51,14 +75,11 @@ const Header = ({ company, onLogout, children }: HeaderProps) => {
           id="header-menu"
           className={`${s.menuWrap} ${open ? s.menuWrapOpen : ""}`}
         >
-          {/* click anywhere in the panel closes it, links navigate away anyway */}
+          {/* hidden in css if desktop size */}
           <div className={s.menu}>
             {children && <nav className={s.menuNav}>{children}</nav>}
-            <p className={s.user}>
-              <span>Inloggad som</span>
-              <strong>{company}</strong>
-            </p>
-            <Button variant="ghost" onClick={onLogout}>Logga ut</Button>
+            {roleLabel && <span className={s.menuRole}>{roleLabel}</span>}
+            {userBlock}
           </div>
         </div>
       </header>
