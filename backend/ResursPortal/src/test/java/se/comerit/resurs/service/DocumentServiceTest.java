@@ -129,10 +129,8 @@ class DocumentServiceTest {
         assertThat(event.getAction()).isEqualTo(AuditAction.DOCUMENT_UPLOADED);
         assertThat(event.getSequenceNumber()).isEqualTo(1L);
         assertThat(event.getActor()).isEqualTo(application.getCompany().getOrg_number());
-        assertThat(event.getData())
-                .contains("\"filename\":\"balansrakning.pdf\"")
-                .contains("\"docType\":\"balansrakning\"");
         assertThat(event.getOccurredAt()).isNotNull();
+        // Innehållet i data-fältet testas i AuditEventServiceTest
     }
 
     @Test
