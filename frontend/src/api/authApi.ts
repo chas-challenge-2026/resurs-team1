@@ -15,7 +15,7 @@ export const loginCompany = async (payload: CompanyLoginPayload): Promise<Compan
   return response.data
 }
 
-export const loginCaseworker = async (payload: CaseworkerLoginPayload): Promise<CaseWorkerUser> => {
+export const loginCaseWorker = async (payload: CaseworkerLoginPayload): Promise<CaseWorkerUser> => {
   const response = await api.post<CaseWorkerUser>("/auth/login/caseworker", payload)
   return response.data
 }

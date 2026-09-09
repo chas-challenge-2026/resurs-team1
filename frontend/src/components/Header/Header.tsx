@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react"
-import { useAuth } from "../../context/AuthContext"
-import { getUserDisplayName } from "../../utils/auth"
+import { getUser, getUserDisplayName } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
 import s from "./Header.module.css"
+import { useLogout } from "../../hooks/useLogout"
 
 interface HeaderProps {
   /** Stays in the bar on mobile instead of collapsing into the menu. */
@@ -12,12 +12,11 @@ interface HeaderProps {
   children?: ReactNode;
 }
 
-// TODO: connect with router later so it highlights correct button automatically.
 const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
-  // name and role come from GET /api/profile, which the backend does not serve yet,
-  // TEST IT THIS WAY ----> see comment in authprovider to "fake logged in view"
-  const { user, logout } = useAuth()
+
+  const user = getUser()
+  const { logout } = useLogout()
 
   // agents get the role badge, companies are identified by their own name
   const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
