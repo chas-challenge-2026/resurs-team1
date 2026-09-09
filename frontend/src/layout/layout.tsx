@@ -15,7 +15,7 @@ const Layout = ({fullWidth = false}: LayoutProps) => {
 
   const { user } = useAuth();
   // case search is a caseworker tool, companies never see it
-  const isAgent = user?.role === "AGENT";
+  const isAgent = user?.role === "caseWorker";
 
   return(
     <div>

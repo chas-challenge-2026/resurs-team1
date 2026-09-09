@@ -9,12 +9,11 @@ import Dropdown from "../../components/Dropdown/Dropdown"
 import type { DropdownOption } from "../../components/Dropdown/Dropdown"
 import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 import Slider from "../../components/Slider/Slider"
-
-type UserRole = "COMPANY" | "AGENT";
+import type { UserRole } from "../../types/user"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
-{ label: "Företag", value: "COMPANY" },
-{ label: "Handläggare", value: "AGENT" },
+{ label: "Företag", value: "company" },
+{ label: "Handläggare", value: "caseWorker" },
 ]
 
 const reasonOptions: DropdownOption[] = [
@@ -33,7 +32,7 @@ const TENURE_OPTIONS = [
 type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 
 const TestPage = () => {
-  const [role, setRole] = useState<UserRole>("COMPANY");
+  const [role, setRole] = useState<UserRole>("company");
   const [tenure, setTenure] = useState<TenureValue>()
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState<number>(3000000);

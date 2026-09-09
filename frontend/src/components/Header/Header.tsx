@@ -19,7 +19,7 @@ const Header = ({ search, children }: HeaderProps) => {
   const { user, logout } = useAuth()
 
   // agents get the role badge, companies are identified by their own name
-  const roleLabel = user?.role === "AGENT" ? "Handläggare" : null
+  const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
 
   // the whole user cluster is meaningless before the profile resolves
   // no wrapper of its own, the bar and the dropdown lay it out differently
