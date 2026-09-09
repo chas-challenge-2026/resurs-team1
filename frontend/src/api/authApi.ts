@@ -4,34 +4,34 @@ export interface CompanyLoginPayload {
   orgNumber: string
 }
 
-export interface AgentLoginPayload {
+export interface CaseworkerLoginPayload {
   email: string,
   password: string
 }
 
-export interface AuthCompanyResponse {
+export interface CompanyAuthResponse {
   userId: number,
   role: "company",
   orgNumber: string,
   companyName: string
 }
 
-export interface AuthAgentResponse {
+export interface CaseworkerAuthResponse {
   userId: number,
   role: "caseworker",
   name: string,
   email: string
 }
 
-export type AuthResponse = AuthCompanyResponse | AuthAgentResponse
+export type AuthResponse = CompanyAuthResponse | CaseworkerAuthResponse
 
-export const loginCompany = async (payload: CompanyLoginPayload): Promise<AuthCompanyResponse> => {
-  const response = await api.post<AuthCompanyResponse>("/auth/login/company", payload)
+export const loginCompany = async (payload: CompanyLoginPayload): Promise<CompanyAuthResponse> => {
+  const response = await api.post<CompanyAuthResponse>("/auth/login/company", payload)
   return response.data
 }
 
-export const loginAgent = async (payload: AgentLoginPayload): Promise<AuthAgentResponse> => {
-  const response = await api.post<AuthAgentResponse>("/auth/login/caseworker", payload)
+export const loginCaseworker = async (payload: CaseworkerLoginPayload): Promise<CaseworkerAuthResponse> => {
+  const response = await api.post<CaseworkerAuthResponse>("/auth/login/caseworker", payload)
   return response.data
 }
 
