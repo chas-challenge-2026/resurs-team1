@@ -32,15 +32,15 @@ const LoginPage = () => {
 
           {role === "COMPANY" ? (
             <>
-              <Input label="Organisationsnummer *" id="orgnr" information="Ange 10 siffror" />
+              <Input placeholder="XXXXXX-XXXX" label="Organisationsnummer *" id="orgnr" information="Ange 10 siffror" />
               <Button className={s.button}>Logga in med BankID</Button>
               <div className={s.divider} />
               <p className={s.info}>Behörig firmateckare i organisationen signerar med sitt personliga BankID. Företagets uppgifter hämtas automatiskt från officiella register.</p>
             </>
           ) : (
             <>
-              <Input label="E-postadress *" id="email" type="email" />
-              <Input label="Lösenord *" id="password" type="password" information="Lösenordet måste vara minst 8 tecken" />
+              <Input placeholder="namn.exempel@foretag.se" label="E-postadress *" id="email" type="email" />
+              <Input placeholder="••••••••••" label="Lösenord *" id="password" type="password" information="Lösenordet måste vara minst 8 tecken" />
               <div className={s.divider} />
               <Button className={s.button}>Logga in</Button>
             </>
