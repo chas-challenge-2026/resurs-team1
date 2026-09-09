@@ -22,13 +22,17 @@ const Header = ({ search, children }: HeaderProps) => {
   const roleLabel = user?.role === "AGENT" ? "Handläggare" : null
 
   // the whole user cluster is meaningless before the profile resolves
+  // no wrapper of its own, the bar and the dropdown lay it out differently
   const userBlock = user && (
-    <p className={s.user}>
-      <span>Inloggad som</span>
-      <strong>{user.name}</strong>
-    </p>
+    <>
+      <p className={s.user}>
+        <span>Inloggad som</span>
+        <strong>{user.name}</strong>
+      </p>
+      <span className={s.divider} />
+      <Button variant="ghost" onClick={logout}>Logga ut</Button>
+    </>
   )
-
   return (
     <>
       <header className={s.header}>
@@ -50,12 +54,8 @@ const Header = ({ search, children }: HeaderProps) => {
 
           {children && <nav className={s.nav}>{children}</nav>}
 
-          {/* using .right styling to cluster togeather */}
-          <div className={s.right}>
-            {userBlock}
-            <span className={s.divider} />
-            <Button variant="ghost" onClick={logout}>Logga ut</Button>
-          </div>
+          {/* displayed on desktop */}
+          {userBlock && <div className={s.right}>{userBlock}</div>}
 
           <button
             type="button"
@@ -74,12 +74,11 @@ const Header = ({ search, children }: HeaderProps) => {
           id="header-menu"
           className={`${s.menuWrap} ${open ? s.menuWrapOpen : ""}`}
         >
-          {/* click anywhere in the panel closes it, links navigate away anyway */}
+          {/* hidden in css if desktop size */}
           <div className={s.menu}>
             {children && <nav className={s.menuNav}>{children}</nav>}
             {roleLabel && <span className={s.menuRole}>{roleLabel}</span>}
             {userBlock}
-            <Button variant="ghost" onClick={logout}>Logga ut</Button>
           </div>
         </div>
       </header>

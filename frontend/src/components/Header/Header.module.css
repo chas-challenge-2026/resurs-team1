@@ -1,7 +1,8 @@
 .header {
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
-  height: 64px;
+  /* not fixed, the background has to reach the open dropdown too */
+  height: auto;
   /* keeps header + dropdown painted above the backdrop */
   position: sticky;
   top: 0;
@@ -12,7 +13,7 @@
 .inner {
   width: 100%;
   max-width: 1200px;
-  height: 100%;
+  height: 64px;
   margin: 0 auto;
   padding: 0 var(--space-base);
   display: flex;
@@ -198,6 +199,11 @@
   .menu .user {
     padding-top: var(--space-xs);
     border-top: 1px solid var(--border);
+  }
+
+  /* vertical rule between name and button, nothing to separate in a column */
+  .menu .divider {
+    display: none;
   }
 
   /* the badge already drew that line, a second one right under it looks broken */
