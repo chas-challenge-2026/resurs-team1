@@ -1,3 +1,19 @@
+// INSTRUCTIONS TO TEST UI BEFORE AUTHPROVIDER IS CONNECTED:
+// UI preview: the backend has no /api/profile yet, so user stays null and every
+// role-dependent part of the UI is hidden. to preview a logged in user, replace
+// the null in the useState below, then revert it before committing.
+//
+// from:
+//   const [user, setUser] = useState<User | null>(null)
+//
+// to, for a caseworker:
+//   const [user, setUser] = useState<User | null>({ id: "1", name: "Anna Andersson", role: "AGENT" })
+//
+// to, for a company:
+//   const [user, setUser] = useState<User | null>({ id: "2", name: "Coconut AB", role: "COMPANY" })
+//
+// clear the "token" key in localStorage first, or the profile fetch resets it.
+
 import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
 import { AuthContext } from "./AuthContext"
