@@ -1,9 +1,12 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: "jsdom",
+  },
   server: {
     // /api is a dev-only prefix so requests stay same-origin and skip CORS.
     // backend routes have no prefix, so strip it before forwarding.
