@@ -28,16 +28,6 @@
   clip-path: inset(50%);
 }
 
-/* Sizes */
-
-.sm {
-  height: 40px;
-}
-
-.md {
-  height: 60px;
-}
-
 /* Icon */
 
 /* the input keeps its own border, this only anchors the icon on top of it */
@@ -65,4 +55,23 @@
 .field input {
   width: 100%;
   padding-left: 2.25rem;
+}
+
+/* Sizes */
+.sm {
+  height: 36px;
+}
+
+.md {
+  height: 60px;
+}
+
+@media (min-width: 768px) {
+  .sm {
+    height: 40px;
+  }
+
+  .md {
+    height: 60px;
+  }
 }

@@ -1,6 +1,7 @@
 .header {
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  height: 64px;
   /* keeps header + dropdown painted above the backdrop */
   position: sticky;
   top: 0;
@@ -10,9 +11,10 @@
 /* same width rules as main to stay aligned */
 .inner {
   width: 100%;
-  max-width: 960px;
+  max-width: 1200px;
+  height: 100%;
   margin: 0 auto;
-  padding: var(--space-sm) var(--space-base);
+  padding: 0 var(--space-base);
   display: flex;
   align-items: center;
   gap: var(--space-base);
