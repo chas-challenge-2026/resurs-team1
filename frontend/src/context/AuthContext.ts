@@ -1,13 +1,5 @@
 import { createContext, useContext } from "react"
-
-export type UserRole = "COMPANY" | "AGENT"
-
-// perhaps add more later depending on cryptography
-export interface User {
-  id: string
-  name: string
-  role: UserRole
-}
+import type { User } from "../types/user"
 
 export interface AuthContextValue {
   user: User | null

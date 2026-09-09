@@ -4,16 +4,15 @@ import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch";
 import s from "./LoginPage.module.css"
 import Input from "../../components/Input/Input";
 import Button from "../../components/Button/Button";
-
-type UserRole = "COMPANY" | "AGENT";
+import type { UserRole } from "../../types/user";
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
-{ label: "Företag", value: "COMPANY" },
-{ label: "Handläggare", value: "AGENT" },
+{ label: "Företag", value: "company" },
+{ label: "Handläggare", value: "caseWorker" },
 ]
 
 const LoginPage = () => {
-  const [role, setRole] = useState<UserRole>("COMPANY")
+  const [role, setRole] = useState<UserRole>("company")
 
   return(
     <div className={s.wrapper}>
@@ -30,7 +29,7 @@ const LoginPage = () => {
           <div className={s.divider} />
           <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
 
-          {role === "COMPANY" ? (
+          {role === "company" ? (
             <>
               <Input placeholder="XXXXXX-XXXX" label="Organisationsnummer *" id="orgnr" information="Ange 10 siffror" />
               <Button className={s.button}>Logga in med BankID</Button>
