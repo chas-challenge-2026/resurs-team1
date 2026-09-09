@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
+    // testing-library only registers its auto-cleanup if a global afterEach exists
+    globals: true,
   },
   server: {
     // /api is a dev-only prefix so requests stay same-origin and skip CORS.
