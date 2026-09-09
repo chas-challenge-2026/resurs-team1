@@ -1,12 +1,10 @@
 package se.comerit.resurs.dto;
 
 import com.fasterxml.jackson.annotation.JsonRawValue;
-import se.comerit.resurs.enums.ActorType;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.model.AuditEvent;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record AuditEventDTO(UUID eventId,
