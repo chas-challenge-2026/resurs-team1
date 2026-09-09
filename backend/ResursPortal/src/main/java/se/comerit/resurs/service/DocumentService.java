@@ -74,7 +74,8 @@ public class DocumentService {
         document.setUploadedAt(LocalDateTime.now());
         documentRepository.save(document);
 
-        appendAuditLog(application, originalFilename, docType);
+        //byts mot riktig loggning jobbar på det
+      //  appendAuditLog(application, originalFilename, docType);
         // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
         // No business rules validation — just check docType string
         if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
@@ -100,7 +101,9 @@ public class DocumentService {
     // Replace with AuditService.append() when issue #102 is done
     // Update audit log JSON blob — same string manipulation pattern as ApplicationController
     // TODO: skapa separat audit_log-tabell med index
-    private void appendAuditLog(CreditApplication application, String filename, String docType) {
+
+    //ska bytas ut mot riktig loggning jobbar på det
+   /* private void appendAuditLog(CreditApplication application, String filename, String docType) {
         String newEntry = "{\"ts\":\"" +
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"DOCUMENT_UPLOADED\",\"filename\":\"" + filename
@@ -112,7 +115,7 @@ public class DocumentService {
         application.setAuditLog(updatedLog);
         application.setUpdatedAt(LocalDateTime.now());
         creditApplicationRepository.save(application);
-    }
+    }*/
 
     private void markUnderReview(CreditApplication application) {
         if (application.getStatus() == ApplicationStatus.PENDING_DOCS) {

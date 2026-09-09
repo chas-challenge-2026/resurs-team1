@@ -96,8 +96,7 @@ public class StatusService {
                 new ApplicationStatusDetails(application),
                 steps,
                 application.getStatus(),
-                documents,
-                application.getAuditLog()
+                documents
         );
 
     }

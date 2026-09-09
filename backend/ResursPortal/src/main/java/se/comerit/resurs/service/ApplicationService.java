@@ -1,7 +1,10 @@
 package se.comerit.resurs.service;
 
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.persistence.CompanyRepository;
@@ -15,18 +18,27 @@ import java.util.List;
 @Service
 public class ApplicationService {
 
+
+    private final AuditService auditService;
+
+
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository) {
+
+
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
+        this.auditService = auditService;
     }
 
     //Submit application
-    public CreditApplication saveApplication(NewApplicationDTO newApplication){
+    @Transactional
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication){
 
         CreditApplication creditApplication = new CreditApplication();
+
 
         creditApplication.setCompany(companyRepository.findByOrgNumber(newApplication.org_number()).orElseThrow());
         creditApplication.setStatus(newApplication.status());
@@ -36,23 +48,13 @@ public class ApplicationService {
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
 
-        // Ingen index, ingen separat tabell — allt i en JSON-'blob'
-        // TODO: skapa separat audit_log-tabell med index
-        String initialAuditLog = "[{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + newApplication.org_number() + "\"}]";
 
+        CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
+        //loggar efter att application finns sparad i databas.
+        auditService.applicationCreated(saved);
+        auditService.scoringRun(saved, newApplication.flagCount());
 
-        String scoringAuditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "\",\"action\":\"SCORING_RUN\",\"result\":\"" + newApplication.decision() + "\",\"flags\":" + newApplication.flagCount() + "}";
-
-        // Append new entry — string manipulation on JSON blob, no proper JSON library
-        String updatedAuditLog = initialAuditLog.substring(0, initialAuditLog.lastIndexOf("]"))
-                    + "," + scoringAuditEntry + "]";
-
-
-        creditApplication.setAuditLog(updatedAuditLog);
-
-        return applicationRepository.save(creditApplication);
+        return new CreditApplicationDTO(saved);
     }
 
     public CreditApplicationDTO findApplicationByID (Long id){

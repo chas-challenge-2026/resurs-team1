@@ -262,32 +262,6 @@ class StatusServiceTests {
     }
 
 
-    @Test
-    void showStatus_returnsAuditLog() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.APPROVED);
-
-        String auditLog =
-                "[{\"event\":\"APPLICATION_APPROVED\"}]";
-
-        application.setAuditLog(auditLog);
-
-        applicationRepository.saveAndFlush(application);
-
-        StatusDetails result =
-                statusService.showStatus(application.getId());
-
-        assertEquals(
-                auditLog,
-                result.app().audit_log()
-        );
-
-        assertEquals(
-                auditLog,
-                result.auditLogRaw()
-        );
-    }
-
 
     @Test
     void showStatus_throwsWhenApplicationDoesNotExist() {
@@ -324,7 +298,6 @@ class StatusServiceTests {
         );
         application.setPurpose("Working capital");
         application.setStatus(status);
-        application.setAuditLog("[]");
         application.setCreatedAt(LocalDateTime.now());
         application.setUpdatedAt(LocalDateTime.now());
 

@@ -96,12 +96,12 @@ class BackofficeServiceTests {
 
         assertThat(updated.getUpdatedAt())
                 .isNotNull();
-
-        assertThat(updated.getAuditLog())
+//byt till auditevent
+     /*   assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"APPROVED\"")
                 .contains("\"worker\":\"test-worker\"")
-                .contains("\"comment\":\"Application looks good\"");
+                .contains("\"comment\":\"Application looks good\"");*/
     }
 
     @Test
@@ -130,13 +130,15 @@ class BackofficeServiceTests {
         assertThat(updated.getUpdatedAt())
                 .isNotNull();
 
+        //byt till audit event
+/*
         assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"REJECTED\"")
                 .contains("\"worker\":\"test-worker\"")
-                .contains("\"comment\":\"Insufficient score\"");
+                .contains("\"comment\":\"Insufficient score\"");*/
     }
-
+/*
     @Test
     void applicationDecision_shouldAppendToExistingAuditLog() {
         CreditApplication application =
@@ -158,7 +160,7 @@ class BackofficeServiceTests {
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        String auditLog = updated.getAuditLog();
+        //String auditLog = updated.getAuditLog();
 
         assertThat(auditLog)
                 .startsWith("[")
@@ -170,7 +172,7 @@ class BackofficeServiceTests {
                 .contains("\"decision\":\"APPROVED\"")
                 .contains("\"worker\":\"test-worker\"")
                 .contains("\"comment\":\"Approved manually\"");
-    }
+    }*/
 
     @Test
     void applicationDecision_shouldHandleEmptyComment() {
@@ -189,11 +191,16 @@ class BackofficeServiceTests {
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
+
+        //byt till auditevent
+        /*
         assertThat(updated.getAuditLog())
                 .contains("\"action\":\"MANUAL_DECISION\"")
                 .contains("\"decision\":\"APPROVED\"")
                 .contains("\"worker\":\"test-worker\"")
                 .doesNotContain("\"comment\"");
+                */
+
     }
 
     @Test
@@ -212,10 +219,13 @@ class BackofficeServiceTests {
 
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
-
+       // byt till audit event
+/*
         assertThat(updated.getAuditLog())
                 .contains("\"worker\":\"test'worker\"")
                 .contains("\"comment\":\"Looks 'good'\"");
+                */
+
     }
 
     @Test
@@ -307,7 +317,7 @@ class BackofficeServiceTests {
         application.setPurpose("Test loan");
         application.setStatus(status);
         application.setCreatedAt(LocalDateTime.now());
-        application.setAuditLog("[]");
+        //application.setAuditLog("[]");
 
         return application;
     }

@@ -72,7 +72,9 @@ public class BackofficeService {
                 + (comment.isEmpty() ? "" : ",\"comment\":\"" + comment.replace("\"", "'") + "\"")
                 + "}";
 
-        String currentLog = application.getAuditLog();
+
+        //ska bytas ut mot riktig loggning objekt
+      /* String currentLog = application.getAuditLog();
 
         String updatedLog;
         if (currentLog == null || currentLog.equals("[]")) {
@@ -82,7 +84,7 @@ public class BackofficeService {
         }
 
         application.setAuditLog(updatedLog);
-
+*/
         //Should we return something to the controller and by extention, the frontend? /Jonathan
         return;
     }
