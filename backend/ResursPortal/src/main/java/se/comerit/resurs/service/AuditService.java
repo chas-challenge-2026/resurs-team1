@@ -1,6 +1,7 @@
 package se.comerit.resurs.service;
 
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -42,6 +43,17 @@ public class AuditService {
     public void documentUploaded(CreditApplication application, String fileName, String docType){
         AuditEvent event = new AuditEvent(application, nextSequenceNumber(application), AuditAction.DOCUMENT_UPLOADED,
                 application.getCompany().getOrg_number(), "{\"actorType\":\"COMPANY\",\"filename\":\"" + fileName + "\",\"docType\":\"" + docType + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
+        auditEventRepository.save(event);
+    }
+
+    public void manualDecision(CreditApplication application,String workerEmail, String workerName,
+                               ApplicationStatus previousStatus, String comment){
+        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application), AuditAction.MANUAL_DECISION, workerEmail, "{\"actorType\":\"CASE_WORKER\""
+                + ",\"workerName\":\"" + workerName + "\""
+                + ",\"previousStatus\":\"" + previousStatus + "\""
+                + ",\"newStatus\":\"" + application.getStatus() + "\""
+                + (comment == null || comment.isBlank() ? "" : ",\"comment\":\"" + comment + "\"")
+                + "}",  NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
         auditEventRepository.save(event);
     }
 
