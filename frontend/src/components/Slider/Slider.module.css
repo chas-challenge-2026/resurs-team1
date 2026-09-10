@@ -81,11 +81,3 @@
   justify-content: space-between;
   color: var(--color-text-muted);
 }
-
-.error {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-}

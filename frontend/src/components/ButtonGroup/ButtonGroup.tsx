@@ -1,5 +1,5 @@
+import InputError from "../InputError/InputError";
 import s from "./ButtonGroup.module.css"
-import { RiErrorWarningLine } from "react-icons/ri";
 
 /**
  * Represents an individual selectable option within a ButtonGroup.
@@ -41,8 +41,10 @@ interface ButtonGroupProps<T extends string | number> {
  * ```
  */
 const ButtonGroup = <T extends string | number>({name, options, selectedValue, onChange, label, error}: ButtonGroupProps<T>) => {
+  const errorId = `${name}-error`
+
   return(
-    <fieldset className={s.fieldset}>
+    <fieldset className={s.fieldset} aria-invalid={!!error} aria-describedby={error ? errorId : undefined}>
       {label && <legend className={s.label}>{label}</legend>}
 
       <div className={s.group}>
@@ -54,7 +56,7 @@ const ButtonGroup = <T extends string | number>({name, options, selectedValue, o
             <label
               key={String(opt.value)}
               htmlFor={inputId}
-              className={[s.button, isChecked && s.isSelected, error && s.errorBorder].filter(Boolean).join(" ")}
+              className={[s.button, isChecked && s.isSelected, error && "error-border"].filter(Boolean).join(" ")}
             >
               <input 
                 type="radio"
@@ -71,12 +73,7 @@ const ButtonGroup = <T extends string | number>({name, options, selectedValue, o
         })}
       </div>
       
-      {error && 
-        <span className={s.error}>
-          <RiErrorWarningLine aria-hidden={true}/>
-          <span>{error}</span>
-        </span>
-      }
+      {error && <InputError errorId={errorId} errorMsg={error} />}
     </fieldset>
   )
 }

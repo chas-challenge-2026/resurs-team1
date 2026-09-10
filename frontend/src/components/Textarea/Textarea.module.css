@@ -17,23 +17,6 @@
   min-height: 160px;
 }
 
-.information {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.error {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-}
-
-.errorBorder {
-  border-color: var(--color-error);
-}
-
 @media (min-width: 768px) {
   .textarea {
     min-height: 120px;
