@@ -49,7 +49,7 @@ describe("LoginPage", () => {
     fireEvent.change(field, { target: { value: "556000-0000" } })
     fireEvent.click(button)
 
-    expect(await screen.findByRole("alert")).toBeTruthy()
+    expect(await screen.findAllByRole("alert")).not.toHaveLength(0)
   })
 
   it("hides the error message when the user types again", async () => {
@@ -58,11 +58,11 @@ describe("LoginPage", () => {
 
     fireEvent.change(field, { target: { value: "556000-0000" } })
     fireEvent.click(button)
-    await screen.findByRole("alert")
+    await screen.findAllByRole("alert")
 
     fireEvent.change(field, { target: { value: ORG_NUMBER } })
 
-    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull())
+    await waitFor(() => expect(screen.queryAllByRole("alert")).toHaveLength(0))
   })
 
   it("redirects when the org number is accepted", async () => {
