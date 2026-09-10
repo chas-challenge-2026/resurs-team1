@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { loginCompany } from "../../api/authApi"
@@ -26,12 +26,40 @@ const renderPage = () => {
   )
 
   return {
-    field: screen.getByLabelText(/Organisationsnummer/),
+    field: screen.getByLabelText(/Organisationsnummer/) as HTMLInputElement,
     button: screen.getByRole("button", { name: /Logga in med BankID/ }) as HTMLButtonElement,
   }
 }
 
 describe("LoginPage", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("formats what the user types into one org number shape", () => {
+    const { field } = renderPage()
+
+    fireEvent.change(field, { target: { value: "556000" } })
+    expect(field.value).toBe("556000")
+
+    fireEvent.change(field, { target: { value: "5560001234" } })
+    expect(field.value).toBe(ORG_NUMBER)
+
+    fireEvent.change(field, { target: { value: "556000-1234-999" } })
+    expect(field.value).toBe(ORG_NUMBER)
+
+    fireEvent.change(field, { target: { value: "55x60y00" } })
+    expect(field.value).toBe("556000")
+  })
+
+  it("rejects a short org number without calling the api", () => {
+    const { field, button } = renderPage()
+
+    fireEvent.change(field, { target: { value: "556000" } })
+    fireEvent.click(button)
+
+    expect(screen.getByText(/ska innehålla 10 siffror/)).toBeTruthy()
+    expect(loginCompany).not.toHaveBeenCalled()
+  })
+
   it("disables the button while the field is empty", () => {
     const { field, button } = renderPage()
 
