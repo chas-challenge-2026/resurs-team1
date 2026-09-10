@@ -43,6 +43,7 @@ CREATE TABLE audit_events (
     actor VARCHAR(100) NOT NULL,
     data JSONB,
     previous_hash VARCHAR(64),
+    current_hash VARCHAR(64),
     schema_version INT NOT NULL,
     signing_key_id VARCHAR(64),
     signature VARCHAR(512),

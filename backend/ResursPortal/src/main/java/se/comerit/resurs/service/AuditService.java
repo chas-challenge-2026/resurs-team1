@@ -24,7 +24,7 @@ public class AuditService {
     private static final String NOT_SIGNED_YET = null;
 
     public void applicationCreated(CreditApplication application){
-            AuditEvent event = new AuditEvent(application,nextSequenceNumber(application), AuditAction.APPLICATION_CREATED, application.getCompany().getOrg_number(),"{\"actorType\":\"COMPANY\",\"purpose\":\"" + application.getPurpose() + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
+            AuditEvent event = new AuditEvent(application,nextSequenceNumber(application), AuditAction.APPLICATION_CREATED, application.getCompany().getOrg_number(),"{\"actorType\":\"COMPANY\",\"purpose\":\"" + application.getPurpose() + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
             auditEventRepository.save(event);
     }
 
@@ -35,14 +35,14 @@ public class AuditService {
                     + ",\"decision\":\"" + application.getDecision() + "\""
                     + ",\"newStatus\":\"" + application.getStatus() + "\""
                     + ",\"flags\":" + flags + "}",
-                NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET
+                NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET,NOT_SIGNED_YET
         );
         auditEventRepository.save(event);
     }
 
     public void documentUploaded(CreditApplication application, String fileName, String docType){
         AuditEvent event = new AuditEvent(application, nextSequenceNumber(application), AuditAction.DOCUMENT_UPLOADED,
-                application.getCompany().getOrg_number(), "{\"actorType\":\"COMPANY\",\"filename\":\"" + fileName + "\",\"docType\":\"" + docType + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
+                application.getCompany().getOrg_number(), "{\"actorType\":\"COMPANY\",\"filename\":\"" + fileName + "\",\"docType\":\"" + docType + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET,NOT_SIGNED_YET);
         auditEventRepository.save(event);
     }
 
@@ -53,7 +53,7 @@ public class AuditService {
                 + ",\"previousStatus\":\"" + previousStatus + "\""
                 + ",\"newStatus\":\"" + application.getStatus() + "\""
                 + (comment == null || comment.isBlank() ? "" : ",\"comment\":\"" + comment + "\"")
-                + "}",  NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
+                + "}",  NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
         auditEventRepository.save(event);
     }
 
