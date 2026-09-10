@@ -25,8 +25,15 @@ const LoginPage = () => {
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
 
+  const companyFieldsEmpty = !formData.orgNumber.trim()
+  const caseWorkerFieldsEmpty = !formData.email.trim() || !formData.password.trim()
+
+  const activeLogin = role === "company" ? companyLogin : caseWorkerLogin
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
+    // the error belongs to the rejected value, so it should go once they start correcting it
+    if (activeLogin.isError) activeLogin.reset()
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
@@ -68,9 +75,23 @@ const LoginPage = () => {
                 value={formData.orgNumber} 
                 onChange={handleChange} 
               />
-              <Button type="submit" className={s.button}>Logga in med BankID</Button>
+              {companyLogin.isError &&
+                <div>
+
+                  <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och försök igen.</p>
+                  <p role="alert" className={s.formError}>Format: XXXXXX-XXXX</p>
+                </div>
+                }
+
+              <Button
+                type="submit"
+                className={s.button}
+                disabled={companyFieldsEmpty || companyLogin.isPending}
+              >
+                {companyLogin.isPending ? "Loggar in..." : "Logga in med BankID"}
+              </Button>
               <div className={s.divider} />
-              <p className={s.info}>Behörig firmateckare i organisationen signerar med sitt personliga BankID. Företagets uppgifter hämtas automatiskt från officiella register.</p>
+              <p className={s.info}>Behörig firmateckare i organisationen signerar med personligt BankID.</p>
             </form>
           ) : (
             <form className={s.form} onSubmit={handleCaseWorkerSubmit}>
@@ -92,7 +113,18 @@ const LoginPage = () => {
                 onChange={handleChange} 
               />
               <div className={s.divider} />
-              <Button type="submit" className={s.button}>Logga in</Button>
+
+              {caseWorkerLogin.isError &&
+                <p role="alert" className={s.formError}>Fel e-postadress eller lösenord.</p>
+              }
+
+              <Button
+                type="submit"
+                className={s.button}
+                disabled={caseWorkerFieldsEmpty || caseWorkerLogin.isPending}
+              >
+                {caseWorkerLogin.isPending ? "Loggar in..." : "Logga in"}
+              </Button>
             </form>
           )}
         </section>
