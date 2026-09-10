@@ -1,5 +1,5 @@
 import type { CaseWorkerUser, CompanyUser } from "../types/user"
-import api from "../utils/api"
+import api from "./client"
 
 export interface CompanyLoginPayload {
   orgNumber: string
