@@ -116,10 +116,9 @@ const LoginPage = () => {
               />
               {companyLogin.isError &&
                 <div>
-
                   <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och försök igen.</p>
                 </div>
-                }
+              }
 
               <Button
                 type="submit"
