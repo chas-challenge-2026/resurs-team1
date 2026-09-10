@@ -13,7 +13,10 @@ const useCompanyLogin = () => {
     onSuccess: (data) => {
       setUser(data)
       navigate("/oversikt")
-    }
+    },
+    meta: {
+      preventGlobalToast: true
+    },
   })
 }
 
@@ -25,7 +28,10 @@ const useCaseWorkerLogin = () => {
     onSuccess: (data) => {
       setUser(data)
       navigate("/arenden")
-    }
+    },
+    meta: {
+      preventGlobalToast: true
+    },
   })
 }
 
