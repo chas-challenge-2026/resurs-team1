@@ -1,7 +1,7 @@
 import { useState } from "react";
-import s from "./Slider.module.css";
 import { formatCurrency } from "../../utils/formatters";
-import { RiErrorWarningLine } from "react-icons/ri";
+import InputError from "../InputError/InputError";
+import s from "./Slider.module.css";
 
 /**
  * Props for the Slider component.
@@ -49,8 +49,9 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
     Math.max(0, ((value - min) / (max - min)) * 100)
   )
 
-  const inputId = `slider-${name}`
-  const textInputId = `input-${name}`
+  const inputId = `${name}-slider`
+  const textInputId = `${name}-input`
+  const errorId = `${name}-error`
 
   // Calculate percentage filled for the dynamic CSS gradient track (clamped between 0 and 100%)
   const trackStyle = {
@@ -126,6 +127,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
         style={trackStyle}
         aria-valuetext={formatCurrency(value, unit)}
         aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
       />
 
       <div className={s.footerLabels} aria-hidden="true">
@@ -133,12 +135,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
         <span>{formatCurrency(max, unit)}</span>
       </div>
 
-      {error && (
-        <span className={s.error}>
-          <RiErrorWarningLine aria-hidden={true} />
-          <span>{error}</span>
-        </span>
-      )}
+      {error && <InputError errorId={errorId} errorMsg={error} />}
     </div>
   )
 }

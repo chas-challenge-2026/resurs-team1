@@ -129,7 +129,7 @@ const LoginPage = () => {
                 {companyLogin.isPending ? "Loggar in..." : "Logga in med BankID"}
               </Button>
               <div className={s.divider} />
-              <p className={s.info}>Behörig firmateckare i organisationen signerar med personligt BankID.</p>
+              <p className="information-text">Behörig firmateckare i organisationen signerar med personligt BankID.</p>
             </form>
           ) : (
             <form className={s.form} onSubmit={handleCaseWorkerSubmit} noValidate>

@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
-import { RiErrorWarningLine } from "react-icons/ri";
+import InputError from "../InputError/InputError";
 import s from "./Input.module.css"
 
 /**
@@ -40,12 +40,12 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size">
  */
 const Input = ({id, label, hideLabel, error, information, size = "md", icon, className, ...props}: InputProps) => {
 
-  const combinedClassName = [s.input, s[size], "input-base", className, error && s.errorBorder].filter(Boolean).join(" ")
+  const combinedClassName = [s.input, `input-${size}`, "input-base", className, error && "error-border"].filter(Boolean).join(" ")
 
   //Id for screen reader
-  const errorId = id && error ? `${id}-error` : undefined
-  const infoId = id && information ? `${id}-info` : undefined
-  const describedBy = errorId || infoId
+  const errorId = `${id}-error`
+  const infoId = `${id}-info`
+  const describedBy = error ? errorId : information ? infoId : undefined
 
   const inputElement = (
     <input
@@ -74,15 +74,10 @@ const Input = ({id, label, hideLabel, error, information, size = "md", icon, cla
       )}
 
       {information && !error && 
-        <span id={infoId} className={s.information}>{information}</span>
+        <span id={infoId} className="information-text">{information}</span>
       }
 
-      {error && 
-        <span id={errorId} className={s.error}>
-          <RiErrorWarningLine aria-hidden={true}/>
-          <span>{error}</span>
-        </span>
-      }
+      {error && <InputError errorId={errorId} errorMsg={error} />}
 
     </div>
   )
