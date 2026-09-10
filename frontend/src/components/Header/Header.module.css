@@ -1,17 +1,21 @@
 .header {
-  background-color: var(--bg-main);
+  background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  /* not fixed, the background has to reach the open dropdown too */
+  height: auto;
   /* keeps header + dropdown painted above the backdrop */
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 20;
 }
 
 /* same width rules as main to stay aligned */
 .inner {
-  width: 90%;
+  width: 100%;
   max-width: 1200px;
+  height: 64px;
   margin: 0 auto;
-  padding: var(--space-sm) 0;
+  padding: 0 var(--space-base);
   display: flex;
   align-items: center;
   gap: var(--space-base);
@@ -82,6 +86,29 @@
   background-color: var(--border);
 }
 
+/* role badge sits next to the wordmark, mirrors the muted label styling */
+.role,
+.menuRole {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* eats the free space so the right cluster stays pinned to the edge */
+.search {
+  flex: 1;
+  min-width: 0;
+}
+
+/* element selector outranks the global .input-base radius without !important */
+.search input {
+  width: 100%;
+  border-radius: var(--radius-pill);
+}
+
 /* burger + dropdown only exist under the breakpoint */
 .burger {
   display: none;
@@ -108,15 +135,24 @@
 }
 
 /* --- small screens --- */
-@media (max-width: 1023px) {
+@media (max-width: 768px) {
   .inner {
     gap: var(--space-sm);
   }
 
   /* the whole bar cluster moves into the dropdown */
+  /* .search is deliberately not here, it stays in the bar */
   .nav,
-  .right {
+  .right,
+  .role,
+  .roleDivider {
     display: none;
+  }
+
+  /* the badge only shows up here once it left the bar */
+  .menuRole {
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border);
   }
 
   .burger {
@@ -140,7 +176,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    width: 90%;
+    width: 100%;
+    padding: 0 var(--space-base);
     margin: 0 auto;
     overflow: hidden;
     opacity: 0;
@@ -162,6 +199,17 @@
   .menu .user {
     padding-top: var(--space-xs);
     border-top: 1px solid var(--border);
+  }
+
+  /* vertical rule between name and button, nothing to separate in a column */
+  .menu .divider {
+    display: none;
+  }
+
+  /* the badge already drew that line, a second one right under it looks broken */
+  .menuRole + .user {
+    padding-top: 0;
+    border-top: none;
   }
 
   .menuNav {
@@ -188,13 +236,6 @@
   .backdropOpen {
     opacity: 1;
     visibility: visible;
-  }
-}
-
-/* same breakpoint for width "padding" as the main field in index */
-@media (min-width: 1024px) {
-  .inner {
-    width: 60%;
   }
 }
 
