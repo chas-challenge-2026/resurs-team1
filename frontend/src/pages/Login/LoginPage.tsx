@@ -21,6 +21,9 @@ const INITIAL_FORM = {
 
 const ORG_NUMBER_DIGITS = 10
 
+// stricter than the browser's own rule, which accepts a domain without a dot
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/
+
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it
 const formatOrgNumber = (value: string) => {
@@ -32,6 +35,7 @@ const LoginPage = () => {
   const [role, setRole] = useState<UserRole>("company")
   const [formData, setFormData] = useState(INITIAL_FORM)
   const [orgNumberError, setOrgNumberError] = useState("")
+  const [emailError, setEmailError] = useState("")
 
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
@@ -46,6 +50,7 @@ const LoginPage = () => {
     // reset error as soon as user ttypes again
     if (activeLogin.isError) activeLogin.reset()
     setOrgNumberError("")
+    setEmailError("")
     setFormData((prev) => ({
       ...prev,
       [id]: id === "orgNumber" ? formatOrgNumber(value) : value,
@@ -62,6 +67,12 @@ const LoginPage = () => {
     }
 
     companyLogin.mutate({ orgNumber: formData.orgNumber })
+  }
+
+  // show error after leaving input field
+  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const email = e.target.value.trim()
+    setEmailError(!email || EMAIL_PATTERN.test(email) ? "" : "Ange en giltig e-postadress")
   }
 
   const handleCaseWorkerSubmit = (e: React.SubmitEvent) => {
@@ -121,14 +132,16 @@ const LoginPage = () => {
               <p className={s.info}>Behörig firmateckare i organisationen signerar med personligt BankID.</p>
             </form>
           ) : (
-            <form className={s.form} onSubmit={handleCaseWorkerSubmit}>
-              <Input 
-                type="email" 
+            <form className={s.form} onSubmit={handleCaseWorkerSubmit} noValidate>
+              <Input
+                type="email"
                 id="email"
-                label="E-postadress *" 
-                placeholder="namn.exempel@foretag.se" 
-                value={formData.email} 
-                onChange={handleChange} 
+                label="E-postadress *"
+                placeholder="namn.exempel@foretag.se"
+                error={emailError}
+                value={formData.email}
+                onChange={handleChange}
+                onBlur={handleEmailBlur}
               />
               <Input 
                 type="password" 
