@@ -5,6 +5,7 @@ import type { UserRole } from "../../types/user";
 import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
+import Loading from "../../components/Loading/Loading";
 import s from "./LoginPage.module.css"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
@@ -18,21 +19,60 @@ const INITIAL_FORM = {
   password: "",
 }
 
+const ORG_NUMBER_DIGITS = 10
+
+// stricter than the browser's own rule, which accepts a domain without a dot
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/
+
+// force the shape
+// the "-" waits for a digit to follow it, otherwise backspace can never delete it
+const formatOrgNumber = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, ORG_NUMBER_DIGITS)
+  return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
+}
+
 const LoginPage = () => {
   const [role, setRole] = useState<UserRole>("company")
   const [formData, setFormData] = useState(INITIAL_FORM)
+  const [orgNumberError, setOrgNumberError] = useState("")
+  const [emailError, setEmailError] = useState("")
 
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
 
+  const companyFieldsEmpty = !formData.orgNumber.trim()
+  const caseWorkerFieldsEmpty = !formData.email.trim() || !formData.password.trim()
+
+  const activeLogin = role === "company" ? companyLogin : caseWorkerLogin
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
-    setFormData((prev) => ({ ...prev, [id]: value }))
+    // reset error as soon as user ttypes again
+    if (activeLogin.isError) activeLogin.reset()
+    setOrgNumberError("")
+    setEmailError("")
+    setFormData((prev) => ({
+      ...prev,
+      [id]: id === "orgNumber" ? formatOrgNumber(value) : value,
+    }))
   }
 
   const handleCompanySubmit = (e: React.SubmitEvent) => {
     e.preventDefault()
+
+    // insta reject wrong format, wait for BankID on correct nyumbers
+    if (formData.orgNumber.replace(/\D/g, "").length !== ORG_NUMBER_DIGITS) {
+      setOrgNumberError("Organisationsnumret ska innehålla 10 siffror")
+      return
+    }
+
     companyLogin.mutate({ orgNumber: formData.orgNumber })
+  }
+
+  // show error after leaving input field
+  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const email = e.target.value.trim()
+    setEmailError(!email || EMAIL_PATTERN.test(email) ? "" : "Ange en giltig e-postadress")
   }
 
   const handleCaseWorkerSubmit = (e: React.SubmitEvent) => {
@@ -60,27 +100,48 @@ const LoginPage = () => {
 
           {role === "company" ? (
             <form className={s.form} onSubmit={handleCompanySubmit}>
+              {companyLogin.isPending &&
+                <Loading fullscreen size="lg" label="Väntar på BankID..." />
+              }
+
               <Input 
-                id="orgNumber" 
-                label="Organisationsnummer *" 
-                placeholder="XXXXXX-XXXX" 
-                information="Ange 10 siffror" 
-                value={formData.orgNumber} 
-                onChange={handleChange} 
+                id="orgNumber"
+                inputMode="numeric"
+                label="Organisationsnummer *"
+                placeholder="XXXXXX-XXXX"
+                information="Ange 10 siffror"
+                error={orgNumberError}
+                value={formData.orgNumber}
+                onChange={handleChange}
               />
-              <Button type="submit" className={s.button}>Logga in med BankID</Button>
+              {companyLogin.isError &&
+                <div>
+
+                  <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och försök igen.</p>
+                </div>
+                }
+
+              <Button
+                type="submit"
+                className={s.button}
+                disabled={companyFieldsEmpty || companyLogin.isPending}
+              >
+                {companyLogin.isPending ? "Loggar in..." : "Logga in med BankID"}
+              </Button>
               <div className={s.divider} />
-              <p className={s.info}>Behörig firmateckare i organisationen signerar med sitt personliga BankID. Företagets uppgifter hämtas automatiskt från officiella register.</p>
+              <p className={s.info}>Behörig firmateckare i organisationen signerar med personligt BankID.</p>
             </form>
           ) : (
-            <form className={s.form} onSubmit={handleCaseWorkerSubmit}>
-              <Input 
-                type="email" 
+            <form className={s.form} onSubmit={handleCaseWorkerSubmit} noValidate>
+              <Input
+                type="email"
                 id="email"
-                label="E-postadress *" 
-                placeholder="namn.exempel@foretag.se" 
-                value={formData.email} 
-                onChange={handleChange} 
+                label="E-postadress *"
+                placeholder="namn.exempel@foretag.se"
+                error={emailError}
+                value={formData.email}
+                onChange={handleChange}
+                onBlur={handleEmailBlur}
               />
               <Input 
                 type="password" 
@@ -92,7 +153,18 @@ const LoginPage = () => {
                 onChange={handleChange} 
               />
               <div className={s.divider} />
-              <Button type="submit" className={s.button}>Logga in</Button>
+
+              {caseWorkerLogin.isError &&
+                <p role="alert" className={s.formError}>Fel e-postadress eller lösenord.</p>
+              }
+
+              <Button
+                type="submit"
+                className={s.button}
+                disabled={caseWorkerFieldsEmpty || caseWorkerLogin.isPending}
+              >
+                {caseWorkerLogin.isPending ? "Loggar in..." : "Logga in"}
+              </Button>
             </form>
           )}
         </section>

@@ -11,6 +11,8 @@ export interface CaseworkerLoginPayload {
 }
 
 export const loginCompany = async (payload: CompanyLoginPayload): Promise<CompanyUser> => {
+  // stands in for the wait while the user signs in the BankID app
+  await new Promise((resolve) => setTimeout(resolve, 4000))
   const response = await api.post<CompanyUser>("/auth/login/company", payload)
   return response.data
 }
