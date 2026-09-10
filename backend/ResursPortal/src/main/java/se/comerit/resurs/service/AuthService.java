@@ -62,23 +62,4 @@ public class AuthService {
                     worker.getEmail()
             );
         }
-
-        // TODO: parameterize this query and use bcrypt
-
-//    private String md5Hash(String input) {
-//        try {
-//            MessageDigest md = MessageDigest.getInstance("MD5");
-//            byte[] hash = md.digest(input.getBytes());
-//            StringBuilder sb = new StringBuilder();
-//            for (byte b : hash) {
-//                sb.append(String.format("%02x", b));
-//            }
-//            return sb.toString();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException("MD5 not available", e);
-//        }
-//    }
 }
-
-
-
