@@ -5,6 +5,7 @@ import type { UserRole } from "../../types/user";
 import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
+import Loading from "../../components/Loading/Loading";
 import s from "./LoginPage.module.css"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
@@ -67,8 +68,12 @@ const LoginPage = () => {
 
           {role === "company" ? (
             <form className={s.form} onSubmit={handleCompanySubmit}>
-              <Input 
-                id="orgNumber" 
+              {companyLogin.isPending &&
+                <Loading fullscreen size="lg" label="Väntar på BankID..." />
+              }
+
+              <Input
+                id="orgNumber"
                 label="Organisationsnummer *" 
                 placeholder="XXXXXX-XXXX" 
                 information="Ange 10 siffror" 
