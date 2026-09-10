@@ -89,6 +89,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         Company company = new Company();
         company.setCompany_name("TestBolaget");
         company.setOrg_number("556000-1234");
+        company.setAuthorized_signatory("Anders Karlsson");
          return companyRepo.save(company);
 
     }
@@ -105,7 +106,8 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @Test
     void companyLogin_shouldReturnCompanyData(){
          Company company = createCompany();
-         CompanyLoginResponse response = authService.loginCompany("556000-1234");
+         CompanyLoginResponse response = authService.loginCompany(
+                 "556000-1234", "Anders Karlsson");
 
 
         assertThat(response.userId()).isEqualTo(company.getId());
@@ -120,7 +122,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
 
         LoginFailedException thrown = assertThrows(
                 LoginFailedException.class,
-                () -> authService.loginCompany("556000-9999"));
+                () -> authService.loginCompany("556000-9999", "Anders Karlsson"));
 
         assertThat(thrown.reason()).isEqualTo(LoginFailureReason.BANKID_REJECTED);
     }
@@ -129,7 +131,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         // 556000-5678 är BankID godkänt men skapas aldrig här
         LoginFailedException thrown = assertThrows(
                 LoginFailedException.class,
-                () -> authService.loginCompany("556000-5678"));
+                () -> authService.loginCompany("556000-5678", "Anders Karlsson"));
 
         assertThat(thrown.reason()).isEqualTo(LoginFailureReason.COMPANY_NOT_FOUND);
     }

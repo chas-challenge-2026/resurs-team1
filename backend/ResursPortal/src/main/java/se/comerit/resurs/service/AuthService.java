@@ -10,37 +10,35 @@ import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
 import se.comerit.resurs.persistence.model.Company;
 
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 
 
 @Service
 public class AuthService {
-
-
-    // BankID-mock — TODO: ersätt med riktig BankID-integration
-    private static final Set<String> BANKID_APPROVED_ORG_NUMBERS =
-            Set.of("556000-1234", "556000-5678");
-
     private final CompanyRepository companyRepository;
     private final CaseWorkerRepository caseWorkerRepository;
+    private final ValidationInterface validationInterface;
 
-    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository) {
+    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository,
+                       ValidationInterface validationInterface) {
         this.companyRepository = companyRepository;
         this.caseWorkerRepository = caseWorkerRepository;
+        this.validationInterface = validationInterface;
     }
-
 
     // BankID mock — hardcoded org numbers, real BankID integration skipped
     // TODO: replace with real BankID integration
-    public CompanyLoginResponse loginCompany(String orgNumber) {
-        if (!BANKID_APPROVED_ORG_NUMBERS.contains(orgNumber)) {
+    public CompanyLoginResponse loginCompany(String orgNumber, String signatoryName) {
+        if (!validationInterface.isApproved(orgNumber)) {
             throw new LoginFailedException(LoginFailureReason.BANKID_REJECTED);
         }
             Company company = companyRepository.findByOrgNumber(orgNumber)
                     .orElseThrow(() -> new LoginFailedException(LoginFailureReason.COMPANY_NOT_FOUND));
+
+        if (!signatoryName.equalsIgnoreCase(company.getAuthorized_signatory())) {
+            throw new LoginFailedException(LoginFailureReason.BANKID_REJECTED);
+        }
 
             return new CompanyLoginResponse(
                     company.getId(),
