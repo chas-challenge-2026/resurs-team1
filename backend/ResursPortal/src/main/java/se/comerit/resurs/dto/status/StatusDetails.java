@@ -9,7 +9,6 @@ public record StatusDetails (
         ApplicationStatusDetails app,
         List<Step> steps,
         ApplicationStatus currentStatus,
-        List<DocumentDTO> documents,
-        String auditLogRaw
+        List<DocumentDTO> documents
 ) {
 }

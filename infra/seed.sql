@@ -34,6 +34,25 @@ CREATE TABLE documents (
     uploaded_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE audit_events (
+    event_id UUID PRIMARY KEY,
+    application_id INT REFERENCES applications(id),
+    sequence_number BIGINT NOT NULL,
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    action VARCHAR(50) NOT NULL,
+    actor VARCHAR(100) NOT NULL,
+    data JSONB,
+    previous_hash VARCHAR(64),
+    current_hash VARCHAR(64),
+    schema_version INT NOT NULL,
+    signing_key_id VARCHAR(64),
+    signature VARCHAR(512),
+    CONSTRAINT uq_audit_application_sequence UNIQUE (application_id, sequence_number)
+);
+
+CREATE INDEX idx_audit_application_id ON audit_events(application_id);
+CREATE INDEX idx_audit_action ON audit_events(action);
+
 -- Seed: two companies (matching BankID mock org numbers)
 INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
 ('556000-1234', 'Malmö Fastigheter AB', 'Anders Karlsson'),

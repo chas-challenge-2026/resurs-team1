@@ -11,9 +11,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
+import se.comerit.resurs.persistence.model.AuditEvent;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
@@ -41,6 +44,8 @@ class DocumentServiceTest {
             .withCopyFileToContainer(MountableFile.forHostPath(SEED_SQL), "/docker-entrypoint-initdb.d/seed.sql");
 
     @Autowired
+    AuditEventRepository auditEventRepository;
+    @Autowired
     private DocumentService documentService;
     @Autowired
     private DocumentRepository documentRepository;
@@ -56,7 +61,6 @@ class DocumentServiceTest {
         application.setRequestedAmount(new BigDecimal("100000.00"));
         application.setPurpose("Testansökan");
         application.setStatus(status);
-        application.setAuditLog("[]");
         return creditApplicationRepository.save(application);
     }
 
@@ -109,17 +113,24 @@ class DocumentServiceTest {
     }
 
     @Test
-    void uploadDocument_validPdf_updatesAuditLog() throws IOException {
+    void uploadDocument_validPdf_writesAuditEvent() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
         CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
         documentService.uploadDocument(application.getId(), "balansrakning", file);
-        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
 
-        assertThat(updated.getAuditLog())
-                .contains("DOCUMENT_UPLOADED")
-                .contains("balansrakning.pdf");
+        List<AuditEvent> events =
+                auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(application.getId());
+
+        assertThat(events).hasSize(1);
+
+        AuditEvent event = events.get(0);
+        assertThat(event.getAction()).isEqualTo(AuditAction.DOCUMENT_UPLOADED);
+        assertThat(event.getSequenceNumber()).isEqualTo(1L);
+        assertThat(event.getActor()).isEqualTo(application.getCompany().getOrg_number());
+        assertThat(event.getOccurredAt()).isNotNull();
+        // Innehållet i data-fältet testas i AuditEventServiceTest
     }
 
     @Test

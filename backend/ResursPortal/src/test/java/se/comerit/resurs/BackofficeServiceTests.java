@@ -1,4 +1,3 @@
-
 package se.comerit.resurs;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +13,12 @@ import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
+import se.comerit.resurs.persistence.model.AuditEvent;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
@@ -31,10 +33,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Tester för BackofficeService.
+ *
+ * Verifierar handläggarflödet: beslut, listor och detaljvy. Att en audit-post
+ * skrivs kontrolleras här, men postens innehåll testas i AuditEventServiceTest.
+ */
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
 class BackofficeServiceTests {
+
+    private static final String WORKER_EMAIL = "karin@resurs.se";
+    private static final String WORKER_NAME = "test-worker";
 
     private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
             .resolve("../../infra/seed.sql")
@@ -64,8 +75,13 @@ class BackofficeServiceTests {
     @Autowired
     private CompanyRepository companyRepo;
 
+    @Autowired
+    private AuditEventRepository auditEventRepo;
+
     @BeforeEach
     void cleanDatabase() {
+        // audit_events har FK mot applications och måste tömmas först
+        auditEventRepo.deleteAll();
         documentRepo.deleteAll();
         creditRepo.deleteAll();
         companyRepo.deleteAll();
@@ -73,149 +89,62 @@ class BackofficeServiceTests {
 
     @Test
     void applicationDecision_shouldApproveApplication() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
+        CreditApplication saved =
+                creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         backofficeService.application_decision(
                 saved.getId(),
                 ApplicationStatus.APPROVED,
-                "test-worker",
+                WORKER_EMAIL,
+                WORKER_NAME,
                 "Application looks good"
         );
 
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        assertThat(updated.getStatus())
-                .isEqualTo(ApplicationStatus.APPROVED);
-
-        assertThat(updated.getDecision())
-                .isEqualTo("APPROVED");
-
-        assertThat(updated.getUpdatedAt())
-                .isNotNull();
-
-        assertThat(updated.getAuditLog())
-                .contains("\"action\":\"MANUAL_DECISION\"")
-                .contains("\"decision\":\"APPROVED\"")
-                .contains("\"worker\":\"test-worker\"")
-                .contains("\"comment\":\"Application looks good\"");
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(updated.getDecision()).isEqualTo("APPROVED");
+        assertThat(updated.getUpdatedAt()).isNotNull();
     }
 
     @Test
     void applicationDecision_shouldRejectApplication() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
+        CreditApplication saved =
+                creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         backofficeService.application_decision(
                 saved.getId(),
                 ApplicationStatus.REJECTED,
-                "test-worker",
+                WORKER_EMAIL,
+                WORKER_NAME,
                 "Insufficient score"
         );
 
         CreditApplication updated =
                 creditRepo.findById(saved.getId()).orElseThrow();
 
-        assertThat(updated.getStatus())
-                .isEqualTo(ApplicationStatus.REJECTED);
-
-        assertThat(updated.getDecision())
-                .isEqualTo("REJECTED");
-
-        assertThat(updated.getUpdatedAt())
-                .isNotNull();
-
-        assertThat(updated.getAuditLog())
-                .contains("\"action\":\"MANUAL_DECISION\"")
-                .contains("\"decision\":\"REJECTED\"")
-                .contains("\"worker\":\"test-worker\"")
-                .contains("\"comment\":\"Insufficient score\"");
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.REJECTED);
+        assertThat(updated.getDecision()).isEqualTo("REJECTED");
+        assertThat(updated.getUpdatedAt()).isNotNull();
     }
 
     @Test
-    void applicationDecision_shouldAppendToExistingAuditLog() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        application.setAuditLog(
-                "[{\"action\":\"APPLICATION_CREATED\",\"worker\":\"System\"}]"
-        );
-
-        CreditApplication saved = creditRepo.save(application);
+    void applicationDecision_shouldWriteAuditEvent() {
+        CreditApplication saved =
+                creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         backofficeService.application_decision(
                 saved.getId(),
                 ApplicationStatus.APPROVED,
-                "test-worker",
-                "Approved manually"
+                WORKER_EMAIL,
+                WORKER_NAME,
+                "Application looks good"
         );
 
-        CreditApplication updated =
-                creditRepo.findById(saved.getId()).orElseThrow();
-
-        String auditLog = updated.getAuditLog();
-
-        assertThat(auditLog)
-                .startsWith("[")
-                .endsWith("]");
-
-        assertThat(auditLog)
-                .contains("\"action\":\"APPLICATION_CREATED\"")
-                .contains("\"action\":\"MANUAL_DECISION\"")
-                .contains("\"decision\":\"APPROVED\"")
-                .contains("\"worker\":\"test-worker\"")
-                .contains("\"comment\":\"Approved manually\"");
-    }
-
-    @Test
-    void applicationDecision_shouldHandleEmptyComment() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
-
-        backofficeService.application_decision(
-                saved.getId(),
-                ApplicationStatus.APPROVED,
-                "test-worker",
-                ""
-        );
-
-        CreditApplication updated =
-                creditRepo.findById(saved.getId()).orElseThrow();
-
-        assertThat(updated.getAuditLog())
-                .contains("\"action\":\"MANUAL_DECISION\"")
-                .contains("\"decision\":\"APPROVED\"")
-                .contains("\"worker\":\"test-worker\"")
-                .doesNotContain("\"comment\"");
-    }
-
-    @Test
-    void applicationDecision_shouldEscapeQuotes() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
-
-        backofficeService.application_decision(
-                saved.getId(),
-                ApplicationStatus.APPROVED,
-                "test\"worker",
-                "Looks \"good\""
-        );
-
-        CreditApplication updated =
-                creditRepo.findById(saved.getId()).orElseThrow();
-
-        assertThat(updated.getAuditLog())
-                .contains("\"worker\":\"test'worker\"")
-                .contains("\"comment\":\"Looks 'good'\"");
+        assertThat(auditEventRepo.findByApplicationIdOrderBySequenceNumberAsc(saved.getId()))
+                .extracting(AuditEvent::getAction)
+                .containsExactly(AuditAction.MANUAL_DECISION);
     }
 
     @Test
@@ -224,10 +153,13 @@ class BackofficeServiceTests {
                 backofficeService.application_decision(
                         999999L,
                         ApplicationStatus.APPROVED,
-                        "test-worker",
+                        WORKER_EMAIL,
+                        WORKER_NAME,
                         "Test"
                 )
         ).isInstanceOf(java.util.NoSuchElementException.class);
+
+        assertThat(auditEventRepo.count()).isZero();
     }
 
     @Test
@@ -246,10 +178,8 @@ class BackofficeServiceTests {
 
     @Test
     void applicationDetails_shouldReturnApplicationAndDocuments() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
+        CreditApplication saved =
+                creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         Document document = new Document();
         document.setApplication(saved);
@@ -278,10 +208,8 @@ class BackofficeServiceTests {
 
     @Test
     void applicationDetails_shouldReturnEmptyDocumentsWhenNoneExist() {
-        CreditApplication application =
-                createApplication(ApplicationStatus.UNDER_REVIEW);
-
-        CreditApplication saved = creditRepo.save(application);
+        CreditApplication saved =
+                creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         CreditApplicationDetails result =
                 backofficeService.application_details(saved.getId());
@@ -306,10 +234,7 @@ class BackofficeServiceTests {
         application.setRequestedAmount(new BigDecimal("10000.00"));
         application.setPurpose("Test loan");
         application.setStatus(status);
-        application.setCreatedAt(LocalDateTime.now());
-        application.setAuditLog("[]");
 
         return application;
     }
 }
-

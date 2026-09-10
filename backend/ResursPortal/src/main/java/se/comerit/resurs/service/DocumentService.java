@@ -31,11 +31,13 @@ public class DocumentService {
     // TODO: använd ett persistent filsystem eller S3 i v2
     private static final String UPLOAD_DIR = "/tmp/uploads/"; //known bug #9, change to persistent storaging
 
+    private final AuditService auditService;
     private final DocumentRepository documentRepository;
     private final CreditApplicationRepository creditApplicationRepository;
 
     @Autowired
-    public DocumentService(DocumentRepository documentRepository, CreditApplicationRepository creditApplicationRepository) {
+    public DocumentService(AuditService auditService, DocumentRepository documentRepository, CreditApplicationRepository creditApplicationRepository) {
+        this.auditService = auditService;
         this.documentRepository = documentRepository;
         this.creditApplicationRepository = creditApplicationRepository;
     }
@@ -72,11 +74,11 @@ public class DocumentService {
         document.setFilename(storedFilename);
         document.setDoc_type(docType);
         document.setUploadedAt(LocalDateTime.now());
+
         documentRepository.save(document);
 
-        appendAuditLog(application, originalFilename, docType);
-        // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
-        // No business rules validation — just check docType string
+        auditService.documentUploaded(application, originalFilename, document.getDoc_type());
+
         if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
             markUnderReview(application);
         }
@@ -95,23 +97,6 @@ public class DocumentService {
         if (!allowed) {
             throw new IllegalArgumentException("Only PDF-files are accepted.");
         }
-    }
-
-    // Replace with AuditService.append() when issue #102 is done
-    // Update audit log JSON blob — same string manipulation pattern as ApplicationController
-    // TODO: skapa separat audit_log-tabell med index
-    private void appendAuditLog(CreditApplication application, String filename, String docType) {
-        String newEntry = "{\"ts\":\"" +
-                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "\",\"action\":\"DOCUMENT_UPLOADED\",\"filename\":\"" + filename
-                + "\",\"docType\":\"" + docType + "\"}";
-        String currentLog = application.getAuditLog();
-        String updatedLog = (currentLog == null || currentLog.equals("[]")) ? "[" + newEntry +
-                "]" : currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + newEntry + "]";
-
-        application.setAuditLog(updatedLog);
-        application.setUpdatedAt(LocalDateTime.now());
-        creditApplicationRepository.save(application);
     }
 
     private void markUnderReview(CreditApplication application) {
