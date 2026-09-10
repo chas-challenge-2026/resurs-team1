@@ -107,7 +107,6 @@ const LoginPage = () => {
                 <div>
 
                   <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och försök igen.</p>
-                  <p role="alert" className={s.formError}>Format: XXXXXX-XXXX</p>
                 </div>
                 }
 
