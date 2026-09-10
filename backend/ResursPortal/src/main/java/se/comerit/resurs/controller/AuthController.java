@@ -42,7 +42,7 @@ public class AuthController {
     public ResponseEntity<CompanyLoginResponse>loginCompany(
                 @Valid @RequestBody CompanyLoginRequest request, HttpSession session
                 ){
-            CompanyLoginResponse response = authService.loginCompany(request.orgNumber());
+            CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.signatoryName());
 
             session.setAttribute("userId", response.userId());
             session.setAttribute("role", "company");
