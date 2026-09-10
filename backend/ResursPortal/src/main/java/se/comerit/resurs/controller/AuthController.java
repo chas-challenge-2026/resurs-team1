@@ -11,7 +11,7 @@ import se.comerit.resurs.service.AuthService;
 
 
 @RestController
-@RequestMapping("/api/")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthService authService;
