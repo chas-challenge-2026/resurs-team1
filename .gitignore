@@ -25,3 +25,8 @@ dist-ssr
 
 # CMake
 native/build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
