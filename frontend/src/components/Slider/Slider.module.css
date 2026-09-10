@@ -1,0 +1,91 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.numberInput {
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  padding-right: var(--space-xs);
+  outline: none;
+  width: auto;
+  field-sizing: content;
+  min-width: 2ch;
+  max-width: 12ch;
+}
+
+.unitSuffix {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.valueDisplayButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  border-bottom: 1px dashed var(--color-text-muted);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.rangeInput {
+  appearance: none;
+  outline: none;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  margin: var(--space-xs) 0;
+  cursor: pointer;
+}
+
+/* Style for (Thumb) in Webkit (Chrome/Safari/Edge) */
+.rangeInput::-webkit-slider-thumb  {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: #ffffff;
+  border: 2px solid var(--color-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+/* Style for thumb in Firefox */
+.rangeInput::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: #ffffff;
+  border: 2px solid var(--color-primary, #436d63);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rangeInput:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.rangeInput:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.footerLabels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}

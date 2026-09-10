@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios"
-import { getToken, removeToken } from "../utils/auth"
+import { clearAuthStorage } from "../utils/auth"
 
 export interface ApiErrorPayload {
   status?: number;
@@ -9,20 +9,10 @@ export interface ApiErrorPayload {
   originalError: AxiosError;
 }
 
-// dev: vite proxy strips "/api". 
-// prod: (backend has no json api as of writing this) -- sending json but not getting json back
-// no proxy, so backend must answer on /api too "server.servlet.context-path=/api"
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
   timeout: 10000,
-})
-
-api.interceptors.request.use((config) => {
-  const token = getToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
 })
 
 api.interceptors.response.use(
@@ -40,9 +30,11 @@ api.interceptors.response.use(
     if (!error.response) {
       fallbackMessage = "Kunde inte ansluta till servern. Kontrollera din internetanslutning."
     } else if (status === 401 && !isLoginRequest) {
-      fallbackMessage = "Sessionen har gått ut, loggar ut..."
-      removeToken()
-      window.location.href = "/logga-in"
+      clearAuthStorage()
+      window.location.href = "/"
+      return Promise.reject(error)
+    } else if (status === 401 && isLoginRequest) {
+      fallbackMessage = "Felaktiga inloggningsuppgifter."
     } else if (status === 403) {
       fallbackMessage = "Du saknar behörighet att utföra denna åtgärd."
     } else if (status === 404) {

@@ -1,6 +1,8 @@
 .header {
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  /* not fixed, the background has to reach the open dropdown too */
+  height: auto;
   /* keeps header + dropdown painted above the backdrop */
   position: sticky;
   top: 0;
@@ -10,9 +12,10 @@
 /* same width rules as main to stay aligned */
 .inner {
   width: 100%;
-  max-width: 960px;
+  max-width: 1200px;
+  height: 64px;
   margin: 0 auto;
-  padding: var(--space-sm) var(--space-base);
+  padding: 0 var(--space-base);
   display: flex;
   align-items: center;
   gap: var(--space-base);
@@ -83,6 +86,29 @@
   background-color: var(--border);
 }
 
+/* role badge sits next to the wordmark, mirrors the muted label styling */
+.role,
+.menuRole {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* eats the free space so the right cluster stays pinned to the edge */
+.search {
+  flex: 1;
+  min-width: 0;
+}
+
+/* element selector outranks the global .input-base radius without !important */
+.search input {
+  width: 100%;
+  border-radius: var(--radius-pill);
+}
+
 /* burger + dropdown only exist under the breakpoint */
 .burger {
   display: none;
@@ -115,9 +141,18 @@
   }
 
   /* the whole bar cluster moves into the dropdown */
+  /* .search is deliberately not here, it stays in the bar */
   .nav,
-  .right {
+  .right,
+  .role,
+  .roleDivider {
     display: none;
+  }
+
+  /* the badge only shows up here once it left the bar */
+  .menuRole {
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border);
   }
 
   .burger {
@@ -164,6 +199,17 @@
   .menu .user {
     padding-top: var(--space-xs);
     border-top: 1px solid var(--border);
+  }
+
+  /* vertical rule between name and button, nothing to separate in a column */
+  .menu .divider {
+    display: none;
+  }
+
+  /* the badge already drew that line, a second one right under it looks broken */
+  .menuRole + .user {
+    padding-top: 0;
+    border-top: none;
   }
 
   .menuNav {

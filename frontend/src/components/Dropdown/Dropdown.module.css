@@ -43,3 +43,22 @@
   height: 1px;
   clip-path: inset(50%);
 }
+
+/* Sizes */
+.sm {
+  height: 36px;
+}
+
+.md {
+  height: 48px;
+}
+
+@media (min-width: 768px) {
+  .sm {
+    height: 40px;
+  }
+
+  .md {
+    height: 60px;
+  }
+}
