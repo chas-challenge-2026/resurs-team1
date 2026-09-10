@@ -19,9 +19,19 @@ const INITIAL_FORM = {
   password: "",
 }
 
+const ORG_NUMBER_DIGITS = 10
+
+// force the shape
+// the "-" waits for a digit to follow it, otherwise backspace can never delete it
+const formatOrgNumber = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, ORG_NUMBER_DIGITS)
+  return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
+}
+
 const LoginPage = () => {
   const [role, setRole] = useState<UserRole>("company")
   const [formData, setFormData] = useState(INITIAL_FORM)
+  const [orgNumberError, setOrgNumberError] = useState("")
 
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
@@ -33,13 +43,24 @@ const LoginPage = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
-    // the error belongs to the rejected value, so it should go once they start correcting it
+    // reset error as soon as user ttypes again
     if (activeLogin.isError) activeLogin.reset()
-    setFormData((prev) => ({ ...prev, [id]: value }))
+    setOrgNumberError("")
+    setFormData((prev) => ({
+      ...prev,
+      [id]: id === "orgNumber" ? formatOrgNumber(value) : value,
+    }))
   }
 
   const handleCompanySubmit = (e: React.SubmitEvent) => {
     e.preventDefault()
+
+    // insta reject wrong format, wait for BankID on correct nyumbers
+    if (formData.orgNumber.replace(/\D/g, "").length !== ORG_NUMBER_DIGITS) {
+      setOrgNumberError("Organisationsnumret ska innehålla 10 siffror")
+      return
+    }
+
     companyLogin.mutate({ orgNumber: formData.orgNumber })
   }
 
@@ -72,13 +93,15 @@ const LoginPage = () => {
                 <Loading fullscreen size="lg" label="Väntar på BankID..." />
               }
 
-              <Input
+              <Input 
                 id="orgNumber"
-                label="Organisationsnummer *" 
-                placeholder="XXXXXX-XXXX" 
-                information="Ange 10 siffror" 
-                value={formData.orgNumber} 
-                onChange={handleChange} 
+                inputMode="numeric"
+                label="Organisationsnummer *"
+                placeholder="XXXXXX-XXXX"
+                information="Ange 10 siffror"
+                error={orgNumberError}
+                value={formData.orgNumber}
+                onChange={handleChange}
               />
               {companyLogin.isError &&
                 <div>
