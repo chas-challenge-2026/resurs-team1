@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import { getUser, getUserDisplayName } from "../../utils/auth"
+import { getDefaultRedirectPath, getUser, getUserDisplayName } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
@@ -37,7 +37,7 @@ const Header = ({ search, children }: HeaderProps) => {
     <>
       <header className={s.header}>
         <div className={s.inner}>
-          <a className={s.logo} href="/">
+          <a className={s.logo} href={getDefaultRedirectPath(user)}>
             <img src={logo} alt="Resurs" />
           </a>
 
