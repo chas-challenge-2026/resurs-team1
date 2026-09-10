@@ -17,6 +17,21 @@ namespace {
 
 using Iv = std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES>;
 using Tag = std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES>;
+using Key = std::array<unsigned char, resurs::crypto::AES_256_KEY_SIZE_BYTES>;
+
+constexpr Key TEST_KEY = {
+    0x52, 0x86, 0x5A, 0x9C, 0x22, 0xEE, 0x88, 0xE5,
+    0x03, 0x25, 0x6B, 0x6D, 0x04, 0x01, 0x21, 0x6B,
+    0xDE, 0xD4, 0x06, 0xA1, 0xFD, 0x88, 0x61, 0x6C,
+    0x1A, 0x7A, 0x77, 0x92, 0x18, 0x76, 0xCF, 0x9C
+};
+
+constexpr Key WRONG_KEY = {
+    0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8,
+    0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0,
+    0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8,
+    0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF, 0xC0
+};
 
 static_assert(resurs::crypto::AES_256_KEY_SIZE_BYTES == 32, "AES-256 requires a 32-byte key");
 static_assert(resurs::crypto::GCM_IV_SIZE_BYTES == 12, "This API requires a 96-bit GCM IV");
@@ -36,7 +51,7 @@ std::vector<uint8_t> bytes(const std::string &text)
 EncryptionResult core_encrypt(AES256_Encryption &crypto, const std::string &plaintext)
 {
     std::string mutable_plaintext = plaintext;
-    return crypto.AES256_Encrypt(mutable_plaintext);
+    return crypto.AES256_Encrypt(mutable_plaintext, TEST_KEY.data());
 }
 
 EncryptionResult core_encrypt(const std::string &plaintext)
@@ -49,7 +64,8 @@ void expect_core_authentication_failure(const EncryptionResult &encrypted)
 {
     AES256_Encryption crypto;
     try {
-        (void)crypto.AES256_Decrypt(encrypted.ciphertext, encrypted.iv, encrypted.tag);
+        (void)crypto.AES256_Decrypt(
+            encrypted.ciphertext, TEST_KEY.data(), encrypted.iv, encrypted.tag);
     } catch (const AuthenticationError &) {
         return;
     } catch (const std::exception &error) {
@@ -75,6 +91,8 @@ WrapperResult wrapper_encrypt(const std::vector<uint8_t> &plaintext)
     const int status = aes_256_gcm_encrypt(
         plaintext_data,
         static_cast<int>(plaintext.size()),
+        TEST_KEY.data(),
+        static_cast<int>(TEST_KEY.size()),
         result.iv.data(),
         static_cast<int>(result.iv.size()),
         result.ciphertext.data(),
@@ -98,6 +116,8 @@ std::vector<uint8_t> wrapper_decrypt(const WrapperResult &encrypted)
     const int status = aes_256_gcm_decrypt(
         ciphertext_data,
         static_cast<int>(encrypted.ciphertext.size()),
+        TEST_KEY.data(),
+        static_cast<int>(TEST_KEY.size()),
         encrypted.iv.data(),
         static_cast<int>(encrypted.iv.size()),
         plaintext.data(),
@@ -119,6 +139,8 @@ int wrapper_decrypt_status(const WrapperResult &encrypted, std::vector<uint8_t> 
     return aes_256_gcm_decrypt(
         ciphertext_data,
         static_cast<int>(encrypted.ciphertext.size()),
+        TEST_KEY.data(),
+        static_cast<int>(TEST_KEY.size()),
         encrypted.iv.data(),
         static_cast<int>(encrypted.iv.size()),
         plaintext.data(),
@@ -150,7 +172,8 @@ void test_core_round_trips()
         require(encrypted.ciphertext.size() == input.size(), "GCM changed the data length");
 
         AES256_Encryption decryptor;
-        require(decryptor.AES256_Decrypt(encrypted.ciphertext, encrypted.iv, encrypted.tag) == input,
+        require(decryptor.AES256_Decrypt(
+                    encrypted.ciphertext, TEST_KEY.data(), encrypted.iv, encrypted.tag) == input,
                 "core round trip changed the plaintext");
     }
 }
@@ -168,7 +191,8 @@ void test_core_random_iv_and_reuse()
         if (!previous_ciphertext.empty())
             require(encrypted.ciphertext != previous_ciphertext,
                     "identical plaintext produced identical ciphertext");
-        require(crypto.AES256_Decrypt(encrypted.ciphertext, encrypted.iv, encrypted.tag) == plaintext,
+        require(crypto.AES256_Decrypt(
+                    encrypted.ciphertext, TEST_KEY.data(), encrypted.iv, encrypted.tag) == plaintext,
                 "reused context failed a round trip");
         previous_ciphertext = encrypted.ciphertext;
     }
@@ -246,18 +270,21 @@ void test_wrapper_rejects_null_pointers()
     uint8_t byte = 0;
     Iv iv{};
     Tag tag{};
+    const int key_size = static_cast<int>(TEST_KEY.size());
     const int iv_size = static_cast<int>(iv.size());
     const int tag_size = static_cast<int>(tag.size());
 
-    require(aes_256_gcm_encrypt(nullptr, 1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null plaintext");
-    require(aes_256_gcm_encrypt(&byte, 1, nullptr, iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null IV");
-    require(aes_256_gcm_encrypt(&byte, 1, iv.data(), iv_size, nullptr, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null ciphertext");
-    require(aes_256_gcm_encrypt(&byte, 1, iv.data(), iv_size, &byte, 1, nullptr, tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null tag");
+    require(aes_256_gcm_encrypt(nullptr, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null plaintext");
+    require(aes_256_gcm_encrypt(&byte, 1, nullptr, key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null key");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, nullptr, iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null IV");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, nullptr, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null ciphertext");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, nullptr, tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted null tag");
 
-    require(aes_256_gcm_decrypt(nullptr, 1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null ciphertext");
-    require(aes_256_gcm_decrypt(&byte, 1, nullptr, iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null IV");
-    require(aes_256_gcm_decrypt(&byte, 1, iv.data(), iv_size, nullptr, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null plaintext");
-    require(aes_256_gcm_decrypt(&byte, 1, iv.data(), iv_size, &byte, 1, nullptr, tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null tag");
+    require(aes_256_gcm_decrypt(nullptr, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null ciphertext");
+    require(aes_256_gcm_decrypt(&byte, 1, nullptr, key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null key");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, nullptr, iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null IV");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, nullptr, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null plaintext");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, nullptr, tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted null tag");
 }
 
 void test_wrapper_rejects_negative_lengths()
@@ -265,18 +292,21 @@ void test_wrapper_rejects_negative_lengths()
     uint8_t byte = 0;
     Iv iv{};
     Tag tag{};
+    const int key_size = static_cast<int>(TEST_KEY.size());
     const int iv_size = static_cast<int>(iv.size());
     const int tag_size = static_cast<int>(tag.size());
 
-    require(aes_256_gcm_encrypt(&byte, -1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative plaintext length");
-    require(aes_256_gcm_encrypt(&byte, 1, iv.data(), -1, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative IV length");
-    require(aes_256_gcm_encrypt(&byte, 1, iv.data(), iv_size, &byte, -1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative ciphertext length");
-    require(aes_256_gcm_encrypt(&byte, 1, iv.data(), iv_size, &byte, 1, tag.data(), -1) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative tag length");
+    require(aes_256_gcm_encrypt(&byte, -1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative plaintext length");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), -1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative key length");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), -1, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative IV length");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, -1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative ciphertext length");
+    require(aes_256_gcm_encrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), -1) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted negative tag length");
 
-    require(aes_256_gcm_decrypt(&byte, -1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative ciphertext length");
-    require(aes_256_gcm_decrypt(&byte, 1, iv.data(), -1, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative IV length");
-    require(aes_256_gcm_decrypt(&byte, 1, iv.data(), iv_size, &byte, -1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative plaintext length");
-    require(aes_256_gcm_decrypt(&byte, 1, iv.data(), iv_size, &byte, 1, tag.data(), -1) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative tag length");
+    require(aes_256_gcm_decrypt(&byte, -1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative ciphertext length");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), -1, iv.data(), iv_size, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative key length");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), -1, &byte, 1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative IV length");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, -1, tag.data(), tag_size) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative plaintext length");
+    require(aes_256_gcm_decrypt(&byte, 1, TEST_KEY.data(), key_size, iv.data(), iv_size, &byte, 1, tag.data(), -1) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted negative tag length");
 }
 
 void test_wrapper_rejects_small_buffers()
@@ -286,15 +316,62 @@ void test_wrapper_rejects_small_buffers()
     Tag tag{};
     std::vector<uint8_t> ciphertext(plaintext.size());
 
-    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), iv.data(), static_cast<int>(iv.size()) - 1, ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short IV buffer");
-    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()) - 1, tag.data(), static_cast<int>(tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short ciphertext buffer");
-    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size()) - 1) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short tag buffer");
+    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), iv.data(), static_cast<int>(iv.size()) - 1, ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short IV buffer");
+    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()) - 1, tag.data(), static_cast<int>(tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short ciphertext buffer");
+    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size()) - 1) == CRYPTO_BUFFER_TOO_SMALL, "encrypt accepted a short tag buffer");
 
     const auto encrypted = wrapper_encrypt(plaintext);
     std::vector<uint8_t> output(plaintext.size());
-    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()) - 1, output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short IV buffer");
-    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()) - 1, encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short plaintext buffer");
-    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size()) - 1) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short tag buffer");
+    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()) - 1, output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short IV buffer");
+    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()) - 1, encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short plaintext buffer");
+    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), TEST_KEY.data(), static_cast<int>(TEST_KEY.size()), encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size()) - 1) == CRYPTO_BUFFER_TOO_SMALL, "decrypt accepted a short tag buffer");
+}
+
+void test_wrapper_rejects_invalid_key_lengths()
+{
+    const auto plaintext = bytes("key length validation");
+    Iv iv{};
+    Tag tag{};
+    std::vector<uint8_t> ciphertext(plaintext.size());
+    const int key_size = static_cast<int>(TEST_KEY.size());
+
+    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), TEST_KEY.data(), key_size - 1, iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size())) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted a short key");
+    require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()), TEST_KEY.data(), key_size + 1, iv.data(), static_cast<int>(iv.size()), ciphertext.data(), static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size())) == CRYPTO_INVALID_ARGUMENT, "encrypt accepted a long key");
+
+    const auto encrypted = wrapper_encrypt(plaintext);
+    std::vector<uint8_t> output(plaintext.size());
+    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), TEST_KEY.data(), key_size - 1, encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted a short key");
+    require(aes_256_gcm_decrypt(encrypted.ciphertext.data(), static_cast<int>(encrypted.ciphertext.size()), TEST_KEY.data(), key_size + 1, encrypted.iv.data(), static_cast<int>(encrypted.iv.size()), output.data(), static_cast<int>(output.size()), encrypted.tag.data(), static_cast<int>(encrypted.tag.size())) == CRYPTO_INVALID_ARGUMENT, "decrypt accepted a long key");
+}
+
+void test_wrapper_rejects_wrong_key()
+{
+    const auto plaintext = bytes("wrong key must fail authentication");
+    const auto encrypted = wrapper_encrypt(plaintext);
+    std::vector<uint8_t> output(plaintext.size(), 0xA5);
+
+    int status = CRYPTO_INTERNAL_ERROR;
+    try {
+        status = aes_256_gcm_decrypt(
+            encrypted.ciphertext.data(),
+            static_cast<int>(encrypted.ciphertext.size()),
+            WRONG_KEY.data(),
+            static_cast<int>(WRONG_KEY.size()),
+            encrypted.iv.data(),
+            static_cast<int>(encrypted.iv.size()),
+            output.data(),
+            static_cast<int>(output.size()),
+            encrypted.tag.data(),
+            static_cast<int>(encrypted.tag.size()));
+    } catch (...) {
+        throw std::runtime_error("an exception escaped the wrapper for a wrong key");
+    }
+
+    require(status == CRYPTO_AUTHENTICATION_FAILED,
+            "wrong key returned status " + std::to_string(status));
+    require(std::all_of(output.begin(), output.end(),
+                [](uint8_t value) { return value == 0xA5; }),
+            "plaintext was copied after authentication with a wrong key");
 }
 
 void test_wrapper_does_not_overwrite_oversized_buffers()
@@ -306,6 +383,7 @@ void test_wrapper_does_not_overwrite_oversized_buffers()
     std::vector<unsigned char> tag(resurs::crypto::GCM_TAG_SIZE_BYTES + 8, sentinel);
 
     require(aes_256_gcm_encrypt(plaintext.data(), static_cast<int>(plaintext.size()),
+                TEST_KEY.data(), static_cast<int>(TEST_KEY.size()),
                 iv.data(), static_cast<int>(iv.size()), ciphertext.data(),
                 static_cast<int>(ciphertext.size()), tag.data(), static_cast<int>(tag.size())) == CRYPTO_OK,
             "encrypt rejected oversized buffers");
@@ -315,6 +393,7 @@ void test_wrapper_does_not_overwrite_oversized_buffers()
 
     std::vector<uint8_t> output(plaintext.size() + 8, sentinel);
     require(aes_256_gcm_decrypt(ciphertext.data(), static_cast<int>(plaintext.size()),
+                TEST_KEY.data(), static_cast<int>(TEST_KEY.size()),
                 iv.data(), static_cast<int>(iv.size()), output.data(), static_cast<int>(output.size()),
                 tag.data(), static_cast<int>(tag.size())) == CRYPTO_OK,
             "decrypt rejected oversized buffers");
@@ -371,6 +450,8 @@ int main()
         {"wrapper rejects null pointers", test_wrapper_rejects_null_pointers},
         {"wrapper rejects negative lengths", test_wrapper_rejects_negative_lengths},
         {"wrapper rejects small buffers", test_wrapper_rejects_small_buffers},
+        {"wrapper rejects invalid key lengths", test_wrapper_rejects_invalid_key_lengths},
+        {"wrapper rejects a different valid-length key", test_wrapper_rejects_wrong_key},
         {"wrapper preserves oversized buffer boundaries", test_wrapper_does_not_overwrite_oversized_buffers},
         {"wrapper maps tampering to authentication failure", test_wrapper_maps_all_tampering_to_authentication_failure},
     };

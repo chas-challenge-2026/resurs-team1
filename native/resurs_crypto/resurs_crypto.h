@@ -19,14 +19,6 @@ struct EncryptionResult
     std::vector<unsigned char> ciphertext;
 };
 
-enum CryptoStatus
-{
-    CRYPTO_OK = 0,
-    CRYPTO_INVALID_ARGUMENT = -1,
-    CRYPTO_BUFFER_TOO_SMALL = -2,
-    CRYPTO_AUTHENTICATION_FAILED = -3,
-    CRYPTO_INTERNAL_ERROR = -4
-};
 
 class AuthenticationError : public std::runtime_error
 {
@@ -56,16 +48,11 @@ public:
         }
     };
 
-    EncryptionResult AES256_Encrypt(std::string& plaintext);
+    EncryptionResult AES256_Encrypt(std::string& plaintext, const unsigned char *aes_key);
 
-    std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag);
+    std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const unsigned char *aes_key, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag);
 
 private:
-    std::array<unsigned char, resurs::crypto::AES_256_KEY_SIZE_BYTES> key =
-        {0x52, 0x86, 0x5A, 0x9C, 0x22, 0xEE, 0x88, 0xE5,
-         0x03, 0x25, 0x6B, 0x6D, 0x04, 0x01, 0x21, 0x6B,
-         0xDE, 0xD4, 0x06, 0xA1, 0xFD, 0x88, 0x61, 0x6C,
-         0x1A, 0x7A, 0x77, 0x92, 0x18, 0x76, 0xCF, 0x9C};
     // CipherCtxPtr becomes an alias of the whole thing after, which is a unique pointer of a sepcific type(EVP_CIPHER_CTX) and a custom delete, the "&EVP_CIPHER_CTX_free"-part
     using CipherCtxPtr = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;
     using CipherPtr = std::unique_ptr<EVP_CIPHER, decltype(&EVP_CIPHER_free)>;

@@ -3,6 +3,7 @@
 
 
 #include "resurs_crypto.h"
+#include "crypto_types.h"
 #include <iostream>
 
 
@@ -23,11 +24,18 @@ int main()
 
     std::vector<uint8_t> ciphertext(text.size());
     std::vector<uint8_t> decrypted(text.size());
+    std::array<unsigned char, resurs::crypto::AES_256_KEY_SIZE_BYTES> key =
+        {0x52, 0x86, 0x5A, 0x9C, 0x22, 0xEE, 0x88, 0xE5,
+         0x03, 0x25, 0x6B, 0x6D, 0x04, 0x01, 0x21, 0x6B,
+         0xDE, 0xD4, 0x06, 0xA1, 0xFD, 0x88, 0x61, 0x6C,
+         0x1A, 0x7A, 0x77, 0x92, 0x18, 0x76, 0xCF, 0x9C};
 
     // Encrypt
     int encryptResult = aes_256_gcm_encrypt(
         reinterpret_cast<const uint8_t *>(text.data()),
         static_cast<int>(text.size()),
+        key.data(),
+        static_cast<int>(key.size()),
         iv.data(),
         static_cast<int>(iv.size()),
         ciphertext.data(),
@@ -52,6 +60,8 @@ int main()
     int decryptResult = aes_256_gcm_decrypt(
         ciphertext.data(),
         static_cast<int>(ciphertext.size()),
+        key.data(),
+        static_cast<int>(key.size()),
         iv.data(),
         static_cast<int>(iv.size()),
         decrypted.data(),
@@ -89,62 +99,3 @@ int main()
 
     return 0;
 }   
-/*
-
-int main()
-{
-    std::string text = "aaaaaaaabbbbbbbbbcccccccccccc";
-
-    std::array<uint8_t, 12> iv;
-    std::vector<uint8_t> cipher_text(text.size());
-    std::array<unsigned char, 16> tag;
-
-    int result = aes_256_gcm_encrypt(
-        reinterpret_cast<const uint8_t*>(text.data()),
-        static_cast<int>(text.size()),
-        iv.data(), 
-        static_cast<int>(iv.size()),
-        cipher_text.data(),
-        static_cast<int>(cipher_text.size()),
-        tag.data(),
-        static_cast<int>(tag.size())
-    );
-
-    if (result != 0)
-    {
-        std::cerr << "Encryption failed\n";
-        return 1;
-    }
-
-    std::cout << "Plaintext: " << text << "\n";
-
-    std::cout << "IV: ";
-    for (unsigned char byte : iv)
-    {
-        std::cout << std::hex
-                  << std::setw(2)
-                  << std::setfill('0')
-                  << static_cast<int>(byte);
-    }
-
-    std::cout << "\nCiphertext: ";
-    for (unsigned char byte : cipher_text)
-    {
-        std::cout << std::hex
-                  << std::setw(2)
-                  << std::setfill('0')
-                  << static_cast<int>(byte);
-    }
-
-    std::cout << "\nTag: ";
-    for (unsigned char byte : tag)
-    {
-        std::cout << std::hex
-                  << std::setw(2)
-                  << std::setfill('0')
-                  << static_cast<int>(byte);
-    }
-
-    std::cout << '\n';
-}
-*/

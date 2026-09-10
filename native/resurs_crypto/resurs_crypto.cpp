@@ -1,9 +1,8 @@
-
 #include "resurs_crypto.h"
 #include <openssl/ssl.h>
 #include <cstring>
 
-EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
+EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const unsigned char* aes_key)
 {
     EncryptionResult result;
 
@@ -16,12 +15,8 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
     // The class constructor fetched the algoritm for us, so no need for specific code here.
 
 
-
-    // TODO - hämta key via Docker Secrets istället
-
-
     // We supply the key and IV directly. The default length of the IV is already set to 12 bytes(96 bits), so no need to explicitly set it.
-    if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), key.data(), result.iv.data(), nullptr) != 1)
+    if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), aes_key, result.iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set key and IV");
     }
@@ -61,7 +56,7 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext)
     return result;
 };
 
-std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag)
+std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const unsigned char* aes_key, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag)
 {
 
     // Resuse existing context, but reset/clear previous encryption state.
@@ -78,7 +73,7 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
 
 
     // init 
-    if (EVP_DecryptInit_ex2(ctx.get(), cipher(), key.data(), iv.data(), nullptr) != 1)
+    if (EVP_DecryptInit_ex2(ctx.get(), cipher.get(), aes_key, iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set KEY and IV");
     }
