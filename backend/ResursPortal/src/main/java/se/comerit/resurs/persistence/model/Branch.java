@@ -14,7 +14,7 @@ public class Branch {
 
     @Column
     public String branchName;
-    @Column
+    @Column(name = "bransch_faktor" )
     public double branchFactor;
     @Column
     public double branschSnittsSoliditet;
