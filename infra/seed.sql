@@ -37,6 +37,7 @@ CREATE TABLE documents (
 CREATE TABLE branches (
     id BIGSERIAL PRIMARY KEY,
     branch_name VARCHAR(50),
+    bransch_faktor DOUBLE PRECISION,
     bransch_snitts_soliditet DOUBLE PRECISION,
     bransch_snitt_skuldsattning DOUBLE PRECISION,
     bransch_snitt_marginal DOUBLE PRECISION
