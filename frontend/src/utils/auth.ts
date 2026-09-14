@@ -25,3 +25,17 @@ export const clearAuthStorage = () => {
 export const getUserDisplayName = (user: User): string => {
   return user.role === "company" ? user.companyName : user.name;
 }
+
+//Get default redirect path
+export const getDefaultRedirectPath = (user: User | null): string => {
+  if (!user) return "/"
+
+  switch (user.role) {
+    case 'company':
+      return '/oversikt'
+    case 'caseWorker':
+      return '/arenden'
+    default:
+      return '/'
+  }
+}
