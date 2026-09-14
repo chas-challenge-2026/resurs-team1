@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * DocumentService hanterar affärslogiken för dokumentuppladdning och nedladdning.
@@ -40,9 +41,12 @@ public class DocumentService {
         this.creditApplicationRepository = creditApplicationRepository;
     }
     public List<DocumentDTO> findByApplicationId(Long applicationId) {
-        if (creditApplicationRepository.findById(applicationId).isEmpty()) {
-            throw new IllegalArgumentException("Application not found");
-        }
+        creditApplicationRepository.findById(applicationId)
+                .orElseThrow(
+                        ()-> new NoSuchElementException(
+                                "Application not found")
+                );
+
         return documentRepository.findByApplicationId(applicationId).stream().map(DocumentDTO::new).toList();
     }
 
@@ -50,12 +54,18 @@ public class DocumentService {
     // av varandra, om det skulle krascha mitt i så lämnas inkonsekvent data, samma bugg som i known-bugs.md #5.
     @Transactional
     public void uploadDocument(Long applicationId, String docType, MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
+        if (applicationId == null) {
+            throw new IllegalArgumentException("Application ID must not be null.");
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new IllegalArgumentException("Document type must not be empty.");
+        }
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("No chosen file.");
         }
         validateFileType(file);
         CreditApplication application = creditApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new IllegalArgumentException("Application not found."));
+                .orElseThrow(() -> new NoSuchElementException("Application not found."));
 
         String originalFilename = file.getOriginalFilename();
         String storedFilename = applicationId + "_" + originalFilename;
