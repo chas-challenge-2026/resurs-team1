@@ -30,7 +30,7 @@ public record ScoringThresholds(
             double minimum
     ){}
     public record DebtRatioThresholds(
-            double max,
+            double maximum,
             double high
     ){}
     public record OperatingMarginThresholds(
