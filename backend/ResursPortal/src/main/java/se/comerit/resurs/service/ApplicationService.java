@@ -37,7 +37,7 @@ public class ApplicationService {
         creditApplication.setScoringResult(newApplication.scoring_result());
 
         // Ingen index, ingen separat tabell — allt i en JSON-'blob'
-        // TODO: skapa separat audit_log-tabell med index
+        // TODO: skapa separat auditLog-tabell med index
         String initialAuditLog = "[{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "\",\"action\":\"APPLICATION_CREATED\",\"orgNumber\":\"" + newApplication.org_number() + "\"}]";
 

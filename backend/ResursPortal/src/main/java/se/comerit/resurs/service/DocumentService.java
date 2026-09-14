@@ -99,7 +99,7 @@ public class DocumentService {
 
     // Replace with AuditService.append() when issue #102 is done
     // Update audit log JSON blob — same string manipulation pattern as ApplicationController
-    // TODO: skapa separat audit_log-tabell med index
+    // TODO: skapa separat auditLog-tabell med index
     private void appendAuditLog(CreditApplication application, String filename, String docType) {
         String newEntry = "{\"ts\":\"" +
                 LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)

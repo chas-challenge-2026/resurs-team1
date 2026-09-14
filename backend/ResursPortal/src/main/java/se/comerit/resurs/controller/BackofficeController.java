@@ -110,7 +110,7 @@ public class BackofficeController {
         /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
-        model.addAttribute("auditLogRaw", app.get("audit_log"));
+        model.addAttribute("auditLogRaw", app.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 

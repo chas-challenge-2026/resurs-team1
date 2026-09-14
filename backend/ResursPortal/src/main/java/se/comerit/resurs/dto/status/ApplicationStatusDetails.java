@@ -8,17 +8,17 @@ import java.time.LocalDateTime;
 
 public record ApplicationStatusDetails(
         Long id,
-        BigDecimal requested_amount,
+        BigDecimal requestedAmount,
         String purpose,
         ApplicationStatus status,
         String decision,
-        String decision_reason,
-        String scoring_result,
-        String audit_log,
-        LocalDateTime created_at,
-        LocalDateTime updated_at,
-        String company_name,
-        String org_number
+        String decisionReason,
+        String scoringResult,
+        String auditLog,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        String companyName,
+        String orgNumber
 
 ) {
     public ApplicationStatusDetails(CreditApplication app) {

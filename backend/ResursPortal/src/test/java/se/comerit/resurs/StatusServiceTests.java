@@ -85,7 +85,7 @@ class StatusServiceTests {
 
         assertEquals(
                 new BigDecimal("100000.00"),
-                result.app().requested_amount()
+                result.app().requestedAmount()
         );
 
         assertEquals(
@@ -95,7 +95,7 @@ class StatusServiceTests {
 
         assertEquals(
                 "Test AB",
-                result.app().company_name()
+                result.app().companyName()
         );
 
 
@@ -279,7 +279,7 @@ class StatusServiceTests {
 
         assertEquals(
                 auditLog,
-                result.app().audit_log()
+                result.app().auditLog()
         );
 
         assertEquals(
