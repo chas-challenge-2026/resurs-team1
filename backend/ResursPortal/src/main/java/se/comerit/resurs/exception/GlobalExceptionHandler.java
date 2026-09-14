@@ -3,6 +3,7 @@ package se.comerit.resurs.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.comerit.resurs.exception.auth.LoginFailedException;
@@ -17,6 +18,17 @@ import java.util.Optional;
 public class GlobalExceptionHandler {
 
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingRequestParam(Exception ex) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "Missing Parameter",
+                Optional.ofNullable(ex.getMessage())
+                        .orElse("Missing Parameter"),
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(DocumentStorageException.class)
     public ResponseEntity<ApiError> handleDocumentUpload(Exception ex) {
