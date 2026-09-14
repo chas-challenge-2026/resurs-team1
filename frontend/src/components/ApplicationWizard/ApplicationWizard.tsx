@@ -1,4 +1,27 @@
+import ButtonGroup from "../ButtonGroup/ButtonGroup";
+import type { ButtonGroupOption } from "../ButtonGroup/ButtonGroup";
 import { Card, CardBody } from "../Card/Card";
+import Dropdown from "../Dropdown/Dropdown";
+import type { DropdownOption } from "../Dropdown/Dropdown";
+import Slider from "../Slider/Slider";
+
+// placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
+const PURPOSE_OPTIONS: DropdownOption[] = [
+  { value: "waiting", label: "Väntar" },
+  { value: "for", label: "På" },
+  { value: "backend", label: "Back-end" },
+]
+
+const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
+  { value: 12, label: "12 mån" },
+  { value: 24, label: "24 mån" },
+  { value: 36, label: "36 mån" },
+  { value: 48, label: "48 mån" },
+  { value: 60, label: "60 mån" },
+]
+
+const LOAN_MIN = 50000
+const LOAN_MAX = 10000000
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -14,7 +37,7 @@ export interface ApplicationFormData {
   // becomes a union once the backend hands over the enum values -- A | B | C
   purpose: string;
   // TODO: "requestedAmount" in api rn, until they change according to request in slack
-  loanAmount: number;
+  requestedAmount: number;
   // undefined until the customer picks one
   repaymentPeriod?: number;
 }
@@ -50,13 +73,36 @@ interface ApplicationWizardProps {
  * // → values becomes { ...everything else, loanAmount: 2000000 }
  * ```
  */
-const ApplicationWizard = ({ step }: ApplicationWizardProps) => {
+const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) => {
   switch (step) {
     case 1:
       return (
         <Card>
           <CardBody>
-            hej
+            <Dropdown
+              id="purpose"
+              label="Ändamål - Vad ska lånet användas till?"
+              placeholder="Välj ändamål..."
+              options={PURPOSE_OPTIONS}
+              value={values.purpose}
+              onChange={(purpose) => onChange({ purpose })}
+            />
+            <Slider
+              name="loanAmount"
+              label="Önskat belopp"
+              min={LOAN_MIN}
+              max={LOAN_MAX}
+              step={50000}
+              value={values.requestedAmount}
+              onChange={(loanAmount) => onChange({ requestedAmount: loanAmount })}
+            />
+            <ButtonGroup
+              name="repaymentPeriod"
+              label="Önskad återbetalningstid (månad)"
+              options={REPAYMENT_OPTIONS}
+              selectedValue={values.repaymentPeriod}
+              onChange={(repaymentPeriod) => onChange({ repaymentPeriod })} //is set to whatever is sent in as prop
+            />
           </CardBody>
         </Card>
       )

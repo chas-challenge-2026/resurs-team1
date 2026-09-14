@@ -39,7 +39,7 @@ const applicationData: ApplicationFormData = {
   email: "",
   phoneNumber: "",
   purpose: "",
-  loanAmount: 50000,
+  requestedAmount: 50000,
 }
 
 type TenureValue = typeof TENURE_OPTIONS[number]["value"];
