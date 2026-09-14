@@ -1,8 +1,8 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px);
   justify-content: center;
+  padding: var(--space-xl) var(--space-md);
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
@@ -27,7 +27,8 @@
 
 .actionsContainer {
   display: flex;
-  gap: var(--space-sm);
+  flex-direction: column;
+  gap: var(--space-base);
 }
 
 .action {
@@ -67,7 +68,7 @@
 }
 
 .cardTitle {
-  font-size: 1.5rem;
+  font-size: var(--font-size-lg);
   font-weight: 500;
 }
 
@@ -82,9 +83,26 @@
 
 .supportLink {
   color: var(--color-primary);
+  white-space: nowrap;
 }
 
 .supportLink:hover {
   font-weight: 600;
   text-underline-offset: 3px;
+}
+
+@media (min-width: 768px) {
+  .wrapper {
+    min-height: calc(100vh - 64px);
+    justify-content: center;
+    gap: var(--space-lg);
+  }
+
+  .actionsContainer {
+    flex-direction: row;
+  }
+
+  .action {
+    flex: 1;
+  }
 }
