@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 import PublicOnlyRoute from "./components/PublicOnlyRoute/PublicOnlyRoute"
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute"
+import { Toaster } from "sonner"
 import Layout from "./layout/layout"
 import TestPage from "./pages/Test/TestPage"
 import NotFoundPage from "./pages/NotFound/NotFoundPage"
@@ -11,35 +12,38 @@ import CasesOverviewPage from "./pages/CaseWorker/Cases/CasesOverviewPage"
 
 function App() {
   return (
-    <Routes>
-      {/* Public only pages */}
-      <Route element={<PublicOnlyRoute />}>
-        <Route element={<Layout fullWidth />}>
-          <Route index element={<LoginPage />} />
+    <>
+      <Toaster position="top-right" richColors closeButton />
+      <Routes>
+        {/* Public only pages */}
+        <Route element={<PublicOnlyRoute />}>
+          <Route element={<Layout fullWidth />}>
+            <Route index element={<LoginPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Company pages */}
-      <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+        {/* Company pages */}
+        <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+          <Route element={<Layout />}>
+            <Route path="oversikt" element={<CompanyHomePage />} />
+            <Route path="kreditansokan" element={<ApplicationFormPage />} />
+          </Route>
+        </Route>
+
+        {/* Caseworker pages */}
+        <Route element={<ProtectedRoute allowedRoles={["caseWorker"]} />}>
+          <Route element={<Layout fullWidth />}>
+            <Route path="arenden" element={<CasesOverviewPage />} />
+          </Route>
+        </Route>
+
+        {/* Other */}
         <Route element={<Layout />}>
-          <Route path="oversikt" element={<CompanyHomePage />} />
-          <Route path="kreditansokan" element={<ApplicationFormPage />} />
+          <Route path='test' element={<TestPage />} />
+          <Route path='*' element={<NotFoundPage />} />
         </Route>
-      </Route>
-
-      {/* Caseworker pages */}
-      <Route element={<ProtectedRoute allowedRoles={["caseWorker"]} />}>
-        <Route element={<Layout fullWidth />}>
-          <Route path="arenden" element={<CasesOverviewPage />} />
-        </Route>
-      </Route>
-
-      {/* Other */}
-      <Route element={<Layout />}>
-        <Route path='test' element={<TestPage />} />
-        <Route path='*' element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }
 

@@ -80,13 +80,13 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void listDocuments_withoutSession_returns401() throws Exception {
-        mockMvc.perform(get("/documents/{id}", pendingDocsApplicationId))
+        mockMvc.perform(get("/api/documents/application/{id}", pendingDocsApplicationId))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void listDocuments_validApplicationWithoutDocument_returnsEmptyList() throws Exception {
-        mockMvc.perform(get("/documents/{id}", pendingDocsApplicationId).sessionAttr("userId",
+        mockMvc.perform(get("/api/documents/application/{id}", pendingDocsApplicationId).sessionAttr("userId",
                         1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -95,7 +95,7 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void showDocumentsPage_unknownApplication_returns404() throws Exception {
-        mockMvc.perform(get("/documents/{id}", 999_999L).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/application/{id}", 999_999L).sessionAttr("userId", 1L))
                 .andExpect(status().isNotFound());
     }
 
@@ -104,7 +104,7 @@ class DocumentControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "test.pdf",
                 "application/pdf", "dummy".getBytes());
 
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning"))
@@ -118,7 +118,7 @@ class DocumentControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "dummy".getBytes());
 
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
@@ -139,7 +139,7 @@ class DocumentControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.txt",
                 "text/plain", "dummy".getBytes());
 
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
@@ -154,7 +154,7 @@ class DocumentControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "arsredovisning.pdf",
                 "application/pdf", "dummy".getBytes());
 
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "arsredovisning")
@@ -170,7 +170,7 @@ class DocumentControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "dummy".getBytes());
 
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
@@ -183,13 +183,13 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void downloadDocument_withoutSession_returns401() throws Exception {
-        mockMvc.perform(get("/document/{id}", 1L))
+        mockMvc.perform(get("/api/documents/{id}", 1L))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void downloadDocument_unknownId_returns404() throws Exception {
-        mockMvc.perform(get("/document/{id}", 999_999L).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/{id}", 999_999L).sessionAttr("userId", 1L))
                 .andExpect(status().isNotFound());
     }
 
@@ -197,7 +197,7 @@ class DocumentControllerIntegrationTest {
     void downloadDocument_uploadedFile_returnsContentAndHeaders() throws Exception {
         MockMultipartFile upload = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "dummy info".getBytes());
-        mockMvc.perform(multipart("/document/upload")
+        mockMvc.perform(multipart("/api/documents/upload")
                 .file(upload)
                 .param("applicationId", String.valueOf(pendingDocsApplicationId))
                 .param("docType", "balansrakning")
@@ -206,7 +206,7 @@ class DocumentControllerIntegrationTest {
         Long documentId = documentRepository.findByApplicationId(pendingDocsApplicationId)
                 .get(0).getId();
 
-        mockMvc.perform(get("/document/{id}", documentId).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/{id}", documentId).sessionAttr("userId", 1L))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
                         "attachment; filename=\"" + pendingDocsApplicationId + "_balansrakning.pdf\""))
