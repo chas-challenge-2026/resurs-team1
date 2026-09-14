@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import Button from "../../components/Button/Button"
 import Loading from "../../components/Loading/Loading"
 import StatusTag from "../../components/StatusTag/StatusTag"
@@ -10,7 +11,7 @@ import type { DropdownOption } from "../../components/Dropdown/Dropdown"
 import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
-import ApplicationWizard from "../../components/ApplicationWizard/ApplicationWizard"
+import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
@@ -42,6 +43,26 @@ const applicationData: ApplicationFormData = {
   requestedAmount: 50000,
 }
 
+// to make button appear and dissapear
+const REVIEW_STEP = 3
+const RECEIPT_STEP = 4
+
+// the page owns the answers, so the page decides when a step may be left
+const isStepComplete = (step: number, values: ApplicationFormData) => {
+  switch (step) {
+    case 1:
+      return values.purpose !== "" && values.repaymentPeriod !== undefined
+    case 2:
+      return (
+        values.contactName !== "" &&
+        EMAIL_PATTERN.test(values.email) &&
+        PHONE_PATTERN.test(values.phoneNumber)
+      )
+    default:
+      return true
+  }
+}
+
 type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 
 const TestPage = () => {
@@ -55,6 +76,14 @@ const TestPage = () => {
 
   const handleChange = (patch: Partial<ApplicationFormData>) =>
     setValues((prev) => ({ ...prev, ...patch }));
+
+  const navigate = useNavigate()
+
+  const handleCancel = () => {
+    if (window.confirm("Vill du avbryta ansökan? Uppgifterna sparas inte.")) {
+      navigate("/oversikt")
+    }
+  }
 
   return (
     <>
@@ -93,8 +122,29 @@ const TestPage = () => {
           />
       </Card>
       <ApplicationWizard step={step} onChange={handleChange} values={values}></ApplicationWizard>
-      <Button onClick={() => setStep(step - 1)}>Backa</Button>
-      <Button onClick={() => setStep(step + 1)}>Fortsätt</Button>
+      {/* step 4 is the receipt, so it has no navigation of its own */}
+      {step < RECEIPT_STEP && (
+        <>
+          {step > 1 && (
+            <Button variant="secondary" onClick={() => setStep((prev) => prev - 1)}>
+              Tillbaka
+            </Button>
+          )}
+          <Button variant="ghost" onClick={handleCancel}>
+            Avbryt ansökan
+          </Button>
+          <Button
+            onClick={() => setStep((prev) => prev + 1)}
+            disabled={!isStepComplete(step, values)}
+          >
+            {step === REVIEW_STEP ? "Skicka ansökan" : "Fortsätt"}
+          </Button>
+        </>
+      )}
+
+      {step === RECEIPT_STEP && (
+        <Button onClick={() => navigate("/oversikt")}>Till översikten</Button>
+      )}
       <h3>{step}</h3>
     </>
   )

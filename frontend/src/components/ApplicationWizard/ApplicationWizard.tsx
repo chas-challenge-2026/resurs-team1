@@ -7,6 +7,7 @@ import type { DropdownOption } from "../Dropdown/Dropdown";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
 import { formatCurrency } from "../../utils/formatters";
+import s from "./ApplicationWizard.module.css";
 
 // placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
 const PURPOSE_OPTIONS: DropdownOption[] = [
@@ -22,6 +23,11 @@ const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
   { value: 48, label: "48 mån" },
   { value: 60, label: "60 mån" },
 ]
+
+// exported so the page can gate the Fortsätt button on the same rules
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// loose on purpose: swedish numbers are written with spaces, dashes and +46
+export const PHONE_PATTERN = /^[\d\s+()-]{6,20}$/
 
 const LOAN_MIN = 50000
 const LOAN_MAX = 10000000
@@ -80,7 +86,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
   switch (step) {
     case 1:
       return (
-        <Card>
+        <Card className={s.card}>
           <CardBody>
             <Dropdown
               id="purpose"
@@ -109,9 +115,19 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
           </CardBody>
         </Card>
       )
-    case 2:
+    case 2: {
+      // an untouched field is not wrong yet, so only complain once something is typed
+      const emailError =
+        values.email !== "" && !EMAIL_PATTERN.test(values.email)
+          ? "Kontrollera e-postadressen"
+          : undefined
+      const phoneError =
+        values.phoneNumber !== "" && !PHONE_PATTERN.test(values.phoneNumber)
+          ? "Kontrollera telefonnumret"
+          : undefined
+
       return (
-        <Card>
+        <Card className={s.card}>
           <CardBody>
             <DataList>
               <DataListItem label="Organisationsnummer" value={values.orgNumber} />
@@ -125,6 +141,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
             <Input
               id="contactName"
               label="Kontaktperson"
+              placeholder="Anna Andersson"
               value={values.contactName}
               onChange={(e) => onChange({ contactName: e.target.value })}
             />
@@ -132,26 +149,31 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
               id="email"
               label="E-post"
               type="email"
+              placeholder="anna@foretag.se"
               value={values.email}
+              error={emailError}
               onChange={(e) => onChange({ email: e.target.value })}
             />
             <Input
               id="phoneNumber"
               label="Telefonnummer"
               type="tel"
+              placeholder="070-123 45 67"
               value={values.phoneNumber}
+              error={phoneError}
               onChange={(e) => onChange({ phoneNumber: e.target.value })}
             />
           </CardBody>
         </Card>
       )
+    }
 
     case 3: {
       // the form stores the value, the customer should read the label
       const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
 
       return (
-        <Card>
+        <Card className={s.card}>
           <CardBody>
             <DataList>
               <DataListItem label="Organisationsnummer" value={values.orgNumber} />
@@ -173,6 +195,19 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
         </Card>
       )
     }
+
+    case 4:
+      return (
+        <Card className={s.card}>
+          <CardBody>
+            <h2>Tack, vi har tagit emot din ansökan</h2>
+            <p>
+              Vi återkommer med besked till {values.email}. Handläggningen tar
+              normalt några arbetsdagar.
+            </p>
+          </CardBody>
+        </Card>
+      )
 
     default:
       return null
