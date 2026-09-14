@@ -1,0 +1,15 @@
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.value {
+  font-weight: 500;
+}

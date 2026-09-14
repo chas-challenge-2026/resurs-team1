@@ -9,10 +9,8 @@ import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
 import se.comerit.resurs.persistence.model.Company;
+import se.comerit.resurs.security.PasswordHasher;
 
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 
@@ -26,10 +24,12 @@ public class AuthService {
 
     private final CompanyRepository companyRepository;
     private final CaseWorkerRepository caseWorkerRepository;
+    private final PasswordHasher passwordHasher;
 
-    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository) {
+    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository, PasswordHasher passwordHasher) {
         this.companyRepository = companyRepository;
         this.caseWorkerRepository = caseWorkerRepository;
+        this.passwordHasher = passwordHasher;
     }
 
 
@@ -55,7 +55,7 @@ public class AuthService {
                     .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
 
 
-            if (!worker.getPasswordHash().equals(md5Hash(password))){
+            if (!worker.getPasswordHash().equals(passwordHasher.md5Hash(password))){
                 throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
             }
             return new CaseWorkerLoginResponse(
@@ -68,19 +68,19 @@ public class AuthService {
 
         // TODO: parameterize this query and use bcrypt
 
-    private String md5Hash(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(input.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 not available", e);
-        }
-    }
+//    private String md5Hash(String input) {
+//        try {
+//            MessageDigest md = MessageDigest.getInstance("MD5");
+//            byte[] hash = md.digest(input.getBytes());
+//            StringBuilder sb = new StringBuilder();
+//            for (byte b : hash) {
+//                sb.append(String.format("%02x", b));
+//            }
+//            return sb.toString();
+//        } catch (NoSuchAlgorithmException e) {
+//            throw new RuntimeException("MD5 not available", e);
+//        }
+//    }
 }
 
 

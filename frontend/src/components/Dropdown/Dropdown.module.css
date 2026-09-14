@@ -1,0 +1,28 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.select {
+  width: 100%;
+  color: var(--color-text-main);
+  background: var(--bg-secondary);
+  cursor: pointer;
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}

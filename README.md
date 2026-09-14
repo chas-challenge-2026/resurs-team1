@@ -10,6 +10,9 @@ cd infra && docker compose up
 
 Öppna [http://localhost:8083](http://localhost:8083)
 
+### API-dokumentation
+Swagger UI nås på denna länk: http://localhost:8083/swagger-ui/index.html
+
 ### Testinloggningar
 
 | Roll | Uppgifter |

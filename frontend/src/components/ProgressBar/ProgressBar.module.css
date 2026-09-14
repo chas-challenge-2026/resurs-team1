@@ -1,0 +1,11 @@
+.track {
+  height: 4px;
+  background-color: var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.fill {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+}
