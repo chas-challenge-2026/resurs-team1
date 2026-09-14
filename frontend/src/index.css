@@ -108,6 +108,22 @@ input, button, textarea, select {
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+.error-border {
+  border-color: var(--color-error);
+}
+
+.information-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.input-sm {
+  height: 36px;
+}
+
+.input-md {
+  height: 48px;
+}
 
 @media (min-width: 768px) {
   :root {
@@ -117,5 +133,13 @@ input, button, textarea, select {
     --space-md: 2rem;     /* 32px */
     --space-lg: 2.5rem;   /* 40px */
     --space-xl: 4rem;     /* 64px */
+  }
+
+  .input-sm {
+    height: 40px;
+  }
+
+  .input-md {
+    height: 60px;
   }
 }

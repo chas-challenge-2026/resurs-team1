@@ -30,11 +30,6 @@
   color: var(--color-text-muted);
 }
 
-.info {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
-
 .button {
   height: 48px;
   border-radius: var(--radius-sm);

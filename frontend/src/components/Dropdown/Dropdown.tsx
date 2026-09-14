@@ -1,4 +1,4 @@
-import { RiErrorWarningLine } from "react-icons/ri";
+import InputError from "../InputError/InputError";
 import s from "./Dropdown.module.css";
 
 export interface DropdownOption {
@@ -22,11 +22,11 @@ export interface DropdownProps {
 
 const Dropdown = ({ id, label, options, value, onChange, placeholder = "Välj...", hideLabel, error, information, disabled, size = "md" }: DropdownProps) => {
 
-  const combinedClassName = [s.select, s[size], "input-base", error && s.errorBorder].filter(Boolean).join(" ")
+  const combinedClassName = [s.select, `input-${size}`, "input-base", error && "error-border"].filter(Boolean).join(" ")
 
-  const errorId = error ? `${id}-error` : undefined
-  const infoId = information ? `${id}-info` : undefined
-  const describedBy = errorId || infoId
+  const errorId = `${id}-error`
+  const infoId = `${id}-info`
+  const describedBy = error ? errorId : information ? infoId : undefined
 
   return (
     <div className={s.wrapper}>
@@ -55,15 +55,10 @@ const Dropdown = ({ id, label, options, value, onChange, placeholder = "Välj...
       </select>
 
       {information && !error &&
-        <span id={infoId} className={s.information}>{information}</span>
+        <span id={infoId} className="information-text">{information}</span>
       }
 
-      {error &&
-        <span id={errorId} className={s.error}>
-          <RiErrorWarningLine aria-hidden={true}/>
-          <span>{error}</span>
-        </span>
-      }
+      {error && <InputError errorId={errorId} errorMsg={error} />}
 
     </div>
   )
