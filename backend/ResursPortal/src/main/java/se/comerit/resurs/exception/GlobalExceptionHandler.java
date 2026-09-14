@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import se.comerit.resurs.exception.auth.LoginFailedException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -16,6 +17,31 @@ import java.util.Optional;
 public class GlobalExceptionHandler {
 
 
+
+    @ExceptionHandler(DocumentStorageException.class)
+    public ResponseEntity<ApiError> handleDocumentUpload(Exception ex) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "Upload Failed",
+                Optional.ofNullable(ex.getMessage())
+                        .orElse("Failed to upload file"),
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+    @ExceptionHandler(LoginFailedException.class)
+    public ResponseEntity<ApiError> handleBadCredentials(Exception ex) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "Login Failed",
+                Optional.ofNullable(ex.getMessage())
+                        .orElse("Bad Credentials"),
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(Exception ex) {

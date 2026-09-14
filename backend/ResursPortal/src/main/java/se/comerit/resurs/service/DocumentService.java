@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.exception.DocumentStorageException;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
@@ -53,7 +54,7 @@ public class DocumentService {
     // Utan transactional så sparas document, audit-log och status var för sig till databasen, helt oberoende
     // av varandra, om det skulle krascha mitt i så lämnas inkonsekvent data, samma bugg som i known-bugs.md #5.
     @Transactional
-    public void uploadDocument(Long applicationId, String docType, MultipartFile file) throws IOException {
+    public void uploadDocument(Long applicationId, String docType, MultipartFile file) {
         if (applicationId == null) {
             throw new IllegalArgumentException("Application ID must not be null.");
         }
@@ -70,25 +71,53 @@ public class DocumentService {
         String originalFilename = file.getOriginalFilename();
         String storedFilename = applicationId + "_" + originalFilename;
 
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists()) uploadDir.mkdirs();
-        file.transferTo(new File(UPLOAD_DIR + storedFilename));
 
-        // Store filename in DB — file path is /tmp which is not persistent
-        // TODO: implement PDF parsing in v2 (see native/README.md)
-        // The file is saved but its contents are never read or validated
-        Document document = new Document();
-        document.setApplication(application);
-        document.setFilename(storedFilename);
-        document.setDoc_type(docType);
-        document.setUploadedAt(LocalDateTime.now());
-        documentRepository.save(document);
+        File target = new File(UPLOAD_DIR, storedFilename);
 
-        appendAuditLog(application, originalFilename, docType);
-        // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
-        // No business rules validation — just check docType string
-        if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
-            markUnderReview(application);
+        //Wrapping it all in a try/Catch block which always returns a runtimeException.
+        //Cleans up the file on both IO and Runtime Exceptions.
+        //Tosses runtime exceptions upwards while wrapping IOExceptions in DocumentStorageException
+        try{
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists() && !uploadDir.mkdirs()) {
+                throw new IOException("Could not create upload directory.");
+            }
+
+            file.transferTo(target);
+
+            // Store filename in DB — file path is /tmp which is not persistent
+            // TODO: implement PDF parsing in v2 (see native/README.md)
+            // The file is saved but its contents are never read or validated
+            Document document = new Document();
+            document.setApplication(application);
+            document.setFilename(storedFilename);
+            document.setDoc_type(docType);
+            document.setUploadedAt(LocalDateTime.now());
+            documentRepository.save(document);
+
+            appendAuditLog(application, originalFilename, docType);
+
+
+            // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
+            // No business rules validation — just check docType string
+
+            if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
+                markUnderReview(application);
+            }
+
+        } catch (IOException e) {
+            undoFileUpload(target);
+            throw new DocumentStorageException("Failed to store document.", e);
+        } catch (RuntimeException e) {
+            undoFileUpload(target);
+            throw e;
+        }
+
+    }
+
+    private void undoFileUpload(File file){
+        if (file.exists() && !file.delete()) {
+            // Optional Log in case file was not removed
         }
     }
 
