@@ -24,8 +24,10 @@ function App() {
 
         {/* Company pages */}
         <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
-          <Route element={<Layout />}>
+          <Route element={<Layout fullWidth />}>
             <Route path="oversikt" element={<CompanyHomePage />} />
+          </Route>
+          <Route element={<Layout />}>
             <Route path="kreditansokan" element={<ApplicationFormPage />} />
           </Route>
         </Route>
