@@ -1,8 +1,10 @@
 import ButtonGroup from "../ButtonGroup/ButtonGroup";
 import type { ButtonGroupOption } from "../ButtonGroup/ButtonGroup";
 import { Card, CardBody } from "../Card/Card";
+import { DataList, DataListItem } from "../DataList/DataList";
 import Dropdown from "../Dropdown/Dropdown";
 import type { DropdownOption } from "../Dropdown/Dropdown";
+import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
 
 // placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
@@ -110,7 +112,35 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
       return (
         <Card>
           <CardBody>
-            hej!
+            <DataList>
+              <DataListItem label="Organisationsnummer" value={values.orgNumber} />
+              <DataListItem label="Företagsnamn" value={values.companyName} />
+            </DataList>
+            <p className="information-text">
+              Vi hämtar företagets bokslutsuppgifter via organisationsnumret.
+            </p>
+
+            {/* native input, so onChange hands over an event instead of a value */}
+            <Input
+              id="contactName"
+              label="Kontaktperson"
+              value={values.contactName}
+              onChange={(e) => onChange({ contactName: e.target.value })}
+            />
+            <Input
+              id="email"
+              label="E-post"
+              type="email"
+              value={values.email}
+              onChange={(e) => onChange({ email: e.target.value })}
+            />
+            <Input
+              id="phoneNumber"
+              label="Telefonnummer"
+              type="tel"
+              value={values.phoneNumber}
+              onChange={(e) => onChange({ phoneNumber: e.target.value })}
+            />
           </CardBody>
         </Card>
       )
