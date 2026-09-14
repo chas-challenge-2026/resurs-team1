@@ -170,7 +170,8 @@ public class ScoringService {
             // TODO: applicera branschfaktor konsekvent på alla nyckeltal
             // ===========================================================
 
-           branchAdjustedChecks( bransch, rorelsemarginal, soliditet, state);
+            branchAdjustedChecks( bransch, rorelsemarginal, soliditet, state);
+            checkIndustryAdjustedMinimumSolidity(soliditet,state,bransch);
 
             // ===========================================================
             // KASSAFLÖDESANALYS
@@ -465,10 +466,30 @@ public class ScoringService {
         }
     }
 
+    void checkIndustryAdjustedMinimumSolidity(double solidity, ScoringState state,String branchName) {
+        Optional<Branch> branchOptional = branchRepository.findByBranchName(branchName);
+
+        double branschFactor = branchOptional.map(branch -> branch.branchFactor).orElse(1.0);
+
+        double threshold =
+                thresholds.solidity().minimum() * branschFactor;
+
+        if (solidity < threshold) {
+            state.incrementFlags(1);
+            state.getDecisionReason()
+                    .append("VARNING: Soliditet understiger branschjusterad gräns (")
+                    .append(String.format("%.2f", threshold))
+                    .append("). ");
+            state.getScoringLog()
+                    .append(", bransch_soliditet [FLAGGED]");
+            state.removePoints(8);
+        }
+    }
+
     void branchAdjustedChecks(String bransch, double rorelsemarginal, double soliditet, ScoringState state){
         Optional<Branch> branchOptional = branchRepository.findByBranchName(bransch);
 
-        double branschFaktor = 1.0; //default fallback
+        double branschFaktor = 1.0;//default fallback
         double snittSoliditet;
         double snittMarginal;
         if (branchOptional.isPresent()){
@@ -498,19 +519,6 @@ public class ScoringService {
             state.getScoringLog().append(", bransch=").append(bransch.isEmpty() ? "OKÄND" : bransch)
                     .append("(faktor=").append(String.format("%.2f", branschFaktor)).append(")");
         }
-
-
-        // Branschjusterad soliditetskontroll — BARA detta check använder branschFaktor
-        // Inkonsekvent: soliditet-check ovan använder fast 0.20/0.25, inte branschjusterad
-        double branschJusteradSoliditetGrans = thresholds.solidity().minimum() * branschFaktor; // inkonsekvent med 0.25 ovan (Fixed by threshold)
-        if (soliditet < branschJusteradSoliditetGrans) {
-            state.incrementFlags(1);
-            state.getDecisionReason().append("VARNING: Soliditet understiger branschjusterad gräns (")
-                    .append(String.format("%.2f", branschJusteradSoliditetGrans))
-                    .append(" för bransch ").append(bransch).append("). ");
-            state.getScoringLog().append(", bransch_soliditet [FLAGGED]");
-            state.removePoints(8);
-        }
     }
 
     void checkOperatingMargin(double rorelsemarginal, ScoringState state){
@@ -538,10 +546,10 @@ public class ScoringService {
     void checkDebtRatio(double skuldsattningsgrad, ScoringState state){
         state.getScoringLog().append("skuldsättningsgrad=").append(String.format("%.2f", skuldsattningsgrad));
 
-        if (skuldsattningsgrad > thresholds.debtRatio().max()) {
+        if (skuldsattningsgrad > thresholds.debtRatio().maximum()) {
             // Hard reject — magic number 3.0
             state.setHardReject(true);
-            state.getDecisionReason().append("AVSLAG: Skuldsättningsgrad för hög (").append(String.format("%.2f", skuldsattningsgrad)).append(" > ").append(thresholds.debtRatio().max()).append("). ");
+            state.getDecisionReason().append("AVSLAG: Skuldsättningsgrad för hög (").append(String.format("%.2f", skuldsattningsgrad)).append(" > ").append(thresholds.debtRatio().maximum()).append("). ");
             state.getScoringLog().append(" [REJECT]");
             state.removePoints(35);
         } else if (skuldsattningsgrad > thresholds.debtRatio().high()) {
@@ -568,6 +576,12 @@ public class ScoringService {
                     .append("). Kortfristiga skulder överstiger omsättningstillgångar. ");
             state.getScoringLog().append(" [FLAGGED]");
             state.removePoints(15);
+        } else if (likviditetsgrad < thresholds.liquidity().low()) {
+            state.incrementFlags(1);
+            state.getDecisionReason().append("VARNING: Likviditetsgrad nära minimigräns (")
+                    .append(String.format("%.2f", likviditetsgrad)).append(" < ").append(thresholds.liquidity().low()).append("). ");
+            state.getScoringLog().append(", likviditet_marginal [FLAGGED]");
+            state.removePoints(8);
         } else if (likviditetsgrad >= thresholds.liquidity().good()) {
             state.getDecisionReason().append("Likviditetsgrad god (").append(String.format("%.2f", likviditetsgrad)).append("). ");
             state.getScoringLog().append(" [GOOD]");
@@ -579,14 +593,6 @@ public class ScoringService {
 
         state.getScoringLog().append(", ");
 
-        // Extra likviditets-check med 1.2-tröskel (ännu ett magic number)
-        if (likviditetsgrad < thresholds.liquidity().low() && likviditetsgrad >= thresholds.liquidity().minimum()) {
-            state.incrementFlags(1);
-            state.getDecisionReason().append("VARNING: Likviditetsgrad nära minimigräns (")
-                    .append(String.format("%.2f", likviditetsgrad)).append(" < ").append(thresholds.liquidity().low()).append("). ");
-            state.getScoringLog().append(", likviditet_marginal [FLAGGED]");
-            state.removePoints(8);
-        }
     }
 
     void solidityCheck(double soliditet, BigDecimal requestedAmount, ScoringState state){
