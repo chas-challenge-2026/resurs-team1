@@ -6,6 +6,7 @@ import Dropdown from "../Dropdown/Dropdown";
 import type { DropdownOption } from "../Dropdown/Dropdown";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
+import { formatCurrency } from "../../utils/formatters";
 
 // placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
 const PURPOSE_OPTIONS: DropdownOption[] = [
@@ -144,6 +145,34 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
           </CardBody>
         </Card>
       )
+
+    case 3: {
+      // the form stores the value, the customer should read the label
+      const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
+
+      return (
+        <Card>
+          <CardBody>
+            <DataList>
+              <DataListItem label="Organisationsnummer" value={values.orgNumber} />
+              <DataListItem label="Företagsnamn" value={values.companyName} />
+              <DataListItem label="Kontaktperson" value={values.contactName} />
+              <DataListItem label="E-post" value={values.email} />
+              <DataListItem label="Telefonnummer" value={values.phoneNumber} />
+              <DataListItem label="Ändamål" value={purposeLabel ?? "Ej valt"} />
+              <DataListItem label="Önskat belopp" value={formatCurrency(values.requestedAmount)} />
+              <DataListItem
+                label="Önskad återbetalningstid"
+                value={values.repaymentPeriod ? `${values.repaymentPeriod} mån` : "Ej valt"}
+              />
+            </DataList>
+            <p className="information-text">
+              Kontrollera uppgifterna innan du skickar in ansökan.
+            </p>
+          </CardBody>
+        </Card>
+      )
+    }
 
     default:
       return null
