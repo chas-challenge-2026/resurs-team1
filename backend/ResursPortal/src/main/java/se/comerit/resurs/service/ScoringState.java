@@ -57,10 +57,10 @@ public class ScoringState {
     }
 
     public void removePoints(int kreditPoang) {
-        this.kreditPoang = kreditPoang;
+        this.kreditPoang = this.kreditPoang - kreditPoang;
     }
     public void addPoints(int kreditPoang) {
-        this.kreditPoang = kreditPoang;
+        this.kreditPoang = this.kreditPoang + kreditPoang;
     }
 
 
