@@ -45,11 +45,6 @@
   padding: 0;
   margin: 0;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  transition: 
-    background-color 0.2s ease, 
-    border-color 0.2s ease, 
-    stroke 0.2s ease, 
-    box-shadow 0.2s ease;
 }
 
 /* System adjustments (iOS scale fix & smooth scroll) */
@@ -84,7 +79,6 @@ input, button, textarea, select {
   font-size: var(--font-size-title);
   font-weight: 500;
   color: var(--color-text-main);
-  text-transform: capitalize;
 }
 
 .subtitle {
