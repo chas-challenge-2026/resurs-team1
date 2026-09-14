@@ -18,11 +18,9 @@ import se.comerit.resurs.persistence.model.Branch;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest
@@ -166,7 +164,7 @@ class ScoringServiceTest {
 
         return Stream.of(
                 Arguments.of(Math.nextDown(minimum), 1),
-                Arguments.of(minimum, 0),
+                Arguments.of(minimum, 1),
                 Arguments.of(Math.nextDown(low), 1),
                 Arguments.of(low, 0),
                 Arguments.of(Math.nextDown(good), 0),
@@ -197,7 +195,7 @@ class ScoringServiceTest {
 
     Stream<Arguments> debtRatioThresholds() {
         double high = thresholds.debtRatio().high();
-        double max = thresholds.debtRatio().max();
+        double max = thresholds.debtRatio().maximum();
 
         return Stream.of(
                 Arguments.of(Math.nextDown(high), false, 0),
@@ -683,15 +681,12 @@ class ScoringServiceTest {
                 .findByBranchName("BYGG")
                 .orElseThrow();
 
-        when(branchRepository.findByBranchName("BYGG"))
-                .thenReturn(Optional.of(branch));
-
         ScoringState state =
                 new ScoringState(thresholds.initialScore());
 
         service.branchAdjustedChecks(
                 branch.branchName,
-                0.04,
+                branch.branschSnittMarginal * 2, // should not trigger flags
                 solidity,
                 state
         );
@@ -704,11 +699,11 @@ class ScoringServiceTest {
                 .findByBranchName("BYGG")
                 .orElseThrow();
 
-        double branchMargin = branch.branschSnittMarginal;
+        double branchSoliditet = branch.branschSnittsSoliditet;
 
         double threshold =
-                branchMargin *
-                        thresholds.operatingMargin().flag_below_branch_avg();
+                branchSoliditet *
+                        thresholds.solidity().flag_below_branch_avg();
 
         return Stream.of(
                 Arguments.of(Math.nextDown(threshold), 1),
@@ -718,9 +713,10 @@ class ScoringServiceTest {
     }
 
 
+
     @ParameterizedTest
-    @MethodSource("branchFactorThresholds")
-    void branchFactorThreshold(
+    @MethodSource("industryAdjustedSolidityThresholds")
+    void industryAdjustedSolidityThreshold(
             double solidity,
             int expectedFlags
     ) {
@@ -728,26 +724,26 @@ class ScoringServiceTest {
                 .findByBranchName("BYGG")
                 .orElseThrow();
 
-
         ScoringState state =
                 new ScoringState(thresholds.initialScore());
 
-        service.branchAdjustedChecks(
-                branch.branchName,
-                0.04,
+        service.checkIndustryAdjustedMinimumSolidity(
                 solidity,
-                state
+                state,
+                branch.branchName
         );
 
         assertEquals(expectedFlags, state.getFlagCount());
     }
 
-    Stream<Arguments> branchFactorThresholds() {
-        double branchFactor = 0.85;
+    Stream<Arguments> industryAdjustedSolidityThresholds() {
+        Branch branch = branchRepository
+                .findByBranchName("BYGG")
+                .orElseThrow();
 
         double threshold =
                 thresholds.solidity().minimum() *
-                        branchFactor;
+                        branch.branchFactor;
 
         return Stream.of(
                 Arguments.of(Math.nextDown(threshold), 1),
@@ -755,6 +751,8 @@ class ScoringServiceTest {
                 Arguments.of(Math.nextUp(threshold), 0)
         );
     }
+
+
 
 
     // ============================================================
@@ -769,9 +767,9 @@ class ScoringServiceTest {
             String expectedDecision
     ) {
         ScoringState state =
-                new ScoringState(thresholds.initialScore());
+                new ScoringState(0);
 
-        state.removePoints(score);
+        state.addPoints(score);
         state.setHardReject(hardReject);
 
         ScoringService.Decision decision =
