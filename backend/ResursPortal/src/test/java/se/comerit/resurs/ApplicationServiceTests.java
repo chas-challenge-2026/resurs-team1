@@ -232,7 +232,7 @@ class ApplicationServiceTests {
         assertThat(result.purpose())
                 .isEqualTo("Expansion");
 
-        assertThat(result.requested_amount())
+        assertThat(result.requestedAmount())
                 .isEqualByComparingTo(new BigDecimal("250000"));
     }
 
@@ -387,13 +387,13 @@ class ApplicationServiceTests {
             String companyName
     ) {
         return new NewApplicationDTO(
-                new BigDecimal("250000"),     // requested_amount
+                new BigDecimal("250000"),     // requestedAmount
                 "Expansion",                  // purpose
                 ApplicationStatus.PENDING_DOCS, // status
                 "APPROVED",                   // decision
                 "Test decision reason",       // decision_reason
                 "Test scoring result",       // scoring_result
-                companyName,                  // company_name
+                companyName,                  // companyName
                 orgNumber,                    // org_number
                 "Test Person",                // authorized_signatory
                 3                            // flagCount

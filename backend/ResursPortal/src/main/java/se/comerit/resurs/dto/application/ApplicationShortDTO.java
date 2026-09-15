@@ -9,17 +9,17 @@ import java.time.LocalDateTime;
 
 public record ApplicationShortDTO (
         Long id,
-        BigDecimal requested_amount,
+        BigDecimal requestedAmount,
         String purpose,
         ApplicationStatus status,
         String decision,
-        LocalDateTime created_at
+        LocalDateTime createdAt
 ){
     public ApplicationShortDTO(CreditApplication app) {
         this(app.getId(), app.getRequestedAmount(), app.getPurpose(), app.getStatus(), app.getDecision(),app.getCreatedAt());
     }
     public ApplicationShortDTO(CreditApplicationDTO appDTO){
-        this(appDTO.id(),appDTO.requested_amount(),appDTO.purpose(),appDTO.status(),appDTO.decision(),appDTO.created_at());
+        this(appDTO.id(),appDTO.requestedAmount(),appDTO.purpose(),appDTO.status(),appDTO.decision(),appDTO.createdAt());
     }
 
 }

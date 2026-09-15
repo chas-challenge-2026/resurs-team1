@@ -22,7 +22,7 @@ public class CreditApplication {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Column(name = "requested_amount" )
+    @Column(name = "requestedAmount" )
     private BigDecimal requestedAmount;
 
     @Column
@@ -41,9 +41,8 @@ public class CreditApplication {
     @Column(name = "scoring_result")
     private String scoringResult;
 
-
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

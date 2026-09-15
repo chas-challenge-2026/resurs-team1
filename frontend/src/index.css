@@ -36,6 +36,7 @@
   /* Font size */
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
+  --font-size-lg: 1.5rem;
   --font-size-title: 2rem;
 }
 
@@ -45,11 +46,6 @@
   padding: 0;
   margin: 0;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  transition: 
-    background-color 0.2s ease, 
-    border-color 0.2s ease, 
-    stroke 0.2s ease, 
-    box-shadow 0.2s ease;
 }
 
 /* System adjustments (iOS scale fix & smooth scroll) */
@@ -84,7 +80,6 @@ input, button, textarea, select {
   font-size: var(--font-size-title);
   font-weight: 500;
   color: var(--color-text-main);
-  text-transform: capitalize;
 }
 
 .subtitle {
@@ -108,6 +103,22 @@ input, button, textarea, select {
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+.error-border {
+  border-color: var(--color-error);
+}
+
+.information-text {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.input-sm {
+  height: 36px;
+}
+
+.input-md {
+  height: 48px;
+}
 
 @media (min-width: 768px) {
   :root {
@@ -117,5 +128,13 @@ input, button, textarea, select {
     --space-md: 2rem;     /* 32px */
     --space-lg: 2.5rem;   /* 40px */
     --space-xl: 4rem;     /* 64px */
+  }
+
+  .input-sm {
+    height: 40px;
+  }
+
+  .input-md {
+    height: 60px;
   }
 }

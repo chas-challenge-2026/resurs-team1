@@ -79,6 +79,8 @@ public class DocumentService {
 
         auditService.documentUploaded(application, originalFilename, document.getDoc_type());
 
+        // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
+        // No business rules validation — just check docType string
         if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
             markUnderReview(application);
         }

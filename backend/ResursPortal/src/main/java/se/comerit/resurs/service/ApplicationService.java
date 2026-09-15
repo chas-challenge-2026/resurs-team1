@@ -1,10 +1,8 @@
 package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.persistence.CompanyRepository;

@@ -7,13 +7,13 @@ import java.time.LocalDateTime;
 
 public record HistoricalReviewInfo(
         long id,
-        BigDecimal requested_amount,
+        BigDecimal requestedAmount,
         String purpose,
         String decision,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String company_name,
-        String org_number
+        String companyName,
+        String orgNumber
 ) {
     public HistoricalReviewInfo(CreditApplication application) {
         this(application.getId(),

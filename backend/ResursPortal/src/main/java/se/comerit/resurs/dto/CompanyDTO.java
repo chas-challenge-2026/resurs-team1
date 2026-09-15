@@ -5,7 +5,7 @@ import se.comerit.resurs.persistence.model.Company;
 public record CompanyDTO (
         Long id,
         String companyName,
-        String org_number,
+        String orgNumber,
         String authorizedSignatory
         ){
 

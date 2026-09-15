@@ -222,7 +222,7 @@ public class ApplicationController {
 
         /*
         // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("audit_log");
+        String auditLogBlob = (String) app.get("auditLog");
         model.addAttribute("auditLogRaw", auditLogBlob);*/
 
         // Fetch documents for this application
