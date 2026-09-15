@@ -1,12 +1,21 @@
 package se.comerit.resurs.dto;
 
 //DTO meant to mock the structure of company validation from external API
-public record CompanyValidationApiDTO (
+import se.comerit.resurs.enums.SigningRight;
+
+import java.time.Instant;
+import java.util.List;
+
+public record CompanyValidationApiDTO(
         String orgNumber,
-        String name,
-        String authorizedSignatory,
-        Boolean active
-){
+        List<Signatory> signatories,
+        Instant updatedAt
+) {
 
-
+    public record Signatory(
+            String personalNumber,
+            String name,
+            String position,
+            SigningRight signingRight
+    ){}
 }
