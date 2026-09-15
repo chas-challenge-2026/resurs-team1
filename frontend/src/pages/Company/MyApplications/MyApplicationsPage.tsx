@@ -14,7 +14,7 @@ const MyApplicationsPage = () => {
 
   if (isError) {
     return (
-      <p>Ett fel uppstod: {error.message}</p>
+      <p>{error.message}</p>
     )
   }
   
