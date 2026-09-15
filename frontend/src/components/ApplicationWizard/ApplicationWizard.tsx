@@ -7,7 +7,6 @@ import type { DropdownOption } from "../Dropdown/Dropdown";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
 import { formatCurrency } from "../../utils/formatters";
-import s from "./ApplicationWizard.module.css";
 
 // placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
 const PURPOSE_OPTIONS: DropdownOption[] = [
@@ -86,7 +85,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
   switch (step) {
     case 1:
       return (
-        <Card className={s.card}>
+        <Card>
           <CardBody>
             <Dropdown
               id="purpose"
@@ -127,16 +126,8 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
           : undefined
 
       return (
-        <Card className={s.card}>
+        <Card>
           <CardBody>
-            <DataList>
-              <DataListItem label="Organisationsnummer" value={values.orgNumber} />
-              <DataListItem label="Företagsnamn" value={values.companyName} />
-            </DataList>
-            <p className="information-text">
-              Vi hämtar företagets bokslutsuppgifter via organisationsnumret.
-            </p>
-
             {/* native input, so onChange hands over an event instead of a value */}
             <Input
               id="contactName"
@@ -147,7 +138,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
             />
             <Input
               id="email"
-              label="E-post"
+              label="E-postadress"
               type="email"
               placeholder="anna@foretag.se"
               value={values.email}
@@ -173,8 +164,11 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
       const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
 
       return (
-        <Card className={s.card}>
+        <Card>
           <CardBody>
+            <p className="information-text">
+              Vi hämtar företagets bokslutsuppgifter via organisationsnumret.
+            </p>
             <DataList>
               <DataListItem label="Organisationsnummer" value={values.orgNumber} />
               <DataListItem label="Företagsnamn" value={values.companyName} />
@@ -198,7 +192,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
 
     case 4:
       return (
-        <Card className={s.card}>
+        <Card>
           <CardBody>
             <h2>Tack, vi har tagit emot din ansökan</h2>
             <p>
