@@ -1,12 +1,17 @@
 package se.comerit.resurs.service;
 
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.AuditEvent;
 import se.comerit.resurs.persistence.model.CreditApplication;
+
+import java.util.List;
+
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @Service
 public class AuditService {
@@ -61,6 +66,10 @@ public class AuditService {
         return auditEventRepository.findMaxSequenceNumber(application.getId()) + 1;
     }
 
+    public List<AuditEventDTO> findAuditEventsByApplicationID(Long applicationID){
+        return auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(applicationID)
+                .stream().map(AuditEventDTO::new ).toList();
+    }
 
 
 
