@@ -14,7 +14,6 @@ public record CreditApplicationDTO(
         String decision,
         String decisionReason,
         String scoringResult,
-        String auditLog,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         String companyName,
@@ -23,6 +22,6 @@ public record CreditApplicationDTO(
 
 ) {
     public CreditApplicationDTO(CreditApplication app) {
-        this(app.getId(), app.getRequestedAmount(), app.getPurpose(), app.getStatus(), app.getDecision(), app.getDecisionReason(), app.getScoringResult(), app.getAuditLog(), app.getCreatedAt(), app.getUpdatedAt(), app.getCompany().getCompany_name(), app.getCompany().getOrg_number(), app.getCompany().getAuthorized_signatory());
+        this(app.getId(), app.getRequestedAmount(), app.getPurpose(), app.getStatus(), app.getDecision(), app.getDecisionReason(), app.getScoringResult(), app.getCreatedAt(), app.getUpdatedAt(), app.getCompany().getCompany_name(), app.getCompany().getOrg_number(), app.getCompany().getAuthorized_signatory());
     }
 }

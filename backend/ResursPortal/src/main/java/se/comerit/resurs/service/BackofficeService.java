@@ -15,18 +15,18 @@ import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class BackofficeService {
 
+    private final AuditService auditService;
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
 
     @Autowired
-    public BackofficeService(CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
+    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
+        this.auditService = auditService;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
     }
@@ -54,34 +54,15 @@ public class BackofficeService {
 
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)
     @Transactional
-    public void application_decision(Long applicationId,ApplicationStatus decision,String workerName, String comment){
+    public void application_decision(Long applicationId,ApplicationStatus decision,String workerEmail,String workerName, String comment){
 
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); // throws NoSuchElement
+        ApplicationStatus previousStatus = application.getStatus();
 
         application.setStatus(decision);
         application.setDecision(decision.toString());
-        application.setUpdatedAt(LocalDateTime.now());
 
-
-        // Append to audit log JSON blob — same string manipulation as elsewhere
-        // No email notification sent — TODO: skicka e-post till företaget
-        //This log should be append only and i think its technically possible to "fake" entries /Jonathan
-        String newAuditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "\",\"action\":\"MANUAL_DECISION\",\"decision\":\"" + decision
-                + "\",\"worker\":\"" + workerName.replace("\"", "'") + "\""
-                + (comment.isEmpty() ? "" : ",\"comment\":\"" + comment.replace("\"", "'") + "\"")
-                + "}";
-
-        String currentLog = application.getAuditLog();
-
-        String updatedLog;
-        if (currentLog == null || currentLog.equals("[]")) {
-            updatedLog = "[" + newAuditEntry + "]";
-        } else {
-            updatedLog = currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + newAuditEntry + "]";
-        }
-
-        application.setAuditLog(updatedLog);
+      auditService.manualDecision(application, workerEmail, workerName, previousStatus, comment);
 
         //Should we return something to the controller and by extention, the frontend? /Jonathan
         return;
