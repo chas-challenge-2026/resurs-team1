@@ -89,10 +89,10 @@ class ApplicationServiceTests {
         assertThat(saved.id()).isNotNull();
 
 
-        assertThat(saved.org_number())
+        assertThat(saved.orgNumber())
                 .isEqualTo(testCompany.getOrg_number());
 
-        assertThat(saved.requested_amount())
+        assertThat(saved.requestedAmount())
                 .isEqualByComparingTo(new BigDecimal("250000"));
 
         assertThat(saved.purpose())
@@ -112,7 +112,7 @@ class ApplicationServiceTests {
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
 
-        assertThat(saved.requested_amount())
+        assertThat(saved.requestedAmount())
                 .isEqualByComparingTo(dto.requested_amount());
 
         assertThat(saved.status())
@@ -121,10 +121,10 @@ class ApplicationServiceTests {
         assertThat(saved.decision())
                 .isEqualTo(dto.decision());
 
-        assertThat(saved.decision_reason())
+        assertThat(saved.decisionReason())
                 .isEqualTo(dto.decision_reason());
 
-        assertThat(saved.scoring_result())
+        assertThat(saved.scoringResult())
                 .isEqualTo(dto.scoring_result());
     }
 
@@ -192,7 +192,7 @@ class ApplicationServiceTests {
         CreditApplicationDTO saved =
                 applicationService.saveApplication(dto);
 
-        assertThat(saved.org_number())
+        assertThat(saved.orgNumber())
                 .isEqualTo("111111-2222");
     }
 
