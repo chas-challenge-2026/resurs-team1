@@ -204,19 +204,14 @@ public class ApplicationController {
                 // Try to find companyId from orgNumber
                 String orgNumber = (String) session.getAttribute("orgNumber");
 
-                try{
-                    companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
-                } catch (NoSuchElementException e){
-                    return ResponseEntity.internalServerError().build();
-                }
+
+                companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
+
                 session.setAttribute("companyId", companyId);
             }
 
-            try{
-                app = appService.findApplicationByID(id);
-            } catch (NoSuchElementException e){
-                return ResponseEntity.notFound().build(); //ansökan hittades inte
-            }
+
+            app = appService.findApplicationByID(id);
 
         }
 
@@ -244,14 +239,8 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-
-        Long companyID;
-        try{
             // Get companyId via orgNumber — no caching, hits DB every time
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+            Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
 
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
@@ -272,12 +261,7 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        Long companyID;
-        try{
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
         // Count applications by status
         Pageable limit = PageRequest.of(0,5);

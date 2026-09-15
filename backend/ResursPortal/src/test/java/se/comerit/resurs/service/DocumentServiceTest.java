@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.NoSuchElementException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -85,12 +87,12 @@ class DocumentServiceTest {
     }
 
     @Test
-    void uploadDocument_unknownApplicationId_throwsIllegalArgumentException() {
+    void uploadDocument_unknownApplicationId_throwsNoSuchElementException() {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
 
         assertThatThrownBy(() -> documentService.uploadDocument(999_999L, "balansrakning", file))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("Application not found");
     }
 
@@ -152,9 +154,9 @@ class DocumentServiceTest {
     }
 
     @Test
-    void findByApplicationId_unknownApplication_throwsIllegalArgumentException() {
+    void findByApplicationId_unknownApplication_throwsNoSuchElementException() {
         assertThatThrownBy(() -> documentService.findByApplicationId(999_999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("Application not found");
     }
 }

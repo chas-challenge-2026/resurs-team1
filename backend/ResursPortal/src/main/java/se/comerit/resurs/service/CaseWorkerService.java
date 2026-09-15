@@ -1,9 +1,11 @@
 package se.comerit.resurs.service;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.caseworker.CaseWorkerResponse;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
+import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
 import se.comerit.resurs.security.PasswordHasher;
@@ -41,16 +43,17 @@ public class CaseWorkerService {
     public CaseWorkerResponse update(Long id, UpdateCaseWorkerRequest request) {
         CaseWorker caseWorker = caseWorkerRepository.findById(id).orElseThrow();
 
-        caseWorkerRepository.findByEmail(request.email())
-                .filter(existing -> !existing.getId().equals(id))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Email already in use");
-                });
 
         caseWorker.setName(request.name());
         caseWorker.setEmail(request.email());
 
-        CaseWorker updated = caseWorkerRepository.save(caseWorker);
+        CaseWorker updated;
+        try{
+            updated = caseWorkerRepository.save(caseWorker);
+        } catch (DataIntegrityViolationException ex){
+            throw new EmailAlreadyInUseException("Email already in use");
+        }
+
         return new CaseWorkerResponse(updated);
     }
 
