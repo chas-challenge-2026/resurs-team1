@@ -9,6 +9,7 @@ import LoginPage from "./pages/Login/LoginPage"
 import CompanyHomePage from "./pages/Company/Home/CompanyHomePage"
 import ApplicationFormPage from "./pages/Company/Application/ApplicationPage"
 import CasesOverviewPage from "./pages/CaseWorker/Cases/CasesOverviewPage"
+import MyApplicationsPage from "./pages/Company/MyApplications/MyApplicationsPage"
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           </Route>
           <Route element={<Layout />}>
             <Route path="kreditansokan" element={<ApplicationFormPage />} />
+            <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
           </Route>
         </Route>
 

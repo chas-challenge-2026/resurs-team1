@@ -55,31 +55,25 @@
 }
 
 /* Statuses — bar from index, plate and text only live here */
-.needs_info {
+.PENDING_DOCS {
   --st-base: var(--color-warning-strong);
   --st-bg: #FBF1DF;
   --st-fg: var(--color-warning-text);
 }
 
-.processing {
+.UNDER_REVIEW {
   --st-base: var(--color-secondary);
   --st-bg: #E9EDF6;
   --st-fg: var(--color-secondary);
 }
 
-.approved {
+.APPROVED {
   --st-base: var(--color-primary);
   --st-bg: var(--color-primary-light);
   --st-fg: #0E5D57;
 }
 
-.closed {
-  --st-base: var(--color-text-muted);
-  --st-bg: #EFF2F2;
-  --st-fg: #4C5756;
-}
-
-.rejected {
+.REJECTED {
   --st-base: var(--color-error);
   --st-bg: #FAEAE9;
   --st-fg: #8C1D19;
