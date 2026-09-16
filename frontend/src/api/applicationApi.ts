@@ -6,6 +6,14 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
 
+export interface ApplicationDocument {
+  id: number
+  applicationId: number,
+  filename: string
+  docType: string
+  uploadedAt: string
+}
+
 export interface Application {
   id: number
   requested_amount: number
@@ -21,9 +29,18 @@ export interface Application {
   org_number: string
   authorized_signatory: string
   duration_months?: number
+  documents?: ApplicationDocument[]
 }
 
 export const getApplications = async (): Promise<Application[]> => {
   const response = await api.get<Application[]>("/application")
   return response.data
+}
+
+export const getApplicationById = async (id: number): Promise<Application> => {
+  const response = await api.get(`application/${id}`)
+  return {
+    ...response.data.app,
+    documents: response.data.documents,
+  }
 }

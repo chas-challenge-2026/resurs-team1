@@ -1,0 +1,70 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.titleGroup {
+  display: flex;
+  gap: var(--space-base);
+  align-items: center;
+}
+
+
+.description {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Warning Card Header */
+.warningHeader {
+  flex-direction: row;
+  align-items: center;
+}
+
+.iconWrapper {
+  display: none;
+}
+
+.warningTitle {
+  font-weight: 500;
+}
+
+.warningSubtitle {
+  color: var(--color-text-muted);
+}
+
+/* Warning Card Body */
+.warningBody {
+  gap: var(--space-sm);
+}
+
+/* Warning Card Footer */
+.warningFooter {
+  flex-direction: column;
+  gap: var(--space-base);
+  align-items: start;
+}
+
+.actionGroup {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.attachButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+@media (min-width: 968px) {
+  .iconWrapper {
+    display: block;
+    aspect-ratio: 1 / 1;
+    background-color: var(--color-primary-light);
+    padding: var(--space-xs);
+    border-radius: var(--radius-pill);
+    font-size: 24px;
+    color: var(--color-primary);
+  }
+}
