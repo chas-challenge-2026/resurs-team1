@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record CompanyValidationApiDTO(
+        String companyName,
         String orgNumber,
         List<Signatory> signatories,
         Instant updatedAt

@@ -1,6 +1,5 @@
 package se.comerit.resurs.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
@@ -11,10 +10,9 @@ import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureRea
 @Service
 public class CompanyValidationService {
 
-    @Autowired
     private final CompanyValidationClient client;
 
-    public CompanyValidationService(CompanyValidationClient client){
+    public CompanyValidationService(CompanyValidationClient client) {
         this.client = client;
     }
 
@@ -23,7 +21,8 @@ public class CompanyValidationService {
                 .orElseThrow(() -> new CompanyValidationFailedException(
                         CompanyValidationFailureReason.COMPANY_NOT_FOUND));
     }
-    public void validateSignatory(CompanyValidationApiDTO company, String personalNumber) {
+
+    public CompanyValidationApiDTO.Signatory validateSignatory(CompanyValidationApiDTO company, String personalNumber) {
         CompanyValidationApiDTO.Signatory signatory = company.signatories().stream()
                 .filter(s -> s.personalNumber().equals(personalNumber))
                 .findFirst()
@@ -34,6 +33,7 @@ public class CompanyValidationService {
             throw new CompanyValidationFailedException(
                     CompanyValidationFailureReason.REQUIRES_JOINT_SIGNATURE);
         }
+        return signatory;
     }
 }
 
