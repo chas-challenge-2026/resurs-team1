@@ -30,7 +30,7 @@ const MyApplicationDetailsPage = () => {
         <p className={s.description}>{application.purpose} · {formatCurrency(application.requested_amount)} {application.duration_months && `· ${application.duration_months} månader`}</p>
       </div>
 
-      {application.status === "UNDER_REVIEW" &&
+      {application.status === "PENDING_DOCS" &&
         <Card as="article" variant="warning">
           <CardHeader className={s.warningHeader}>
             <div className={s.iconWrapper}>
@@ -42,7 +42,7 @@ const MyApplicationDetailsPage = () => {
             </div>
           </CardHeader>
           <CardBody className={s.warningBody}>
-              <p>PLACEHOLDER: MEDDELANDE FRÅN HANDLÄGGARE</p>
+              <p>{application.decision}</p>
               <TextArea id="message" label="Meddelande" />
           </CardBody>
           <CardFooter className={s.warningFooter}>
