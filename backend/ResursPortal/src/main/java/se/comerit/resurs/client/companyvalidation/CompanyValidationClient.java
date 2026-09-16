@@ -1,6 +1,6 @@
 package se.comerit.resurs.client.companyvalidation;
 
-import se.comerit.resurs.dto.CompanyValidationApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 
 import java.util.Optional;
 

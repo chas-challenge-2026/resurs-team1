@@ -1,8 +1,8 @@
 package se.comerit.resurs.client.companyvalidation;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import se.comerit.resurs.dto.CompanyValidationApiDTO;
-import se.comerit.resurs.dto.CompanyValidationApiDTO.Signatory;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO.Signatory;
 import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 
@@ -43,5 +43,4 @@ class MockCompanyValidationClient implements CompanyValidationClient {
         }
         return Optional.ofNullable(REGISTRY.get(orgNumber));
     }
-
 }

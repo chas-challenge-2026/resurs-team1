@@ -1,4 +1,4 @@
-package se.comerit.resurs.dto;
+package se.comerit.resurs.dto.companyvalidation;
 
 //DTO meant to mock the structure of company validation from external API
 import se.comerit.resurs.enums.SigningRight;

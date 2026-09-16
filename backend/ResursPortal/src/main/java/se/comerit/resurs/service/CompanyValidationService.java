@@ -3,7 +3,7 @@ package se.comerit.resurs.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
-import se.comerit.resurs.dto.CompanyValidationApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
