@@ -1,15 +1,14 @@
 import { useParams } from "react-router-dom"
-import s from "./MyApplicationDetailsPage.module.css"
+import { RiChat3Line, RiLink } from "react-icons/ri"
 import { useApplication } from "../../../hooks/useApplication"
-import NotFoundPage from "../../NotFound/NotFoundPage"
-import StatusTag from "../../../components/StatusTag/StatusTag"
-import Loading from "../../../components/Loading/Loading"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../../utils/formatters"
 import { Card, CardBody, CardFooter, CardHeader } from "../../../components/Card/Card"
+import { DataList, DataListItem } from "../../../components/DataList/DataList"
+import Loading from "../../../components/Loading/Loading"
+import StatusTag from "../../../components/StatusTag/StatusTag"
 import TextArea from "../../../components/Textarea/Textarea"
 import Button from "../../../components/Button/Button"
-import { DataList, DataListItem } from "../../../components/DataList/DataList"
-import { RiChat3Line, RiLink } from "react-icons/ri"
+import s from "./MyApplicationDetailsPage.module.css"
 
 const MyApplicationDetailsPage = () => {
   const { id } = useParams()
@@ -18,7 +17,6 @@ const MyApplicationDetailsPage = () => {
 
   if(isPending) return <Loading label="Hämtar ansökan..." delay />
   if (isError) return <p>{error.message}</p>
-  if(!application) return <NotFoundPage />
 
   return(
     <div className={s.wrapper}>
