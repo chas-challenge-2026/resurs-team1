@@ -186,7 +186,7 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash_chain(co
 int DigitalSign::verify_chain(const AuditEntryChain* chain, size_t entryCount, EVP_PKEY* publicKey)
 {
     //std::vector<uint8_t> previousEntryCurrentHash{};
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash;
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash {};
 
 
     size_t index = 0;
@@ -194,12 +194,17 @@ int DigitalSign::verify_chain(const AuditEntryChain* chain, size_t entryCount, E
     for(auto& entry : chain->entries)
     {
         // Reset MD context for every entry, so we dont have any data from old entry?
+
+        if (entry.previousHash != previousEntryCurrentHash)
+        {
+            return index;
+        }
                
         // verifiera att hashen i sig ärgiltig
         std::vector<uint8_t> canonicalData(entry.canonicalData, entry.canonicalData + entry.canonicalDataLength);
 
         std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hashOfEntry = hash(canonicalData);
-        if (hashOfEntry.data() != entry.currentHash.data())
+        if (hashOfEntry != entry.currentHash)
         {
             throw std::runtime_error("Entry hash is not the same as current hash.");
             return index;
@@ -225,13 +230,10 @@ int DigitalSign::verify_chain(const AuditEntryChain* chain, size_t entryCount, E
             entry.canonicalDataLength
         );
 
-        if (result == 1) // EVP library success is 1
-        {
-            return 0; // but in c/c++ 0 is success, and negative numbers if error codes
-        }
+        // EVP library function returns 1 is successfull and 0 if any error occured. If so, we return the index of the audit entry we got error from.
         if (result == 0)
         {
-            return -1;
+            return index;
         }
 
         throw std::runtime_error("EVP_DigestVerify failed.");
@@ -245,11 +247,36 @@ int DigitalSign::verify_chain(const AuditEntryChain* chain, size_t entryCount, E
         // previousEntryCurrentHash = std::vector<uint8_t>(entry.previousHash, entry.previousHash + resurs::audit::SHA256_HASH_BYTES);
         ++index;
     }
+
+    return 0; // but in c/c++ 0 is success, and negative numbers if error codes    
     
+    PkeyPtr convert_c_private_key_to_EVP_PKEY_POINTER(const uint8_t privateKey, size_t privateKeyLength) 
+    {
+        PkeyPtr pKey = EVP_PKEY_new_raw_private_key_ex(
+            nullptr,
+            "ED25519",
+            nullptr,
+            privateKey,
+            privateKeyLength
+        );
+
+        return pKey;
+    } 
+
     
-    
-    
-    
+    PkeyPtr convert_c_public_key_to_EVP_PKEY_POINTER(const uint8_t publicKey, size_t publicKeyLength) 
+    {
+        PkeyPtr pKey = EVP_PKEY_new_raw_public_key_ex(
+            nullptr,
+            "ED25519",
+            nullptr,
+            publicKey,
+            publicKeyLength
+        );
+
+        return pKey;
+    }
+
     
     
     /* Dum-kod eller dum-flöde

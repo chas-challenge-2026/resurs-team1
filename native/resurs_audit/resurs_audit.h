@@ -21,21 +21,21 @@ public:
             throw std::runtime_error("failed to create context.");
         }
     };
-
-private:
     //std::array<std::size_t, resurs::audit::DIGITAL_SIGNATURE_BYTES> sign(const std::vector<uint8_t>& data, EVP_PKEY *pkey);
     //std::array<uint8_t, resurs::audit::DIGITAL_SIGNATURE_BYTES> sign(const std::vector<uint8_t>& data, EVP_PKEY *pkey);
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash(const std::vector<uint8_t> &data);
+    
     std::vector<uint8_t> sign(const std::vector<uint8_t>& data, EVP_PKEY *pkey);
-
+    
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash_chain(const std::string &data, const std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES>& prev_hash);
     
     std::array<unsigned char, resurs::audit::PKEY_BYTES> generate_private_key();
-
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash(const std::vector<uint8_t> &data);
-
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash_chain(const std::string &data, const std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES>& prev_hash);
-
     int verify_chain(const AuditEntryChain* chain, size_t entryCount, EVP_PKEY* publicKey);
  
+    PkeyPtr convert_c_private_key_to_EVP_PKEY_POINTER(const uint8_t privateKey, size_t privateKeyLength);
+    PkeyPtr convert_c_public_key_to_EVP_PKEY_POINTER(const uint8_t publicKey, size_t publicKeyLength);
+
+private:
 
     using PkeyCtxPtr = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;
     using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
