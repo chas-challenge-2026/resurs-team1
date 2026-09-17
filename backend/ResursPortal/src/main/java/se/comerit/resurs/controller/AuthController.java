@@ -23,7 +23,7 @@ public class AuthController {
     //session skickas tillfälligt in i controller kommer senare att gå via filter i spring security
     @GetMapping("/me")
     public ResponseEntity<CurrentUserResponse>me(HttpSession session){
-            Long userId = (Long) session.getAttribute("userId");
+            Object userId = session.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
@@ -33,7 +33,9 @@ public class AuthController {
                     ? (String) session.getAttribute("workerName")
                     : (String) session.getAttribute("companyName");
 
-            return ResponseEntity.ok(new CurrentUserResponse(userId, role, displayName,
+            Long responseUserId = "caseWorker".equals(role) ? (Long) userId : null;
+
+            return ResponseEntity.ok(new CurrentUserResponse(responseUserId, role, displayName,
                     (String) session.getAttribute("orgNumber")));
         }
 
@@ -42,13 +44,12 @@ public class AuthController {
     public ResponseEntity<CompanyLoginResponse>loginCompany(
                 @Valid @RequestBody CompanyLoginRequest request, HttpSession session
                 ){
-            CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.signatoryName());
+            CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.personalNumber());
 
-            session.setAttribute("userId", response.userId());
+            session.setAttribute("userId", response.orgNumber());
             session.setAttribute("role", "company");
             session.setAttribute("orgNumber", response.orgNumber());
             session.setAttribute("companyName", response.companyName());
-            session.setAttribute("companyId", response.userId());
 
             return ResponseEntity.ok(response);
         }
