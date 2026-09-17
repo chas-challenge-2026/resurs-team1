@@ -13,6 +13,8 @@ import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
 import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
+import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
+import type { Application } from "../../api/applicationApi"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "company" },
@@ -42,6 +44,14 @@ const applicationData: ApplicationFormData = {
   purpose: "",
   requestedAmount: 50000,
 }
+
+// copy pasted mock cases to try it out
+const SAMPLE_CASES: Application[] = [
+  { id: 387139, company_name: "Nordvik Bygg AB", org_number: "556600-0000", authorized_signatory: "Anna Nordvik", purpose: "Rörelsekapital", requested_amount: 3000000, status: "PENDING_DOCS", created_at: "2026-08-27T09:00:00Z", updated_at: "2026-08-27T09:00:00Z" },
+  { id: 387142, company_name: "Lindqvist Logistik AB", org_number: "559012-3456", authorized_signatory: "Erik Lindqvist", purpose: "Maskininvestering", requested_amount: 850000, status: "UNDER_REVIEW", created_at: "2026-08-29T09:00:00Z", updated_at: "2026-08-29T09:00:00Z" },
+  { id: 387150, company_name: "Solberga Café & Bageri AB", org_number: "556788-1122", authorized_signatory: "Sara Solberg", purpose: "Expansion", requested_amount: 1200000, status: "APPROVED", created_at: "2026-09-02T09:00:00Z", updated_at: "2026-09-02T09:00:00Z" },
+  { id: 387155, company_name: "Västra Götalands Maskin- och Fastighetsservice AB", org_number: "559334-7788", authorized_signatory: "Johan Hallberg", purpose: "Rörelsekapital", requested_amount: 400000, status: "REJECTED", created_at: "2026-09-08T09:00:00Z", updated_at: "2026-09-08T09:00:00Z" },
+]
 
 // to make button appear and dissapear
 const REVIEW_STEP = 3
@@ -87,13 +97,18 @@ const TestPage = () => {
 
   return (
     <>
+      <div style={{width: "20rem"}}>
+        {SAMPLE_CASES.map((application) => (
+          <SidebarCaseCard key={application.id} application={application} />
+        ))}
+      </div>
       <Card>
         <h1 className="title">Titel</h1>
         <p className="subtitle">Undertitel</p>
         <Loading size="lg"/>
           test knapp
         <Button variant="ghost">
-        <StatusTag status="approved"/>
+        <StatusTag status="APPROVED"/>
         </Button>
       <Dropdown
         id="selectReason"
