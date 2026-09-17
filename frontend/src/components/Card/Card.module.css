@@ -30,6 +30,11 @@
   margin-top: auto;
 }
 
+.warning {
+  border-radius: 0 var(--radius-base) var(--radius-base) 0;
+  border-left: 3px solid var(--color-primary);
+}
+
 /* Accent line on top of the card */
 .accent::before {
   content: "";

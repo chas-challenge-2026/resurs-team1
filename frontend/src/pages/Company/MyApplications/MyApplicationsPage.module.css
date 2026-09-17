@@ -1,0 +1,11 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.applicationsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}

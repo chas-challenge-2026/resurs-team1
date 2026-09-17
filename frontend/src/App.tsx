@@ -9,6 +9,8 @@ import LoginPage from "./pages/Login/LoginPage"
 import CompanyHomePage from "./pages/Company/Home/CompanyHomePage"
 import ApplicationFormPage from "./pages/Company/Application/ApplicationPage"
 import CasesOverviewPage from "./pages/CaseWorker/Cases/CasesOverviewPage"
+import MyApplicationsPage from "./pages/Company/MyApplications/MyApplicationsPage"
+import MyApplicationDetailsPage from "./pages/Company/MyApplicationDetails/MyApplicationDetailsPage"
 
 function App() {
   return (
@@ -24,9 +26,13 @@ function App() {
 
         {/* Company pages */}
         <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
-          <Route element={<Layout />}>
+          <Route element={<Layout fullWidth />}>
             <Route path="oversikt" element={<CompanyHomePage />} />
+          </Route>
+          <Route element={<Layout />}>
             <Route path="kreditansokan" element={<ApplicationFormPage />} />
+            <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
+            <Route path="/mina-ansokningar/:id" element={<MyApplicationDetailsPage />} />
           </Route>
         </Route>
 

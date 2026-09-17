@@ -13,8 +13,9 @@ public class Company {
     @Column(unique = true,name = "org_number" )
     private String orgNumber;
 
-    @Column(name = "company_name")
+    @Column(name = "companyName")
     private String companyName;
+
 
     @Column(name = "authorized_signatory")
     private String authorizedSignatory;

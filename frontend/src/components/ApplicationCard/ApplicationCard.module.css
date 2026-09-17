@@ -1,0 +1,87 @@
+.card {
+  padding: 0;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.cardContent {
+  padding: var(--space-md);
+}
+
+.cardFooter {
+  background-color: var(--bg-main);
+  justify-content: space-between;
+  padding: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+/* Top / Left Side */
+.applicationInfo {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.reference {
+  color: var(--color-text-muted);
+}
+
+.purpose {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.updatedAt {
+  color: var(--color-text-muted);
+}
+
+/* Bottom / Right Side */
+.amountGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.amountLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.amountValue {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.card:hover .link {
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .card {
+    flex-direction: row;
+  }
+
+  .cardContent {
+    flex: 2;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-xs);
+    text-align: end;
+    align-items: end;
+    border-top: none;
+    border-left: 1px solid var(--border);
+  }
+}

@@ -63,7 +63,7 @@ class ApplicationControllerIntegrationTest {
 
         restTestClient
                 .post()
-                .uri("/application/apply")
+                .uri("/api/application/apply")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(
                         "orgNumber=556677-8899" +
@@ -97,7 +97,7 @@ class ApplicationControllerIntegrationTest {
 
         restTestClient
                 .get()
-                .uri("/application/1")
+                .uri("/api/application/1")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
@@ -112,7 +112,7 @@ class ApplicationControllerIntegrationTest {
 
         restTestClient
                 .get()
-                .uri("/application")
+                .uri("/api/application")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
@@ -127,7 +127,7 @@ class ApplicationControllerIntegrationTest {
 
         restTestClient
                 .get()
-                .uri("/application/dashboard")
+                .uri("/api/application/dashboard")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();

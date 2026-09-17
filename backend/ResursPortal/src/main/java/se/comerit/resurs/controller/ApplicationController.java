@@ -161,7 +161,7 @@ public class ApplicationController {
         // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
         // TODO: wrap in @Transactional
         // ===========================================================
-        CreditApplication application =  appService.saveApplication(scoredApplication);
+        CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
 
 
 
@@ -176,10 +176,10 @@ public class ApplicationController {
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
                 .path("/application/{id}")
-                .buildAndExpand(application.getId())
+                .buildAndExpand(application.id())
                 .toUri();
 
-        return  ResponseEntity.created( location).body(new CreditApplicationDTO(application));
+        return  ResponseEntity.created( location).body(application);
     }
 
     // ============================================================
@@ -222,7 +222,7 @@ public class ApplicationController {
 
         /*
         // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("audit_log");
+        String auditLogBlob = (String) app.get("auditLog");
         model.addAttribute("auditLogRaw", auditLogBlob);*/
 
         // Fetch documents for this application

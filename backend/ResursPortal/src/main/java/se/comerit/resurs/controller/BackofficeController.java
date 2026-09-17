@@ -83,9 +83,10 @@ public class BackofficeController {
         }
 
         String workerName = (String) session.getAttribute("workerName");
+        String workerEmail = (String) session.getAttribute("workerEmail");
         ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
-        service.application_decision(applicationId,newStatus,workerName,comment);
+        service.application_decision(applicationId,newStatus,workerEmail, workerName,comment);
 
         // No email notification — TODO: implement email via Spring Mail in v2
         // TODO: notify company via email when decision is made
@@ -110,7 +111,7 @@ public class BackofficeController {
         /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
-        model.addAttribute("auditLogRaw", app.get("audit_log"));
+        model.addAttribute("auditLogRaw", app.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 

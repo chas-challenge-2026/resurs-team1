@@ -1,6 +1,6 @@
 .header {
   background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 0 var(--border);
   /* not fixed, the background has to reach the open dropdown too */
   height: auto;
   /* keeps header + dropdown painted above the backdrop */
