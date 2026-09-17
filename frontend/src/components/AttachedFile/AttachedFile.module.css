@@ -44,6 +44,12 @@
   display: none;
 }
 
+.removeFileBtn {
+  margin-left: auto;
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs);
+}
+
 @media (min-width: 768px) {
   .downloadLabel {
     display: inline;

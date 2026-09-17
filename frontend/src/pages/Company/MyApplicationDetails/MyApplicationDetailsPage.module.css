@@ -39,6 +39,40 @@
   gap: var(--space-sm);
 }
 
+/* "Drop zone" */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-lg) var(--space-base);
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.dropzoneIcon {
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.dropzoneTitle {
+  font-weight: 600;
+  color: var(--color-text-main);
+  font-size: var(--font-size-sm);
+}
+
+.dropzoneHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
 /* Warning Card Footer */
 .warningFooter {
   flex-direction: column;
@@ -53,11 +87,12 @@
 
 .attachButton {
   display: flex;
+  border-style: dashed;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
-@media (min-width: 968px) {
+@media (min-width: 768px) {
   .iconWrapper {
     display: block;
     aspect-ratio: 1 / 1;
