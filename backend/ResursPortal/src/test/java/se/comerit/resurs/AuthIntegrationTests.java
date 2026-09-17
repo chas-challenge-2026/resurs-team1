@@ -15,6 +15,7 @@ import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
+import se.comerit.resurs.exception.bankid.BankIdVerificationFailedException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -107,7 +108,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     void companyLogin_shouldReturnCompanyData(){
          Company company = createCompany();
          CompanyLoginResponse response = authService.loginCompany(
-                 "556000-1234", "Anders Karlsson");
+                 "556000-1234", "196701011234");
 
 
         assertThat(response.role()).isEqualTo("company");
@@ -116,14 +117,12 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     }
 
     @Test
-    void loginCompany_shouldRejectOrgNumberNotApprovedByBankId() {
+    void loginCompany_shouldRejectWhenPersonalNumberIsNotApprovedByBankId() {
         createCompany();
 
-        LoginFailedException thrown = assertThrows(
-                LoginFailedException.class,
-                () -> authService.loginCompany("556000-9999", "Anders Karlsson"));
-
-        assertThat(thrown.reason()).isEqualTo(LoginFailureReason.BANKID_REJECTED);
+        assertThrows(
+                BankIdVerificationFailedException.class,
+                () -> authService.loginCompany("556000-1234", "000000000000"));
     }
     @Test
     void loginCompany_shouldFailWhenApprovedCompanyIsMissingInDatabase() {
