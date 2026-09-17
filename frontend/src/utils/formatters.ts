@@ -17,3 +17,12 @@ export const formatCurrency = (value: number, unit: string = "kr"): string => {
   const formatted = swedishCurrencyFormatter.format(value);
   return unit ? `${formatted} ${unit}`.trim() : formatted;
 }
+
+export const formatDate = (isoString: string) => {
+  const date = new Date(isoString)
+  return date.toISOString().split("T")[0]
+}
+
+export const formatReferenceNumber = (id: number) => {
+  return `REF-${id}`
+}

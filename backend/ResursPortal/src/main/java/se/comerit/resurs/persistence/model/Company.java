@@ -16,6 +16,7 @@ public class Company {
     @Column(name = "companyName")
     private String companyName;
 
+
     @Column(name = "authorized_signatory")
     private String authorizedSignatory;
 
