@@ -213,4 +213,39 @@ class DocumentControllerIntegrationTest {
                         "attachment; filename=\"" + pendingDocsApplicationId + "_balansrakning.pdf\""))
                 .andExpect(content().bytes("dummy info".getBytes()));
     }
+
+    @Test
+    void uploadDocument_emptyFile_returns400() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.pdf",
+                "application/pdf",
+                new byte[0]
+        );
+
+        mockMvc.perform(multipart("/api/documents/upload")
+                        .file(file)
+                        .param("applicationId", String.valueOf(pendingDocsApplicationId))
+                        .param("docType", "balansrakning")
+                        .sessionAttr("userId", 1L))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void uploadDocument_missingApplicationId_returns400() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.pdf",
+                "application/pdf",
+                "dummy".getBytes()
+        );
+
+        mockMvc.perform(multipart("/api/documents/upload")
+                        .file(file)
+                        .param("docType", "balansrakning")
+                        .sessionAttr("userId", 1L))
+                .andExpect(status().isBadRequest());
+    }
+
+
 }

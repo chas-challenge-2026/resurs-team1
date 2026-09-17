@@ -17,6 +17,7 @@ import se.comerit.resurs.service.DocumentService;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * DocumentController -> hanterar HTTP in och ut för dokument.
@@ -54,12 +55,9 @@ public class DocumentController {
         if (session.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        try {
-            List<DocumentDTO> documents = documentService.findByApplicationId(applicationId);
-            return ResponseEntity.ok(documents);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+
+        return ResponseEntity.ok(documentService.findByApplicationId(applicationId));
+
     }
 // Old thymeleaf compatible method
 // Keeping the method as documentations for what was delivered to frontend
@@ -89,14 +87,10 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            documentService.uploadDocument(applicationId, docType, file);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+
+        documentService.uploadDocument(applicationId, docType, file);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+
     }
 
         // Session check copy-pasted in every method — should be an interceptor
