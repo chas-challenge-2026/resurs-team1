@@ -1,29 +1,26 @@
 import type { IconType } from "react-icons"
-import { FiAlertCircle, FiArchive, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi"
+import { FiAlertCircle, FiArchive, FiCheckCircle, FiClock } from "react-icons/fi"
+import type { ApplicationStatus } from "../../api/applicationApi";
 import s from "./StatusTag.module.css"
 
-export type Status = "needs_info" | "processing" | "approved" | "closed" | "rejected"
-
 interface StatusTagProps {
-  status: Status;
+  status: ApplicationStatus;
   size?: "sm" | "md" | "lg";
   uppercase?: boolean;
 }
 
-const LABELS: Record<Status, string> = {
-  needs_info: "Komplettering krävs",
-  processing: "Under behandling",
-  approved: "Godkänd",
-  closed: "Avslutad",
-  rejected: "Avvisad"
+const LABELS: Record<ApplicationStatus, string> = {
+  PENDING_DOCS: "Komplettering krävs",
+  UNDER_REVIEW: "Under behandling",
+  APPROVED: "Godkänd",
+  REJECTED: "Avvisad"
 }
 
-const ICONS: Record<Status, IconType> = {
-  needs_info: FiAlertCircle,
-  processing: FiClock,
-  approved: FiCheckCircle,
-  closed: FiArchive,
-  rejected: FiXCircle
+const ICONS: Record<ApplicationStatus, IconType> = {
+  PENDING_DOCS: FiAlertCircle,
+  UNDER_REVIEW: FiClock,
+  APPROVED: FiCheckCircle,
+  REJECTED: FiArchive,
 }
 
 const StatusTag = ({status, size="md", uppercase=true}: StatusTagProps) => {

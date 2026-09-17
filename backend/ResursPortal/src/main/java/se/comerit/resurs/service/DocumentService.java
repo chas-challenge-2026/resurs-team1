@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.exception.DocumentStorageException;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * DocumentService hanterar affärslogiken för dokumentuppladdning och nedladdning.
@@ -31,54 +33,93 @@ public class DocumentService {
     // TODO: använd ett persistent filsystem eller S3 i v2
     private static final String UPLOAD_DIR = "/tmp/uploads/"; //known bug #9, change to persistent storaging
 
+    private final AuditService auditService;
     private final DocumentRepository documentRepository;
     private final CreditApplicationRepository creditApplicationRepository;
 
     @Autowired
-    public DocumentService(DocumentRepository documentRepository, CreditApplicationRepository creditApplicationRepository) {
+    public DocumentService(AuditService auditService, DocumentRepository documentRepository, CreditApplicationRepository creditApplicationRepository) {
+        this.auditService = auditService;
         this.documentRepository = documentRepository;
         this.creditApplicationRepository = creditApplicationRepository;
     }
     public List<DocumentDTO> findByApplicationId(Long applicationId) {
-        if (creditApplicationRepository.findById(applicationId).isEmpty()) {
-            throw new IllegalArgumentException("Application not found");
-        }
+        creditApplicationRepository.findById(applicationId)
+                .orElseThrow(
+                        ()-> new NoSuchElementException(
+                                "Application not found")
+                );
+
         return documentRepository.findByApplicationId(applicationId).stream().map(DocumentDTO::new).toList();
     }
 
     // Utan transactional så sparas document, audit-log och status var för sig till databasen, helt oberoende
     // av varandra, om det skulle krascha mitt i så lämnas inkonsekvent data, samma bugg som i known-bugs.md #5.
     @Transactional
-    public void uploadDocument(Long applicationId, String docType, MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
+    public void uploadDocument(Long applicationId, String docType, MultipartFile file) {
+        if (applicationId == null) {
+            throw new IllegalArgumentException("Application ID must not be null.");
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new IllegalArgumentException("Document type must not be empty.");
+        }
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("No chosen file.");
         }
         validateFileType(file);
         CreditApplication application = creditApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new IllegalArgumentException("Application not found."));
+                .orElseThrow(() -> new NoSuchElementException("Application not found."));
 
         String originalFilename = file.getOriginalFilename();
         String storedFilename = applicationId + "_" + originalFilename;
 
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists()) uploadDir.mkdirs();
-        file.transferTo(new File(UPLOAD_DIR + storedFilename));
 
-        // Store filename in DB — file path is /tmp which is not persistent
-        // TODO: implement PDF parsing in v2 (see native/README.md)
-        // The file is saved but its contents are never read or validated
-        Document document = new Document();
-        document.setApplication(application);
-        document.setFilename(storedFilename);
-        document.setDoc_type(docType);
-        document.setUploadedAt(LocalDateTime.now());
-        documentRepository.save(document);
+        File target = new File(UPLOAD_DIR, storedFilename);
 
-        appendAuditLog(application, originalFilename, docType);
-        // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
-        // No business rules validation — just check docType string
-        if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
-            markUnderReview(application);
+        //Wrapping it all in a try/Catch block which always returns a runtimeException.
+        //Cleans up the file on both IO and Runtime Exceptions.
+        //Tosses runtime exceptions upwards while wrapping IOExceptions in DocumentStorageException
+        try{
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists() && !uploadDir.mkdirs()) {
+                throw new IOException("Could not create upload directory.");
+            }
+
+            file.transferTo(target);
+
+            // Store filename in DB — file path is /tmp which is not persistent
+            // TODO: implement PDF parsing in v2 (see native/README.md)
+            // The file is saved but its contents are never read or validated
+            Document document = new Document();
+            document.setApplication(application);
+            document.setFilename(storedFilename);
+            document.setDoc_type(docType);
+            document.setUploadedAt(LocalDateTime.now());
+            documentRepository.save(document);
+
+            appendAuditLog(application, originalFilename, docType);
+
+
+            // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
+            // No business rules validation — just check docType string
+
+            if("arsredovisning".equals(docType) || "årsredovisning".equals(docType)) {
+                markUnderReview(application);
+            }
+
+        } catch (IOException e) {
+            undoFileUpload(target);
+            throw new DocumentStorageException("Failed to store document.", e);
+        } catch (RuntimeException e) {
+            undoFileUpload(target);
+            throw e;
+        }
+
+    }
+
+    private void undoFileUpload(File file){
+        if (file.exists() && !file.delete()) {
+            // Optional Log in case file was not removed
         }
     }
 
@@ -95,23 +136,6 @@ public class DocumentService {
         if (!allowed) {
             throw new IllegalArgumentException("Only PDF-files are accepted.");
         }
-    }
-
-    // Replace with AuditService.append() when issue #102 is done
-    // Update audit log JSON blob — same string manipulation pattern as ApplicationController
-    // TODO: skapa separat audit_log-tabell med index
-    private void appendAuditLog(CreditApplication application, String filename, String docType) {
-        String newEntry = "{\"ts\":\"" +
-                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "\",\"action\":\"DOCUMENT_UPLOADED\",\"filename\":\"" + filename
-                + "\",\"docType\":\"" + docType + "\"}";
-        String currentLog = application.getAuditLog();
-        String updatedLog = (currentLog == null || currentLog.equals("[]")) ? "[" + newEntry +
-                "]" : currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + newEntry + "]";
-
-        application.setAuditLog(updatedLog);
-        application.setUpdatedAt(LocalDateTime.now());
-        creditApplicationRepository.save(application);
     }
 
     private void markUnderReview(CreditApplication application) {

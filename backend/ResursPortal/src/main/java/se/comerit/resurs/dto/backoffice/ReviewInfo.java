@@ -10,10 +10,10 @@ public record ReviewInfo(
         BigDecimal requested_amount,
         String purpose,
         LocalDateTime createdAt,
-        String scoring_result,
-        String decision_reason,
-        String company_name,
-        String org_number
+        String scoringResult,
+        String decisionReason,
+        String companyName,
+        String orgNumber
 ) {
     public ReviewInfo(CreditApplication application) {
         this(application.getId(),

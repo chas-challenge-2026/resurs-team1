@@ -202,7 +202,7 @@ public class ApplicationController {
         // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
         // TODO: wrap in @Transactional
         // ===========================================================
-        CreditApplication application =  appService.saveApplication(scoredApplication);
+        CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
 
 
 
@@ -217,10 +217,10 @@ public class ApplicationController {
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
                 .path("/application/{id}")
-                .buildAndExpand(application.getId())
+                .buildAndExpand(application.id())
                 .toUri();
 
-        return  ResponseEntity.created( location).body(new CreditApplicationDTO(application));
+        return  ResponseEntity.created( location).body(application);
     }
 
     // ============================================================
@@ -245,25 +245,20 @@ public class ApplicationController {
                 // Try to find companyId from orgNumber
                 String orgNumber = (String) session.getAttribute("orgNumber");
 
-                try{
-                    companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
-                } catch (NoSuchElementException e){
-                    return ResponseEntity.internalServerError().build();
-                }
+
+                companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
+
                 session.setAttribute("companyId", companyId);
             }
 
-            try{
-                app = appService.findApplicationByID(id);
-            } catch (NoSuchElementException e){
-                return ResponseEntity.notFound().build(); //ansökan hittades inte
-            }
+
+            app = appService.findApplicationByID(id);
 
         }
 
         /*
         // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("audit_log");
+        String auditLogBlob = (String) app.get("auditLog");
         model.addAttribute("auditLogRaw", auditLogBlob);*/
 
         // Fetch documents for this application
@@ -285,14 +280,8 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-
-        Long companyID;
-        try{
             // Get companyId via orgNumber — no caching, hits DB every time
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+            Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
 
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
@@ -313,12 +302,7 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        Long companyID;
-        try{
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
         // Count applications by status
         Pageable limit = PageRequest.of(0,5);

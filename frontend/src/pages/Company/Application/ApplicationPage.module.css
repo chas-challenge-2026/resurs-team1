@@ -1,0 +1,29 @@
+/* main is 1200, but this one looks wayyyy too wide if kept the same */
+.wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* make the far right button actually stay far right*/
+.submit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-left: auto;
+}

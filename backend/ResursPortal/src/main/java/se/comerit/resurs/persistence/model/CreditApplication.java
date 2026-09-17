@@ -1,7 +1,9 @@
 package se.comerit.resurs.persistence.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.UpdateTimestamp;
 import se.comerit.resurs.enums.ApplicationStatus;
 
 import java.math.BigDecimal;
@@ -20,7 +22,7 @@ public class CreditApplication {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Column(name = "requested_amount" )
+    @Column(name = "requestedAmount" )
     private BigDecimal requestedAmount;
 
     @Column
@@ -39,11 +41,11 @@ public class CreditApplication {
     @Column(name = "scoring_result")
     private String scoringResult;
 
-    @Column(name = "audit_log")
-    private String auditLog = "[]";
-
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
@@ -114,13 +116,7 @@ public class CreditApplication {
         this.scoringResult = scoringResult;
     }
 
-    public String getAuditLog() {
-        return auditLog;
-    }
 
-    public void setAuditLog(String auditLog) {
-        this.auditLog = auditLog;
-    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

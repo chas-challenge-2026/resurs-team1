@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import Button from "../../components/Button/Button"
 import Loading from "../../components/Loading/Loading"
 import StatusTag from "../../components/StatusTag/StatusTag"
@@ -10,6 +11,8 @@ import type { DropdownOption } from "../../components/Dropdown/Dropdown"
 import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
+import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
+import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "company" },
@@ -29,6 +32,37 @@ const TENURE_OPTIONS = [
   { label: "60 mån", value: 60 },
 ] as const
 
+// taking start values from already signed in user. need to assign all data at start because of TS
+const applicationData: ApplicationFormData = {
+  orgNumber: "556677-8899",
+  companyName: "Mangobolaget AB",
+  contactName: "",
+  email: "",
+  phoneNumber: "",
+  purpose: "",
+  requestedAmount: 50000,
+}
+
+// to make button appear and dissapear
+const REVIEW_STEP = 3
+const RECEIPT_STEP = 4
+
+// the page owns the answers, so the page decides when a step may be left
+const isStepComplete = (step: number, values: ApplicationFormData) => {
+  switch (step) {
+    case 1:
+      return values.purpose !== "" && values.repaymentPeriod !== undefined
+    case 2:
+      return (
+        values.contactName !== "" &&
+        EMAIL_PATTERN.test(values.email) &&
+        PHONE_PATTERN.test(values.phoneNumber)
+      )
+    default:
+      return true
+  }
+}
+
 type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 
 const TestPage = () => {
@@ -37,41 +71,82 @@ const TestPage = () => {
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState<number>(3000000);
 
+  const [step, setStep] = useState(1)
+  const [values, setValues] = useState<ApplicationFormData>(applicationData)
+
+  const handleChange = (patch: Partial<ApplicationFormData>) =>
+    setValues((prev) => ({ ...prev, ...patch }));
+
+  const navigate = useNavigate()
+
+  const handleCancel = () => {
+    if (window.confirm("Vill du avbryta ansökan? Uppgifterna sparas inte.")) {
+      navigate("/oversikt")
+    }
+  }
+
   return (
-    <Card>
-      <h1 className="title">Titel</h1>
-      <p className="subtitle">Undertitel</p>
-      <Loading size="lg"/>
-        test knapp
-      <Button variant="ghost">
-      <StatusTag status="approved"/>
-      </Button>
-    <Dropdown
-      id="selectReason"
-      label="Ange orsak för lån"
-      placeholder="Välj orsak..."
-      options={reasonOptions}
-      value={reason}
-      onChange={setReason}
-    />
-      <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
-      <ButtonGroup<TenureValue>
-        name="tenure"
-        label="Önskad återbetalningstid (månad)"
-        options={TENURE_OPTIONS}
-        selectedValue={tenure}
-        onChange={setTenure}
+    <>
+      <Card>
+        <h1 className="title">Titel</h1>
+        <p className="subtitle">Undertitel</p>
+        <Loading size="lg"/>
+          test knapp
+        <Button variant="ghost">
+        <StatusTag status="approved"/>
+        </Button>
+      <Dropdown
+        id="selectReason"
+        label="Ange orsak för lån"
+        placeholder="Välj orsak..."
+        options={reasonOptions}
+        value={reason}
+        onChange={setReason}
       />
-      <Slider
-          name="requestedAmount"
-          label="Önskat belopp"
-          min={50000}
-          max={5000000}
-          step={50000}
-          value={amount}
-          onChange={setAmount}
+        <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
+        <ButtonGroup<TenureValue>
+          name="tenure"
+          label="Önskad återbetalningstid (månad)"
+          options={TENURE_OPTIONS}
+          selectedValue={tenure}
+          onChange={setTenure}
         />
-    </Card>
+        <Slider
+            name="requestedAmount"
+            label="Önskat belopp"
+            min={50000}
+            max={5000000}
+            step={50000}
+            value={amount}
+            onChange={setAmount}
+          />
+      </Card>
+      <ApplicationWizard step={step} onChange={handleChange} values={values}></ApplicationWizard>
+      {/* step 4 is the receipt, so it has no navigation of its own */}
+      {step < RECEIPT_STEP && (
+        <>
+          {step > 1 && (
+            <Button variant="secondary" onClick={() => setStep((prev) => prev - 1)}>
+              Tillbaka
+            </Button>
+          )}
+          <Button variant="ghost" onClick={handleCancel}>
+            Avbryt ansökan
+          </Button>
+          <Button
+            onClick={() => setStep((prev) => prev + 1)}
+            disabled={!isStepComplete(step, values)}
+          >
+            {step === REVIEW_STEP ? "Skicka ansökan" : "Fortsätt"}
+          </Button>
+        </>
+      )}
+
+      {step === RECEIPT_STEP && (
+        <Button onClick={() => navigate("/oversikt")}>Till översikten</Button>
+      )}
+      <h3>{step}</h3>
+    </>
   )
 }
 
