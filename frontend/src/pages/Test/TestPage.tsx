@@ -13,11 +13,20 @@ import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
 import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
+import AttachedFile from "../../components/AttachedFile/AttachedFile"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "company" },
 { label: "Handläggare", value: "caseWorker" },
 ]
+
+const DOCUMENT_MOCK = {
+  id: 1,
+  applicationId: 1,
+  filename: "årsredovisning_2025.pdf",
+  docType: "PDF",
+  uploadedAt: "2026-08-27T10:30:00Z",
+}
 
 const reasonOptions: DropdownOption[] = [
   { value: "renovering", label: "Renovering" },
@@ -93,7 +102,7 @@ const TestPage = () => {
         <Loading size="lg"/>
           test knapp
         <Button variant="ghost">
-        <StatusTag status="approved"/>
+        <StatusTag status="APPROVED"/>
         </Button>
       <Dropdown
         id="selectReason"
@@ -120,7 +129,9 @@ const TestPage = () => {
             value={amount}
             onChange={setAmount}
           />
+          <AttachedFile document={DOCUMENT_MOCK} />
       </Card>
+
       <ApplicationWizard step={step} onChange={handleChange} values={values}></ApplicationWizard>
       {/* step 4 is the receipt, so it has no navigation of its own */}
       {step < RECEIPT_STEP && (

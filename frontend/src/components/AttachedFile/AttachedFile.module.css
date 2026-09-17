@@ -1,0 +1,55 @@
+.wrapper {
+  display: flex;
+  gap: var(--space-xs);
+  background-color: var(--bg-main);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  align-items: center;
+}
+
+.iconWrapper {
+  padding: var(--space-sm);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.fileInformation {
+  min-width: 0; 
+}
+
+.fileName {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary, #666);
+  font-size: 0.875rem;
+}
+
+.downloadButton {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.downloadLabel {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .downloadLabel {
+    display: inline;
+  }
+
+  .downloadIcon {
+    display: none;
+  }
+}
