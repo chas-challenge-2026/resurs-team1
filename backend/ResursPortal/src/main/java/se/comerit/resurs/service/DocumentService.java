@@ -97,7 +97,8 @@ public class DocumentService {
             document.setUploadedAt(LocalDateTime.now());
             documentRepository.save(document);
 
-            appendAuditLog(application, originalFilename, docType);
+
+            auditService.documentUploaded(application, originalFilename, docType);
 
 
             // Update application status from PENDING_DOCS to UNDER_REVIEW if årsredovisning uploaded
