@@ -1,11 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FiArrowRight } from "react-icons/fi"
-import ApplicationWizard, {
-  EMAIL_PATTERN,
-  PHONE_PATTERN,
-  type ApplicationFormData,
-} from "../../../components/ApplicationWizard/ApplicationWizard"
+import ApplicationWizard, { type ApplicationFormData} from "../../../components/ApplicationWizard/ApplicationWizard"
+import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"

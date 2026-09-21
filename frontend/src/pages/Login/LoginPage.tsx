@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCaseWorkerLogin, useCompanyLogin } from "../../hooks/useLogin";
 import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch";
 import type { UserRole } from "../../types/user";
+import { EMAIL_PATTERN } from "../../constants/constants";
 import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
@@ -9,8 +10,8 @@ import Loading from "../../components/Loading/Loading";
 import s from "./LoginPage.module.css"
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
-{ label: "Företag", value: "company" },
-{ label: "Handläggare", value: "caseWorker" },
+  { label: "Företag", value: "company" },
+  { label: "Handläggare", value: "caseWorker" },
 ]
 
 const INITIAL_FORM = {
@@ -20,9 +21,6 @@ const INITIAL_FORM = {
 }
 
 const ORG_NUMBER_DIGITS = 10
-
-// stricter than the browser's own rule, which accepts a domain without a dot
-const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/
 
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it

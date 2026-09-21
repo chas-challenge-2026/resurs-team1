@@ -28,13 +28,13 @@ const ApplicationSummary = ({ application, amountColor = "primary", durationColo
       <dl className={s.summary}>
         <div className={`${s.item} ${s.amountItem} ${panelClassName}`}>
           <dt className={s.label}>Sökt belopp</dt>
-          <dd className={`${s.amount} ${s[amountColor]}`}>{formatCurrency(application.requested_amount)}</dd>
+          <dd className={`${s.amount} ${s[amountColor]}`}>{formatCurrency(application.requestedAmount)}</dd>
         </div>
 
-        {application.duration_months && (
+        {application.durationMonths && (
           <div className={`${s.item} ${s.durationItem} ${panelClassName}`}>
             <dt className={s.label}><span className={s.hidden}>Återbetalningstid i </span>Månader</dt>
-            <dd className={`${s.duration} ${s[durationColor]}`}>{application.duration_months}</dd>
+            <dd className={`${s.duration} ${s[durationColor]}`}>{application.durationMonths}</dd>
           </div>
         )}
 
