@@ -19,6 +19,7 @@ export const formatCurrency = (value: number, unit: string = "kr"): string => {
 }
 
 export const formatDate = (isoString: string) => {
+  if (!isoString) return "-"
   const date = new Date(isoString)
   return date.toISOString().split("T")[0]
 }
