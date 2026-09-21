@@ -1,5 +1,5 @@
 import type { IconType } from "react-icons"
-import { FiAlertCircle, FiArchive, FiCheckCircle, FiClock } from "react-icons/fi"
+import { FiAlertCircle, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi"
 import { NavLink } from "react-router-dom"
 import type { Application, ApplicationStatus } from "../../api/applicationApi"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
@@ -17,7 +17,7 @@ const ICONS: Record<ApplicationStatus, IconType> = {
   PENDING_DOCS: FiAlertCircle,
   UNDER_REVIEW: FiClock,
   APPROVED: FiCheckCircle,
-  REJECTED: FiArchive,
+  REJECTED: FiXCircle,
 }
 
 interface SidebarCaseCardProps {
