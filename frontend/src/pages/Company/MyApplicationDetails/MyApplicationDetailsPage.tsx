@@ -77,7 +77,7 @@ const MyApplicationDetailsPage = () => {
         <p className={s.description}>{application.purpose} · {formatCurrency(application.requested_amount)} {application.duration_months && `· ${application.duration_months} månader`}</p>
       </div>
 
-      {application.status === "UNDER_REVIEW" &&
+      {application.status === "PENDING_DOCS" &&
         <Card as="section" variant="warning">
           <CardHeader className={s.warningHeader}>
             <div className={s.iconWrapper}>
