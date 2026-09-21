@@ -412,8 +412,8 @@ public class ScoringService {
             // Flag — magic number 2.5, inkonsekvent med hardReject-gränsen 1.5
             state.incrementFlags(1);
             state.getDecisionReason().append("VARNING: Räntetäckningsgrad låg (").append(String.format("%.2f", ranteTackningsgrad)).append(" < ")
-                    .append(thresholds.interestCoverage().reject()).append(", rekommenderas minst ")
-                    .append(thresholds.interestCoverage().reject()).append("). ");
+                    .append(thresholds.interestCoverage().low()).append(", rekommenderas minst ")
+                    .append(thresholds.interestCoverage().low()).append("). ");
             state.getScoringLog().append(" [FLAGGED]");
             state.removePoints(15);
         } else if (ranteTackningsgrad >= 999) {

@@ -15,7 +15,10 @@ import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../component
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
 import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
 import type { Application } from "../../api/applicationApi"
-
+import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
+import type { Application } from "../../api/applicationApi"
+import AttachedFile from "../../components/AttachedFile/AttachedFile"
+        
 const summaryApplication: Application = {
   id: 1,
   requested_amount: 850000,
@@ -33,6 +36,14 @@ const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "company" },
 { label: "Handläggare", value: "caseWorker" },
 ]
+
+const DOCUMENT_MOCK = {
+  id: 1,
+  applicationId: 1,
+  filename: "årsredovisning_2025.pdf",
+  docType: "PDF",
+  uploadedAt: "2026-08-27T10:30:00Z",
+}
 
 const reasonOptions: DropdownOption[] = [
   { value: "renovering", label: "Renovering" },
@@ -57,6 +68,14 @@ const applicationData: ApplicationFormData = {
   purpose: "",
   requestedAmount: 50000,
 }
+
+// copy pasted mock cases to try it out
+const SAMPLE_CASES: Application[] = [
+  { id: 387139, company_name: "Nordvik Bygg AB", org_number: "556600-0000", authorized_signatory: "Anna Nordvik", purpose: "Rörelsekapital", requested_amount: 3000000, status: "PENDING_DOCS", created_at: "2026-08-27T09:00:00Z", updated_at: "2026-08-27T09:00:00Z" },
+  { id: 387142, company_name: "Lindqvist Logistik AB", org_number: "559012-3456", authorized_signatory: "Erik Lindqvist", purpose: "Maskininvestering", requested_amount: 850000, status: "UNDER_REVIEW", created_at: "2026-08-29T09:00:00Z", updated_at: "2026-08-29T09:00:00Z" },
+  { id: 387150, company_name: "Solberga Café & Bageri AB", org_number: "556788-1122", authorized_signatory: "Sara Solberg", purpose: "Expansion", requested_amount: 1200000, status: "APPROVED", created_at: "2026-09-02T09:00:00Z", updated_at: "2026-09-02T09:00:00Z" },
+  { id: 387155, company_name: "Västra Götalands Maskin- och Fastighetsservice AB", org_number: "559334-7788", authorized_signatory: "Johan Hallberg", purpose: "Rörelsekapital", requested_amount: 400000, status: "REJECTED", created_at: "2026-09-08T09:00:00Z", updated_at: "2026-09-08T09:00:00Z" },
+]
 
 // to make button appear and dissapear
 const REVIEW_STEP = 3
@@ -103,11 +122,13 @@ const TestPage = () => {
   return (
     <>
       <ApplicationSummary application={summaryApplication} />
-      <ApplicationSummary application={{ ...summaryApplication, duration_months: undefined }} />
-      <ApplicationSummary application={summaryApplication} amountColor="neutral" />
-      <ApplicationSummary application={summaryApplication} amountColor="neutral" durationColor="neutral" />
-      <ApplicationSummary application={summaryApplication} amountBackground="neutral" />
-      <ApplicationSummary application={summaryApplication} amountColor="neutral" durationColor="neutral" amountBackground="neutral" />
+
+      <div style={{width: "20rem"}}>
+        {SAMPLE_CASES.map((application) => (
+          <SidebarCaseCard key={application.id} application={application} />
+        ))}
+      </div>
+
       <Card>
         <h1 className="title">Titel</h1>
         <p className="subtitle">Undertitel</p>
@@ -141,7 +162,9 @@ const TestPage = () => {
             value={amount}
             onChange={setAmount}
           />
+          <AttachedFile document={DOCUMENT_MOCK} />
       </Card>
+
       <ApplicationWizard step={step} onChange={handleChange} values={values}></ApplicationWizard>
       {/* step 4 is the receipt, so it has no navigation of its own */}
       {step < RECEIPT_STEP && (
