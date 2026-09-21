@@ -65,41 +65,6 @@ public class ApplicationService {
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
     kör scoring engine och placerar rätt värde till rättattribut
     */
-    @Transactional
-    public CreditApplicationDTO submitApplication(String orgNumber, String personalNumber,
-                                                  BigDecimal requestedAmount, String purpose, String bransch){
-        CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
-        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
-
-        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
-                .orElseThrow();
-
-        CompanyFinancialApiDTO.CompanyIncomeStatement income = financials.incomeStatement();
-        CompanyFinancialApiDTO.CompanyBalanceSheet balance = financials.balanceSheet();
-        CompanyFinancialApiDTO.CompanyCashFlowStatement cashFlow = financials.cashFlowStatement();
-
-        NewApplicationDTO scoredApplication = scoringService.ScoringEngine(
-                cashFlow == null ? "" : cashFlow.operatingCashFlow().toPlainString(),        //operativtkassaflöde
-                cashFlow == null ? "" : cashFlow.investmentCashFlow().toPlainString(),      //investeringskassaflöde
-                income.interestExpenses().toPlainString(),                                  //räntekostnader
-                balance.totalAssets().doubleValue(),                                       //totalt kapital
-                balance.equity().doubleValue(),                                            //eget kapital
-                balance.shortTermLiabilities().doubleValue(),                            // kortfristigaSkulder
-                balance.currentAssets().doubleValue(),                                   // omsättnings tillgangar
-                balance.shortTermLiabilities().add(balance.longTermLiabilities()).doubleValue(), // totalaSkulder
-                income.revenue().doubleValue(),                                          // netto omsättning
-                income.operatingResult().doubleValue(),                                  // rörelse resultat
-                requestedAmount,                                                         // requestedAmount
-                bransch,                                                                 // bransch
-                company.orgNumber(),                                                     // orgNumber
-                company.companyName(),                                                   // companyName
-                signatory.name(),                                                        // signatur
-                purpose
-        );
-
-        return saveApplication(scoredApplication);
-    }
-
 
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());

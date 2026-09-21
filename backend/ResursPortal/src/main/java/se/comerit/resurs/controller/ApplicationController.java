@@ -20,12 +20,11 @@ import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.ApplicationShortDTO;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
-import se.comerit.resurs.service.ApplicationService;
-import se.comerit.resurs.service.CompanyService;
-import se.comerit.resurs.service.DocumentService;
-import se.comerit.resurs.service.ScoringService;
+import se.comerit.resurs.service.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -54,12 +53,17 @@ import java.util.*;
 @RequestMapping("api/application")
 public class ApplicationController {
 
+
+    private final CompanyValidationService validationService;
+    private final CompanyFinancialService financialService;
     private final DocumentService documentService;
     private final ApplicationService appService;
     private final CompanyService companyService; //Swap to CompanyService later
     private final ScoringService creditScoreService;
 
-    public ApplicationController(DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+        this.validationService = validationService;
+        this.financialService = financialService;
         this.documentService = documentService;
         this.appService = appService;
         this.companyService = companyService;
@@ -86,75 +90,55 @@ public class ApplicationController {
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
             @RequestParam("orgNumber") String orgNumber,
-            @RequestParam("companyName") String companyName,
-            @RequestParam("authorizedSignatory") String authorizedSignatory,
-            @RequestParam("egetKapital") String egetKapitalStr,
-            @RequestParam("totaltKapital") String totaltKapitalStr,
-            @RequestParam("omsattningstillgangar") String omsattningstillgangarStr,
-            @RequestParam("kortfristigaSkulder") String kortfristigaSkulderStr,
-            @RequestParam("totalaSkulder") String totalaSkulderStr,
-            @RequestParam("rorelseresultat") String rorelseresultatStr,
-            @RequestParam("nettoomsattning") String nettoomsattningStr,
-            @RequestParam("requestedAmount") String requestedAmountStr,
+            @RequestParam("requestedAmount") BigDecimal requestedAmountStr,
             @RequestParam("purpose") String purpose,
-            @RequestParam(value = "operativtKassaflode", defaultValue = "") String operativtKassaflodeStr,
-            @RequestParam(value = "investeringsKassaflode", defaultValue = "") String investeringsKassaflodeStr,
-            @RequestParam(value = "ranteKostnader", defaultValue = "") String ranteKostnaderStr,
             @RequestParam(value = "bransch", defaultValue = "") String bransch,
             HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         if (!"company".equals(session.getAttribute("role"))) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if(session.getAttribute("personalNumber") == null )return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
         // No validation or sanitization of inputs
 
-        // ---- Parse financial inputs (no proper error handling) ----
-        double egetKapital = 0;
-        double totaltKapital = 0;
-        double omsattningstillgangar = 0;
-        double kortfristigaSkulder = 0;
-        double totalaSkulder = 0;
-        double rorelseresultat = 0;
-        double nettoomsattning = 0;
-        BigDecimal requestedAmount = BigDecimal.ZERO;
 
-        try {
-            egetKapital = Double.parseDouble(egetKapitalStr.replace(",", ".").trim());
-            totaltKapital = Double.parseDouble(totaltKapitalStr.replace(",", ".").trim());
-            omsattningstillgangar = Double.parseDouble(omsattningstillgangarStr.replace(",", ".").trim());
-            kortfristigaSkulder = Double.parseDouble(kortfristigaSkulderStr.replace(",", ".").trim());
-            totalaSkulder = Double.parseDouble(totalaSkulderStr.replace(",", ".").trim());
-            rorelseresultat = Double.parseDouble(rorelseresultatStr.replace(",", ".").trim());
-            nettoomsattning = Double.parseDouble(nettoomsattningStr.replace(",", ".").trim());
-            requestedAmount = new BigDecimal(requestedAmountStr.replace(",", ".").trim());
-        } catch (NumberFormatException e) {
-            /*model.addAttribute("error", "Ogiltiga numeriska värden. Kontrollera dina inmatningar.");
-            model.addAttribute("companyName", companyName);
-            model.addAttribute("orgNumber", orgNumber);*/
-            ResponseEntity.badRequest().build();
-        }
+        /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
+    kör scoring engine och placerar rätt värde till rättattribut
+    */
+        String personalNumber = session.getAttribute("personalNumber").toString();
+        CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
+
+        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
+                .orElseThrow();
+
+        CompanyFinancialApiDTO.CompanyIncomeStatement income = financials.incomeStatement();
+        CompanyFinancialApiDTO.CompanyBalanceSheet balance = financials.balanceSheet();
+        CompanyFinancialApiDTO.CompanyCashFlowStatement cashFlow = financials.cashFlowStatement();
 
         NewApplicationDTO scoredApplication = creditScoreService.ScoringEngine(
-                operativtKassaflodeStr,
-                investeringsKassaflodeStr,
-                ranteKostnaderStr,
-                totaltKapital,
-                egetKapital,
-                kortfristigaSkulder,
-                omsattningstillgangar,
-                totalaSkulder,
-                nettoomsattning,
-                rorelseresultat,
-                requestedAmount,
-                bransch,
-                orgNumber,
-                companyName,
-                authorizedSignatory,
+                cashFlow.operatingCashFlow().toPlainString(),        //operativtkassaflöde
+                cashFlow.investmentCashFlow().toPlainString(),      //investeringskassaflöde
+                income.interestExpenses().toPlainString(),                                  //räntekostnader
+                balance.totalAssets().doubleValue(),                                       //totalt kapital
+                balance.equity().doubleValue(),                                            //eget kapital
+                balance.shortTermLiabilities().doubleValue(),                            // kortfristigaSkulder
+                balance.currentAssets().doubleValue(),                                   // omsättnings tillgangar
+                balance.shortTermLiabilities().add(balance.longTermLiabilities()).doubleValue(), // totalaSkulder
+                income.revenue().doubleValue(),                                          // netto omsättning
+                income.operatingResult().doubleValue(),                                  // rörelse resultat
+                requestedAmountStr,                                                         // requestedAmount
+                bransch,                                                                 // bransch
+                company.orgNumber(),                                                     // orgNumber
+                company.companyName(),                                                   // companyName
+                signatory.name(),                                                        // signatur
                 purpose
         );
+
+
 
 
         // ===========================================================
