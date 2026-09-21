@@ -121,6 +121,9 @@ public class ApplicationController {
         double nettoomsattning = 0;
         BigDecimal requestedAmount = BigDecimal.ZERO;
 
+
+
+
         try {
             egetKapital = Double.parseDouble(egetKapitalStr.replace(",", ".").trim());
             totaltKapital = Double.parseDouble(totaltKapitalStr.replace(",", ".").trim());
@@ -137,10 +140,45 @@ public class ApplicationController {
             ResponseEntity.badRequest().build();
         }
 
+        //Optional?  Code comments say that they are
+        double operativtKassaflode = 0.0;
+        double investeringsKassaflode = 0.0;
+        double ranteKostnader = 0.0;
+
+        // Parse new optional params — om tomt, sätt 0 — kan ge felaktiga resultat nedströms
+        try {
+            if (!operativtKassaflodeStr.isEmpty()) {
+                operativtKassaflode = Double.parseDouble(operativtKassaflodeStr.replace(",", ".").trim());
+            }
+        } catch (NumberFormatException e) {
+            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
+            operativtKassaflode = 0.0;
+        }
+
+        try {
+            if (!investeringsKassaflodeStr.isEmpty()) {
+                investeringsKassaflode = Double.parseDouble(investeringsKassaflodeStr.replace(",", ".").trim());
+            }
+        } catch (NumberFormatException e) {
+            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
+            investeringsKassaflode = 0.0;
+        }
+
+        try {
+            if (!ranteKostnaderStr.isEmpty()) {
+                ranteKostnader = Double.parseDouble(ranteKostnaderStr.replace(",", ".").trim());
+            }
+        } catch (NumberFormatException e) {
+            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
+            ranteKostnader = 0.0;
+        }
+
+
+
         NewApplicationDTO scoredApplication = creditScoreService.ScoringEngine(
-                operativtKassaflodeStr,
-                investeringsKassaflodeStr,
-                ranteKostnaderStr,
+                operativtKassaflode,
+                investeringsKassaflode,
+                ranteKostnader,
                 totaltKapital,
                 egetKapital,
                 kortfristigaSkulder,
@@ -155,6 +193,9 @@ public class ApplicationController {
                 authorizedSignatory,
                 purpose
         );
+
+
+
 
 
         // ===========================================================
@@ -204,19 +245,14 @@ public class ApplicationController {
                 // Try to find companyId from orgNumber
                 String orgNumber = (String) session.getAttribute("orgNumber");
 
-                try{
-                    companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
-                } catch (NoSuchElementException e){
-                    return ResponseEntity.internalServerError().build();
-                }
+
+                companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
+
                 session.setAttribute("companyId", companyId);
             }
 
-            try{
-                app = appService.findApplicationByID(id);
-            } catch (NoSuchElementException e){
-                return ResponseEntity.notFound().build(); //ansökan hittades inte
-            }
+
+            app = appService.findApplicationByID(id);
 
         }
 
@@ -244,14 +280,8 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-
-        Long companyID;
-        try{
             // Get companyId via orgNumber — no caching, hits DB every time
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+            Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
 
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
@@ -272,12 +302,7 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        Long companyID;
-        try{
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
         // Count applications by status
         Pageable limit = PageRequest.of(0,5);
