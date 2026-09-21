@@ -8,7 +8,7 @@ import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
 import { formatCurrency } from "../../utils/formatters";
 
-// placeholder options -- pratat med back-end "ej enum, det är  vanlig text sträng"
+// TODO: move out to seperate file
 const PURPOSE_OPTIONS: DropdownOption[] = [
   { value: "waiting", label: "Väntar" },
   { value: "for", label: "På" },
@@ -23,6 +23,7 @@ const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
   { value: 60, label: "60 mån" },
 ]
 
+//TODO: move both email and phone pattern to mutual file
 // exported so the page can gate the Fortsätt button on the same rules
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // loose on purpose: swedish numbers are written with spaces, dashes and +46
@@ -42,9 +43,8 @@ export interface ApplicationFormData {
   email: string;
   phoneNumber: string;
 
-  // becomes a union once the backend hands over the enum values -- A | B | C
-  purpose: string;
-  // TODO: "requestedAmount" in api rn, until they change according to request in slack
+
+  purpose: string; // becomes a union once the backend hands over the enum values -- A | B | C
   requestedAmount: number;
   // undefined until the customer picks one
   repaymentPeriod?: number;
@@ -109,7 +109,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
               label="Önskad återbetalningstid (månad)"
               options={REPAYMENT_OPTIONS}
               selectedValue={values.repaymentPeriod}
-              onChange={(repaymentPeriod) => onChange({ repaymentPeriod })} //is set to whatever is sent in as prop
+              onChange={(repaymentPeriod) => onChange({ repaymentPeriod })}
             />
           </CardBody>
         </Card>
@@ -128,7 +128,6 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
       return (
         <Card>
           <CardBody>
-            {/* native input, so onChange hands over an event instead of a value */}
             <Input
               id="contactName"
               label="Kontaktperson"
@@ -160,7 +159,6 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
     }
 
     case 3: {
-      // the form stores the value, the customer should read the label
       const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
 
       return (

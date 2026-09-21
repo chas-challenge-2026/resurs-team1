@@ -54,7 +54,6 @@
   height: 15px;
 }
 
-/* Statuses — bar from index, plate and text only live here */
 .PENDING_DOCS {
   --st-base: var(--color-warning-strong);
   --st-bg: #FBF1DF;

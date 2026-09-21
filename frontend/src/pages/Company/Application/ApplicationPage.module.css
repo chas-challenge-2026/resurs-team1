@@ -1,4 +1,3 @@
-/* main is 1200, but this one looks wayyyy too wide if kept the same */
 .wizard {
   display: flex;
   flex-direction: column;

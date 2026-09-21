@@ -1,9 +1,3 @@
-/* Loading
-   ---------------------------------------------------------------
-   Sizing is set inline by Loading.tsx, colors come from the
-   tokens in index.css.
-*/
-
 .wrapper {
   display: inline-flex;
   flex-direction: column;
@@ -11,8 +5,6 @@
   gap: var(--space-xs);
 }
 
-/* The animation carries the meaning visually, the text carries it
-   for screen readers. Reduced motion makes it visible instead. */
 .label {
   position: absolute;
   width: 1px;
