@@ -4,9 +4,9 @@ import s from "./Datalist.module.css"
  * Props for individual rows in the DataList.
  */
 interface DataListItemProps {
-  /** The label/title describing the data (e.g., "Contact person" or "Organization number"). */
+  /** label describing the data. ex: "Organization number" */
   label: string;
-  /** The value associated with the label (e.g., "Anna Andersson" or "5566000-0000"). */
+  /** value associated with label ex: "5566000-0000"). */
   value: string;
 }
 
@@ -39,7 +39,7 @@ interface DataListProps {
  * An accessible key/value list (Description List) used to display
  * structured data such as summaries, profile details, or receipts.
  * 
- * Uses the HTML5 `<dl>` element internally for proper WCAG and screen reader support.
+ * Uses `<dl>` element internally for proper WCAG and screen reader support.
  *
  * @example
  * ```tsx

@@ -62,8 +62,7 @@ const Input = ({id, label, hideLabel, error, information, size = "md", icon, cla
       <label htmlFor={id} className={hideLabel ? s.hidden : undefined}>
         {label}
       </label>
-
-      {/* the wrapper only exists to anchor the icon, so plain fields keep their markup */}
+      
       {icon ? (
         <div className={s.field}>
           <span className={s.icon} aria-hidden={true}>{icon}</span>

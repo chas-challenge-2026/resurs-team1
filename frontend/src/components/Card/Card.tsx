@@ -35,7 +35,7 @@ const Card = ({children, variant = "default", accentColor, as: Component = "div"
 
   const combinedClassName = [ s.card, s[variant], className].filter(Boolean).join(" ");
 
-  //Add variable for accent color
+  //accentColor becomes --card-accent-color to style correct part of element
   const combinedStyle: CSSProperties = {
     ...style,
     ...(accentColor ? { ["--card-accent-color" as string]: accentColor } : {}),

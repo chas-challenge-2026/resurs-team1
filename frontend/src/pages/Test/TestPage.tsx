@@ -16,7 +16,6 @@ import type { ApplicationFormData } from "../../components/ApplicationWizard/App
 import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
 import type { Application } from "../../api/applicationApi"
 import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
-import type { Application } from "../../api/applicationApi"
 import AttachedFile from "../../components/AttachedFile/AttachedFile"
         
 const summaryApplication: Application = {
