@@ -13,10 +13,24 @@ import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
 import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
+import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
+import type { Application } from "../../api/applicationApi"
 import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
 import type { Application } from "../../api/applicationApi"
 import AttachedFile from "../../components/AttachedFile/AttachedFile"
-
+        
+const summaryApplication: Application = {
+  id: 1,
+  requested_amount: 850000,
+  purpose: "Investering i maskiner/utrustning",
+  status: "UNDER_REVIEW",
+  created_at: "2026-08-20T10:00:00Z",
+  updated_at: "2026-08-20T10:00:00Z",
+  company_name: "Andersson Bygg AB",
+  org_number: "556123-4567",
+  authorized_signatory: "Lars Andersson",
+  duration_months: 36,
+}
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 { label: "Företag", value: "company" },
@@ -107,11 +121,14 @@ const TestPage = () => {
 
   return (
     <>
+      <ApplicationSummary application={summaryApplication} />
+
       <div style={{width: "20rem"}}>
         {SAMPLE_CASES.map((application) => (
           <SidebarCaseCard key={application.id} application={application} />
         ))}
       </div>
+
       <Card>
         <h1 className="title">Titel</h1>
         <p className="subtitle">Undertitel</p>
