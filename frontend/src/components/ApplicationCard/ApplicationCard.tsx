@@ -22,14 +22,14 @@ const ApplicationCard = ({application}: ApplicationCardProps) => {
           </div>
 
           <p className={s.purpose}>{application.purpose}</p>
-          <p className={s.updatedAt}>Uppdaterad {formatDate(application.updated_at)}</p>
+          <p className={s.updatedAt}>Uppdaterad {formatDate(application.updatedAt)}</p>
         </div>
       </CardBody>
 
       <CardFooter className={s.cardFooter}>
         <div className={s.amountGroup}>
           <span className={s.amountLabel}>Sökt belopp</span>
-          <span className={s.amountValue}>{formatCurrency(application.requested_amount)}</span>
+          <span className={s.amountValue}>{formatCurrency(application.requestedAmount)}</span>
         </div>
 
         <Link

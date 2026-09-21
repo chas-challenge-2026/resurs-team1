@@ -25,7 +25,7 @@ interface SidebarCaseCardProps {
 }
 
 const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
-  const { id, status, company_name, requested_amount, created_at } = application
+  const { id, status, companyName, requestedAmount, createdAt } = application
   const StatusIcon = ICONS[status]
 
   return(
@@ -34,8 +34,8 @@ const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
       className={({ isActive }) => isActive ? `${s.card} ${s.active}` : s.card}
     >
       <div className={s.row}>
-        <span className={s.company} title={company_name}>{company_name}</span>
-        <span className={s.amount}>{formatCurrency(requested_amount)}</span>
+        <span className={s.company} title={companyName}>{companyName}</span>
+        <span className={s.amount}>{formatCurrency(requestedAmount)}</span>
       </div>
 
       <div className={s.row}>
@@ -48,7 +48,7 @@ const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
           />
           {formatReferenceNumber(id)}
         </span>
-        <span className={s.date}>{formatDate(created_at)}</span>
+        <span className={s.date}>{formatDate(createdAt)}</span>
       </div>
     </NavLink>
   )

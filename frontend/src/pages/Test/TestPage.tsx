@@ -20,15 +20,15 @@ import AttachedFile from "../../components/AttachedFile/AttachedFile"
         
 const summaryApplication: Application = {
   id: 1,
-  requested_amount: 850000,
+  requestedAmount: 850000,
   purpose: "Investering i maskiner/utrustning",
   status: "UNDER_REVIEW",
-  created_at: "2026-08-20T10:00:00Z",
-  updated_at: "2026-08-20T10:00:00Z",
-  company_name: "Andersson Bygg AB",
-  org_number: "556123-4567",
-  authorized_signatory: "Lars Andersson",
-  duration_months: 36,
+  createdAt: "2026-08-20T10:00:00Z",
+  updatedAt: "2026-08-20T10:00:00Z",
+  companyName: "Andersson Bygg AB",
+  orgNumber: "556123-4567",
+  authorizedSignatory: "Lars Andersson",
+  durationMonths: 36,
 }
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
@@ -70,10 +70,10 @@ const applicationData: ApplicationFormData = {
 
 // copy pasted mock cases to try it out
 const SAMPLE_CASES: Application[] = [
-  { id: 387139, company_name: "Nordvik Bygg AB", org_number: "556600-0000", authorized_signatory: "Anna Nordvik", purpose: "Rörelsekapital", requested_amount: 3000000, status: "PENDING_DOCS", created_at: "2026-08-27T09:00:00Z", updated_at: "2026-08-27T09:00:00Z" },
-  { id: 387142, company_name: "Lindqvist Logistik AB", org_number: "559012-3456", authorized_signatory: "Erik Lindqvist", purpose: "Maskininvestering", requested_amount: 850000, status: "UNDER_REVIEW", created_at: "2026-08-29T09:00:00Z", updated_at: "2026-08-29T09:00:00Z" },
-  { id: 387150, company_name: "Solberga Café & Bageri AB", org_number: "556788-1122", authorized_signatory: "Sara Solberg", purpose: "Expansion", requested_amount: 1200000, status: "APPROVED", created_at: "2026-09-02T09:00:00Z", updated_at: "2026-09-02T09:00:00Z" },
-  { id: 387155, company_name: "Västra Götalands Maskin- och Fastighetsservice AB", org_number: "559334-7788", authorized_signatory: "Johan Hallberg", purpose: "Rörelsekapital", requested_amount: 400000, status: "REJECTED", created_at: "2026-09-08T09:00:00Z", updated_at: "2026-09-08T09:00:00Z" },
+  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "Rörelsekapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z" },
+  { id: 387142, companyName: "Lindqvist Logistik AB", orgNumber: "559012-3456", authorizedSignatory: "Erik Lindqvist", purpose: "Maskininvestering", requestedAmount: 850000, status: "UNDER_REVIEW", createdAt: "2026-08-29T09:00:00Z", updatedAt: "2026-08-29T09:00:00Z" },
+  { id: 387150, companyName: "Solberga Café & Bageri AB", orgNumber: "556788-1122", authorizedSignatory: "Sara Solberg", purpose: "Expansion", requestedAmount: 1200000, status: "APPROVED", createdAt: "2026-09-02T09:00:00Z", updatedAt: "2026-09-02T09:00:00Z" },
+  { id: 387155, companyName: "Västra Götalands Maskin- och Fastighetsservice AB", orgNumber: "559334-7788", authorizedSignatory: "Johan Hallberg", purpose: "Rörelsekapital", requestedAmount: 400000, status: "REJECTED", createdAt: "2026-09-08T09:00:00Z", updatedAt: "2026-09-08T09:00:00Z" },
 ]
 
 // to make button appear and dissapear

@@ -74,7 +74,7 @@ const MyApplicationDetailsPage = () => {
           <h2 className="title">{formatReferenceNumber(application.id)}</h2>
           <StatusTag status={application.status} />
         </div>
-        <p className={s.description}>{application.purpose} · {formatCurrency(application.requested_amount)} {application.duration_months && `· ${application.duration_months} månader`}</p>
+        <p className={s.description}>{application.purpose} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
       </div>
 
       {application.status === "PENDING_DOCS" &&
@@ -143,9 +143,9 @@ const MyApplicationDetailsPage = () => {
           <DataList>
             <DataListItem label="Ärendenummer" value={formatReferenceNumber(application.id)} />
             <DataListItem label="Ändamål" value={application.purpose} />
-            <DataListItem label="Belopp" value={formatCurrency(application.requested_amount)} />
-            {application.duration_months && <DataListItem label="Återbetalningstid" value={`${application.duration_months} månader`} />}
-            <DataListItem label="Inskickad" value={formatDate(application.created_at)} />
+            <DataListItem label="Belopp" value={formatCurrency(application.requestedAmount)} />
+            {application.durationMonths && <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />}
+            <DataListItem label="Inskickad" value={formatDate(application.createdAt)} />
           </DataList>
         </CardHeader>
       </Card>

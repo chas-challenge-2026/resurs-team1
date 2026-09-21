@@ -16,19 +16,19 @@ export interface ApplicationDocument {
 
 export interface Application {
   id: number
-  requested_amount: number
+  requestedAmount: number
   purpose: string
   status: ApplicationStatus
   decision?: string | null
-  decision_reason?: string | null
-  scoring_result?: string | null
+  decisionRreason?: string | null
+  scoringResult?: string | null
   auditLog?: string | null
-  created_at: string
-  updated_at: string
-  company_name: string
-  org_number: string
-  authorized_signatory: string
-  duration_months?: number
+  createdAt: string
+  updatedAt: string
+  companyName: string
+  orgNumber: string
+  authorizedSignatory: string
+  durationMonths?: number
   documents?: ApplicationDocument[]
 }
 
