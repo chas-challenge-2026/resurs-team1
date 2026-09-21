@@ -11,12 +11,13 @@ import type { DropdownOption } from "../../components/Dropdown/Dropdown"
 import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
-import ApplicationWizard, { EMAIL_PATTERN, PHONE_PATTERN } from "../../components/ApplicationWizard/ApplicationWizard"
+import ApplicationWizard from "../../components/ApplicationWizard/ApplicationWizard"
 import type { ApplicationFormData } from "../../components/ApplicationWizard/ApplicationWizard"
 import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
 import type { Application } from "../../api/applicationApi"
 import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
 import AttachedFile from "../../components/AttachedFile/AttachedFile"
+import { EMAIL_PATTERN, PHONE_PATTERN } from "../../constants/constants"
         
 const summaryApplication: Application = {
   id: 1,

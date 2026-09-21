@@ -1,36 +1,13 @@
+import { formatCurrency } from "../../utils/formatters";
+import { LOAN_MIN, LOAN_MAX, EMAIL_PATTERN, PHONE_PATTERN } from "../../constants/constants";
+import { PURPOSE_OPTIONS } from "../../constants/constants";
+import { REPAYMENT_OPTIONS } from "../../constants/constants";
+import Dropdown from "../Dropdown/Dropdown";
 import ButtonGroup from "../ButtonGroup/ButtonGroup";
-import type { ButtonGroupOption } from "../ButtonGroup/ButtonGroup";
 import { Card, CardBody } from "../Card/Card";
 import { DataList, DataListItem } from "../DataList/DataList";
-import Dropdown from "../Dropdown/Dropdown";
-import type { DropdownOption } from "../Dropdown/Dropdown";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
-import { formatCurrency } from "../../utils/formatters";
-
-// TODO: move out to seperate file
-const PURPOSE_OPTIONS: DropdownOption[] = [
-  { value: "waiting", label: "Väntar" },
-  { value: "for", label: "På" },
-  { value: "backend", label: "Back-end" },
-]
-
-const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
-  { value: 12, label: "12 mån" },
-  { value: 24, label: "24 mån" },
-  { value: 36, label: "36 mån" },
-  { value: 48, label: "48 mån" },
-  { value: 60, label: "60 mån" },
-]
-
-//TODO: move both email and phone pattern to mutual file
-// exported so the page can gate the Fortsätt button on the same rules
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-// loose on purpose: swedish numbers are written with spaces, dashes and +46
-export const PHONE_PATTERN = /^[\d\s+()-]{6,20}$/
-
-const LOAN_MIN = 50000
-const LOAN_MAX = 10000000
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {

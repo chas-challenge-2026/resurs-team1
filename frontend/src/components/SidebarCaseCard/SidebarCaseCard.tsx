@@ -1,24 +1,8 @@
-import type { IconType } from "react-icons"
-import { FiAlertCircle, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi"
 import { NavLink } from "react-router-dom"
-import type { Application, ApplicationStatus } from "../../api/applicationApi"
+import type { Application } from "../../api/applicationApi"
+import { ICONS, STATUS_LABELS } from "../../constants/constants"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
 import s from "./SidebarCaseCard.module.css"
-
-// TODO: will be moved to a shared file soon, because StatusTag.tsx is using it too
-const LABELS: Record<ApplicationStatus, string> = {
-  PENDING_DOCS: "Komplettering krävs",
-  UNDER_REVIEW: "Under behandling",
-  APPROVED: "Godkänd",
-  REJECTED: "Avvisad"
-}
-
-const ICONS: Record<ApplicationStatus, IconType> = {
-  PENDING_DOCS: FiAlertCircle,
-  UNDER_REVIEW: FiClock,
-  APPROVED: FiCheckCircle,
-  REJECTED: FiXCircle,
-}
 
 interface SidebarCaseCardProps {
   application: Application
@@ -43,8 +27,8 @@ const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
           <StatusIcon
             className={`${s.icon} ${s[status]}`}
             role="img"
-            aria-label={LABELS[status]}
-            title={LABELS[status]}
+            aria-label={STATUS_LABELS[status]}
+            title={STATUS_LABELS[status]}
           />
           {formatReferenceNumber(id)}
         </span>
