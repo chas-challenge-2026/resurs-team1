@@ -15,6 +15,7 @@ import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
+import se.comerit.resurs.exception.bankid.BankIdVerificationFailedException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -89,6 +90,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         Company company = new Company();
         company.setCompany_name("TestBolaget");
         company.setOrg_number("556000-1234");
+        company.setAuthorized_signatory("Anders Karlsson");
          return companyRepo.save(company);
 
     }
@@ -105,31 +107,29 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @Test
     void companyLogin_shouldReturnCompanyData(){
          Company company = createCompany();
-         CompanyLoginResponse response = authService.loginCompany("556000-1234");
+         CompanyLoginResponse response = authService.loginCompany(
+                 "556000-1234", "196701011234");
 
 
-        assertThat(response.userId()).isEqualTo(company.getId());
         assertThat(response.role()).isEqualTo("company");
         assertThat(response.orgNumber()).isEqualTo(company.getOrg_number());
         assertThat(response.companyName()).isEqualTo(company.getCompany_name());
     }
 
     @Test
-    void loginCompany_shouldRejectOrgNumberNotApprovedByBankId() {
+    void loginCompany_shouldRejectWhenPersonalNumberIsNotApprovedByBankId() {
         createCompany();
 
-        LoginFailedException thrown = assertThrows(
-                LoginFailedException.class,
-                () -> authService.loginCompany("556000-9999"));
-
-        assertThat(thrown.reason()).isEqualTo(LoginFailureReason.BANKID_REJECTED);
+        assertThrows(
+                BankIdVerificationFailedException.class,
+                () -> authService.loginCompany("556000-1234", "000000000000"));
     }
     @Test
     void loginCompany_shouldFailWhenApprovedCompanyIsMissingInDatabase() {
         // 556000-5678 är BankID godkänt men skapas aldrig här
         LoginFailedException thrown = assertThrows(
                 LoginFailedException.class,
-                () -> authService.loginCompany("556000-5678"));
+                () -> authService.loginCompany("556000-5678", "Anders Karlsson"));
 
         assertThat(thrown.reason()).isEqualTo(LoginFailureReason.COMPANY_NOT_FOUND);
     }

@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 
 @Component
 public class PasswordHasher {
-
+    // TODO: replace MD5 with bcrypt
     public String md5Hash(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
