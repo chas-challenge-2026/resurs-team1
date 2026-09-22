@@ -132,9 +132,7 @@ class AuthControllerIntegrationTest {
                 new CompanyLoginRequest(ORG_NUMBER, OTHER_PERSONAL_NUMBER),
                 ApiError.class);
 
-        // CompanyValidationFailedException saknar egen @ExceptionHandler och fångas av den generella.
-        // Byt till FORBIDDEN när GlobalExceptionHandler hanterar den.
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test

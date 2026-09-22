@@ -2,6 +2,7 @@ package se.comerit.resurs.client.companyvalidation;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
@@ -30,7 +31,8 @@ class MockCompanyValidationClient implements CompanyValidationClient {
 
     private void throwIfUnavailable(String orgNumber) {
         if (UNAVAILABLE_ORG_NUMBER.equals(orgNumber)) {
-            throw new CompanyRegistryUnavailableException("company-registry", orgNumber, null);
+            throw new CompanyRegistryUnavailableException("company-registry", orgNumber,
+            new ResourceAccessException("Simulated registry timeout"));
         }
     }
 }
