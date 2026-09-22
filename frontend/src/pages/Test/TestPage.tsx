@@ -85,7 +85,7 @@ const RECEIPT_STEP = 4
 const isStepComplete = (step: number, values: ApplicationFormData) => {
   switch (step) {
     case 1:
-      return values.purpose !== "" && values.repaymentPeriod !== undefined
+      return values.purpose !== "" && values.durationMonths !== undefined
     case 2:
       return (
         values.contactName !== "" &&

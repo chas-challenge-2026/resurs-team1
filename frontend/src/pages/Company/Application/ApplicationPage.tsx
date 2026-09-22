@@ -27,7 +27,7 @@ const ApplicationFormPage = () => {
     phoneNumber: "",
     purpose: "",
     requestedAmount: 3000000,
-    repaymentPeriod: undefined,
+    durationMonths: undefined,
   })
 
   // old answers first, then the patch overwrites only what changed
@@ -37,7 +37,7 @@ const ApplicationFormPage = () => {
   // same rules the wizard shows errors for, so Fortsätt can't walk past a bad field
   const stepIsComplete =
     step === 1
-      ? values.purpose !== "" && values.repaymentPeriod !== undefined
+      ? values.purpose !== "" && values.durationMonths !== undefined
       : step === 2
         ? values.contactName !== "" &&
           EMAIL_PATTERN.test(values.email) &&
