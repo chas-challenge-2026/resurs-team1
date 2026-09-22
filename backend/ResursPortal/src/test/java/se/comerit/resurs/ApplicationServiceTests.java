@@ -196,6 +196,8 @@ class ApplicationServiceTests {
                 .isEqualTo("111111-2222");
     }
 
+    /* This test no longer reflect behavior. application never reaches this point without validation of the company
+    meaning we now save the company if it does not exist in database, as company does not reflect an "account"
     @Test
     void saveApplication_shouldThrowWhenCompanyDoesNotExist() {
 //kolla över
@@ -211,6 +213,7 @@ class ApplicationServiceTests {
         assertThat(applicationRepository.count())
                 .isZero();
     }
+    */
 
     // ============================================================
     // findApplicationByID()

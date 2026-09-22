@@ -1,11 +1,15 @@
 package se.comerit.resurs;
 
+import jakarta.persistence.OptimisticLockException;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,9 +33,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Tester för BackofficeService.
@@ -78,13 +82,16 @@ class BackofficeServiceTests {
     @Autowired
     private AuditEventRepository auditEventRepo;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @BeforeEach
     void cleanDatabase() {
         // audit_events har FK mot applications och måste tömmas först
-        auditEventRepo.deleteAll();
-        documentRepo.deleteAll();
-        creditRepo.deleteAll();
-        companyRepo.deleteAll();
+            auditEventRepo.deleteAll();
+            documentRepo.deleteAll();
+            creditRepo.deleteAllInBatch();
+            companyRepo.deleteAll();
     }
 
     @Test
@@ -236,5 +243,37 @@ class BackofficeServiceTests {
         application.setStatus(status);
 
         return application;
+    }
+
+    @Test
+    void optimisticLocking_shouldRejectStaleUpdate() {
+        CreditApplication saved =
+                creditRepo.saveAndFlush(
+                        createApplication(ApplicationStatus.UNDER_REVIEW)
+                );
+
+        CreditApplication first = transactionTemplate.execute(status ->
+                creditRepo.findById(saved.getId()).orElseThrow()
+        );
+
+        CreditApplication second = transactionTemplate.execute(status ->
+                creditRepo.findById(saved.getId()).orElseThrow()
+        );
+
+        first.setStatus(ApplicationStatus.APPROVED);
+        first.setDecision(ApplicationStatus.APPROVED.toString());
+
+        second.setStatus(ApplicationStatus.REJECTED);
+        second.setDecision(ApplicationStatus.REJECTED.toString());
+
+        transactionTemplate.executeWithoutResult(status ->
+                creditRepo.saveAndFlush(first)
+        );
+
+        assertThatThrownBy(() ->
+                transactionTemplate.executeWithoutResult(status ->
+                        creditRepo.saveAndFlush(second)
+                )
+        ).isInstanceOf(ObjectOptimisticLockingFailureException.class);
     }
 }

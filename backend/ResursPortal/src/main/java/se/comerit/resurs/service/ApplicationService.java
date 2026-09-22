@@ -7,11 +7,13 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ApplicationService {
@@ -20,15 +22,17 @@ public class ApplicationService {
     private final AuditService auditService;
 
 
+    private final CompanyService companyService;
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
 
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService) {
-        this.companyRepository = companyRepository;
+    public ApplicationService(CompanyService companyService, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyRepository companyRepository) {
+        this.companyService = companyService;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
+        this.companyRepository = companyRepository;
     }
 
     //Submit application
@@ -37,8 +41,23 @@ public class ApplicationService {
 
         CreditApplication creditApplication = new CreditApplication();
 
+        ////////////////
+        //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
+        /////////////////
+        Optional<Company> companyOptional = companyRepository.findByOrgNumber(newApplication.org_number());
+        Company company;
+        //persist the new company in DB
+        company = companyOptional.orElseGet(
+                () -> companyService.createCompany(
+                                newApplication.company_name(),
+                                newApplication.org_number(),
+                                newApplication.authorized_signatory()
+                )
+        );
 
-        creditApplication.setCompany(companyRepository.findByOrgNumber(newApplication.org_number()).orElseThrow());
+
+        //Enter data into entity.
+        creditApplication.setCompany(company);
         creditApplication.setStatus(newApplication.status());
         creditApplication.setDecision(newApplication.decision());
         creditApplication.setPurpose(newApplication.purpose());
@@ -46,8 +65,9 @@ public class ApplicationService {
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
 
+        //persist entity
+        CreditApplication saved = applicationRepository.save(creditApplication);
 
-        CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
         //loggar efter att application finns sparad i databas.
         auditService.applicationCreated(saved);
         auditService.scoringRun(saved, newApplication.flagCount());
