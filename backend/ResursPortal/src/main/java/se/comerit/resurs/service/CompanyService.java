@@ -15,6 +15,7 @@ public class CompanyService {
         this.companyRepository = companyRepository;
     }
 
+    //Largely unused as we propagate the company entity from application, Could still be useful to keep.
     public CompanyDTO createCompany(String companyName, String org_number, String authorizedSignatory){
         return new CompanyDTO(companyRepository.save(new Company(org_number,companyName,authorizedSignatory)));
     }
