@@ -29,12 +29,12 @@ public class AuditService {
     private static final String NOT_SIGNED_YET = null;
 
     public void applicationCreated(CreditApplication application){
-            AuditEvent event = new AuditEvent(application,nextSequenceNumber(application), AuditAction.APPLICATION_CREATED, application.getCompany().getOrg_number(),"{\"actorType\":\"COMPANY\",\"purpose\":\"" + application.getPurpose() + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
+            AuditEvent event = new AuditEvent(application,nextSequenceNumber(application.getId()), AuditAction.APPLICATION_CREATED, application.getCompany().getOrg_number(),"{\"actorType\":\"COMPANY\",\"purpose\":\"" + application.getPurpose() + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET);
             auditEventRepository.save(event);
     }
 
     public void scoringRun(CreditApplication application, int flags){
-        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application),AuditAction.SCORING_RUN,
+        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application.getId()),AuditAction.SCORING_RUN,
                 "SYSTEM",
                 "{\"actorType\":\"SYSTEM\""
                     + ",\"decision\":\"" + application.getDecision() + "\""
@@ -46,14 +46,14 @@ public class AuditService {
     }
 
     public void documentUploaded(CreditApplication application, String fileName, String docType){
-        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application), AuditAction.DOCUMENT_UPLOADED,
+        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application.getId()), AuditAction.DOCUMENT_UPLOADED,
                 application.getCompany().getOrg_number(), "{\"actorType\":\"COMPANY\",\"filename\":\"" + fileName + "\",\"docType\":\"" + docType + "\"}", NOT_SIGNED_YET, NOT_SIGNED_YET, NOT_SIGNED_YET,NOT_SIGNED_YET);
         auditEventRepository.save(event);
     }
 
     public void manualDecision(CreditApplication application,String workerEmail, String workerName,
                                ApplicationStatus previousStatus, String comment){
-        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application), AuditAction.MANUAL_DECISION, workerEmail, "{\"actorType\":\"CASE_WORKER\""
+        AuditEvent event = new AuditEvent(application, nextSequenceNumber(application.getId()), AuditAction.MANUAL_DECISION, workerEmail, "{\"actorType\":\"CASE_WORKER\""
                 + ",\"workerName\":\"" + workerName + "\""
                 + ",\"previousStatus\":\"" + previousStatus + "\""
                 + ",\"newStatus\":\"" + application.getStatus() + "\""
@@ -62,8 +62,9 @@ public class AuditService {
         auditEventRepository.save(event);
     }
 
-    private long nextSequenceNumber(CreditApplication application){
-        return auditEventRepository.findMaxSequenceNumber(application.getId()) + 1;
+    private Long nextSequenceNumber(Long applicationID){
+        return auditEventRepository.findFirstByApplicationIdOrderBySequenceNumberDesc(applicationID)
+                .orElseThrow().getSequenceNumber() + 1;
     }
 
     public List<AuditEventDTO> findAuditEventsByApplicationID(Long applicationID){
