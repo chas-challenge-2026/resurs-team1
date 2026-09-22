@@ -19,7 +19,7 @@ public class CreditApplication {
     private Long id;
 
     @Version
-    private int version;
+    private Integer version;
 
     //if application does not specify a company ID, create a new row in DB,  if it does. update the old row.
     //we do this since when an application is created we use a source of truth (company validation)

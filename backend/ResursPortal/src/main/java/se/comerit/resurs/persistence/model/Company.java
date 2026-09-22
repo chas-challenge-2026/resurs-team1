@@ -11,7 +11,7 @@ public class Company {
     private Long id;
 
     @Version
-    private int version;
+    private Integer version;
 
     @Column(unique = true,name = "org_number" )
     private String orgNumber;

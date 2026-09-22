@@ -11,7 +11,7 @@ public class CaseWorker {
     private Long id;
 
     @Version
-    private int version;
+    private Integer version;
 
     @Column(name = "name")
     private String name;
