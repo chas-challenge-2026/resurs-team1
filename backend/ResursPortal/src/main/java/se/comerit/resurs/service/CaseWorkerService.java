@@ -40,6 +40,7 @@ public class CaseWorkerService {
         return new CaseWorkerResponse(caseWorker);
     }
 
+    //No transactional dirtychecking here in order to handle the exceptions on the save()
     public CaseWorkerResponse update(Long id, UpdateCaseWorkerRequest request) {
         CaseWorker caseWorker = caseWorkerRepository.findById(id).orElseThrow();
 

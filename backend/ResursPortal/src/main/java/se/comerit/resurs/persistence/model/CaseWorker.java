@@ -10,6 +10,9 @@ public class CaseWorker {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private int version;
+
     @Column(name = "name")
     private String name;
 
