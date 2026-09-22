@@ -2,6 +2,7 @@
 #define RESURS_AUDIT_TYPES_H
 
 #include <iostream>
+#include <cstdint>
 
 namespace resurs::audit
 {
@@ -16,19 +17,21 @@ struct AuditEntry
     size_t canonicalDataLength;
 
     uint8_t signature[resurs::audit::DIGITAL_SIGNATURE_BYTES];
-    //uint8_t previousHash[resurs::audit::SHA256_HASH_BYTES];
-    //uint8_t currentHash[resurs::audit::SHA256_HASH_BYTES];
-    
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousHash;
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> currentHash;
+    uint8_t previousHash[resurs::audit::SHA256_HASH_BYTES];
+    uint8_t currentHash[resurs::audit::SHA256_HASH_BYTES];
+        
+    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousHash;
+    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> currentHash;
     uint64_t sequenceNumber;
 };
 
+/*
 struct AuditEntryChain
 {
     std::vector<AuditEntry> entries;
-
+    
 };
+*/
 
 /* exemmple på wrappern
 int verify_audit_chain(

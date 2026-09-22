@@ -6,6 +6,7 @@ find_package(OpenSSL REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 function(add_resurs_module target source module_directory)
     add_library(${target} SHARED ${source})
@@ -38,6 +39,7 @@ endif()
 add_resurs_module(resurs_audit
     resurs_audit/resurs_audit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+    target_sources(resurs_audit PRIVATE resurs_audit/wrapper.cpp)
 
 include(GNUInstallDirs)
 install(TARGETS resurs_crypto resurs_audit
