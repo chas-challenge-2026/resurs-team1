@@ -1,11 +1,10 @@
 .header {
   background-color: var(--bg-secondary);
   box-shadow: 0 1px 0 0 var(--border);
-  /* not fixed, the background has to reach the open dropdown too */
   height: auto;
-  /* keeps header + dropdown painted above the backdrop */
   position: sticky;
   top: 0;
+  /* keeps header + dropdown painted above the backdrop */
   z-index: 20;
 }
 
@@ -27,15 +26,13 @@
   object-fit: contain;
 }
 
-/* have to style nav to look similar to ghost button because it needs to be a navlink */
-/* if nav chioldren are added */
+/* replicating the ghost style from button */
 .nav {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
 }
 
-/* shared by the bar nav and the dropdown nav */
 .nav a,
 .menuNav a {
   color: var(--color-text-muted);
@@ -86,7 +83,7 @@
   background-color: var(--border);
 }
 
-/* role badge sits next to the wordmark, mirrors the muted label styling */
+/* role badge sits next to the wordmark */
 .role,
 .menuRole {
   font-size: 0.8125rem;
@@ -97,13 +94,11 @@
   white-space: nowrap;
 }
 
-/* eats the free space so the right cluster stays pinned to the edge */
 .search {
   flex: 1;
   min-width: 0;
 }
 
-/* element selector outranks the global .input-base radius without !important */
 .search input {
   width: 100%;
   border-radius: var(--radius-pill);
@@ -141,7 +136,7 @@
   }
 
   /* the whole bar cluster moves into the dropdown */
-  /* .search is deliberately not here, it stays in the bar */
+  /* .search is deliberately not here, it stays in the header */
   .nav,
   .right,
   .role,
@@ -149,7 +144,6 @@
     display: none;
   }
 
-  /* the badge only shows up here once it left the bar */
   .menuRole {
     padding-top: var(--space-xs);
     border-top: 1px solid var(--border);
@@ -160,7 +154,6 @@
     margin-left: auto;
   }
 
-  /* 0fr -> 1fr animates the height with no magic max-height number */
   .menuWrap {
     display: grid;
     grid-template-rows: 0fr;
@@ -201,12 +194,11 @@
     border-top: 1px solid var(--border);
   }
 
-  /* vertical rule between name and button, nothing to separate in a column */
   .menu .divider {
     display: none;
   }
 
-  /* the badge already drew that line, a second one right under it looks broken */
+  /* remove double line */
   .menuRole + .user {
     padding-top: 0;
     border-top: none;
@@ -221,7 +213,6 @@
     padding: var(--space-xs) 0;
   }
 
-  /* dims the page under the header while the menu is open */
   .backdrop {
     display: block;
     position: fixed;

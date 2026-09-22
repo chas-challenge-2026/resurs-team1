@@ -31,7 +31,8 @@ const queryClient = new QueryClient({
       const error = err as unknown as ApiErrorPayload
       
       // Display toast on 500/network errors UNLESS the component explicitly opts out
-      // via custom mutation metadata: useMutation({ meta: { preventGlobalToast: true } })
+      // via custom mutation metadata: 
+      // useMutation({ meta: { preventGlobalToast: true } })
       if (!mutation.meta?.preventGlobalToast && (!error.status || error.status >= 500)) {
         toast.error(error.message)
       }

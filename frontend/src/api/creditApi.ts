@@ -1,1 +1,0 @@
-// Credit application specific API-calls

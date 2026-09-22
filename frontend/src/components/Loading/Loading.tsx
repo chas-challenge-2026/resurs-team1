@@ -45,7 +45,7 @@ function Loading({
   
   if (!fullscreen) return content;
   
-  // the fullscreen stylinjg
+  // the fullscreen styling
   return <div className={styles.overlay}>{content}</div>;
 }
 

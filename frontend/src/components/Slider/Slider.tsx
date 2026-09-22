@@ -29,8 +29,6 @@ export interface SliderProps {
 
 
 /**
- * Slider – An accessible, dual-input numerical range control.
- *
  * Allows users to select a value either by dragging a slider or by clicking
  * the displayed amount to enter a custom value manually via a text field.
  *

@@ -105,9 +105,9 @@ public class ApplicationController {
         // No validation or sanitization of inputs
 
 
-        /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
-    kör scoring engine och placerar rätt värde till rättattribut
-    */
+        //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
+
+
         String personalNumber = session.getAttribute("personalNumber").toString();
         CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
         CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
@@ -115,40 +115,13 @@ public class ApplicationController {
         CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
                 .orElseThrow();
 
-        CompanyFinancialApiDTO.CompanyIncomeStatement income = financials.incomeStatement();
-        CompanyFinancialApiDTO.CompanyBalanceSheet balance = financials.balanceSheet();
-        CompanyFinancialApiDTO.CompanyCashFlowStatement cashFlow = financials.cashFlowStatement();
-
-        NewApplicationDTO scoredApplication = creditScoreService.ScoringEngine(
-                cashFlow.operatingCashFlow().toPlainString(),        //operativtkassaflöde
-                cashFlow.investmentCashFlow().toPlainString(),      //investeringskassaflöde
-                income.interestExpenses().toPlainString(),                                  //räntekostnader
-                balance.totalAssets().doubleValue(),                                       //totalt kapital
-                balance.equity().doubleValue(),                                            //eget kapital
-                balance.shortTermLiabilities().doubleValue(),                            // kortfristigaSkulder
-                balance.currentAssets().doubleValue(),                                   // omsättnings tillgangar
-                balance.shortTermLiabilities().add(balance.longTermLiabilities()).doubleValue(), // totalaSkulder
-                income.revenue().doubleValue(),                                          // netto omsättning
-                income.operatingResult().doubleValue(),                                  // rörelse resultat
-                requestedAmountStr,                                                         // requestedAmount
-                bransch,                                                                 // bransch
-                company.orgNumber(),                                                     // orgNumber
-                company.companyName(),                                                   // companyName
-                signatory.name(),                                                        // signatur
-                purpose
-        );
-
-
-
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, orgNumber, company.companyName(), signatory.name(), purpose);
 
         // ===========================================================
         // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
         // TODO: wrap in @Transactional
         // ===========================================================
         CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
-
-
-
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
@@ -188,19 +161,14 @@ public class ApplicationController {
                 // Try to find companyId from orgNumber
                 String orgNumber = (String) session.getAttribute("orgNumber");
 
-                try{
-                    companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
-                } catch (NoSuchElementException e){
-                    return ResponseEntity.internalServerError().build();
-                }
+
+                companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
+
                 session.setAttribute("companyId", companyId);
             }
 
-            try{
-                app = appService.findApplicationByID(id);
-            } catch (NoSuchElementException e){
-                return ResponseEntity.notFound().build(); //ansökan hittades inte
-            }
+
+            app = appService.findApplicationByID(id);
 
         }
 
@@ -228,14 +196,8 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-
-        Long companyID;
-        try{
             // Get companyId via orgNumber — no caching, hits DB every time
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+            Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
 
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
@@ -256,12 +218,7 @@ public class ApplicationController {
 
         String orgNumber = (String) session.getAttribute("orgNumber");
 
-        Long companyID;
-        try{
-            companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
+        Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
 
         // Count applications by status
         Pageable limit = PageRequest.of(0,5);

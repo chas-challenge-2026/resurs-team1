@@ -11,6 +11,7 @@ import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.caseworker.CaseWorkerResponse;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
+import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
 import se.comerit.resurs.security.PasswordHasher;
@@ -139,7 +140,7 @@ public class CaseWorkerServiceTest {
 
         UpdateCaseWorkerRequest request = new UpdateCaseWorkerRequest("Nytt namn", takenEmail);
 
-        assertThrows(IllegalArgumentException.class, () -> caseWorkerService.update(caseWorkerToUpdate.getId(), request));
+        assertThrows(EmailAlreadyInUseException.class, () -> caseWorkerService.update(caseWorkerToUpdate.getId(), request));
     }
 
     @Test

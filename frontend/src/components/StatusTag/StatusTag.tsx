@@ -1,29 +1,11 @@
-import type { IconType } from "react-icons"
-import { FiAlertCircle, FiArchive, FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi"
+import { ICONS, STATUS_LABELS } from "../../constants/constants";
+import type { ApplicationStatus } from "../../api/applicationApi";
 import s from "./StatusTag.module.css"
 
-export type Status = "needs_info" | "processing" | "approved" | "closed" | "rejected"
-
 interface StatusTagProps {
-  status: Status;
+  status: ApplicationStatus;
   size?: "sm" | "md" | "lg";
   uppercase?: boolean;
-}
-
-const LABELS: Record<Status, string> = {
-  needs_info: "Komplettering krävs",
-  processing: "Under behandling",
-  approved: "Godkänd",
-  closed: "Avslutad",
-  rejected: "Avvisad"
-}
-
-const ICONS: Record<Status, IconType> = {
-  needs_info: FiAlertCircle,
-  processing: FiClock,
-  approved: FiCheckCircle,
-  closed: FiArchive,
-  rejected: FiXCircle
 }
 
 const StatusTag = ({status, size="md", uppercase=true}: StatusTagProps) => {
@@ -39,7 +21,7 @@ const StatusTag = ({status, size="md", uppercase=true}: StatusTagProps) => {
   return(
     <span className={combinedClassName}>
       <Icon className={s.icon} aria-hidden />
-      {LABELS[status]}
+      {STATUS_LABELS[status]}
     </span>
   )
 }

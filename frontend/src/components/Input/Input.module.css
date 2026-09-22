@@ -34,7 +34,6 @@
   height: 1rem;
 }
 
-/* element selector outranks the global .input-base padding without !important */
 .field input {
   width: 100%;
   padding-left: 2.25rem;

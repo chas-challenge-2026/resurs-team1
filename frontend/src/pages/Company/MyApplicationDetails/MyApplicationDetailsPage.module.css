@@ -1,0 +1,105 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.titleGroup {
+  display: flex;
+  gap: var(--space-base);
+  align-items: center;
+}
+
+
+.description {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* Warning Card Header */
+.warningHeader {
+  flex-direction: row;
+  align-items: center;
+}
+
+.iconWrapper {
+  display: none;
+}
+
+.warningTitle {
+  font-weight: 500;
+}
+
+.warningSubtitle {
+  color: var(--color-text-muted);
+}
+
+/* Warning Card Body */
+.warningBody {
+  gap: var(--space-sm);
+}
+
+/* "Drop zone" */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-lg) var(--space-base);
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.dropzoneIcon {
+  font-size: 24px;
+  color: var(--color-primary);
+}
+
+.dropzoneTitle {
+  font-weight: 600;
+  color: var(--color-text-main);
+  font-size: var(--font-size-sm);
+}
+
+.dropzoneHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Warning Card Footer */
+.warningFooter {
+  flex-direction: column;
+  gap: var(--space-base);
+  align-items: start;
+}
+
+.actionGroup {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.attachButton {
+  display: flex;
+  border-style: dashed;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 768px) {
+  .iconWrapper {
+    display: block;
+    aspect-ratio: 1 / 1;
+    background-color: var(--color-primary-light);
+    padding: var(--space-xs);
+    border-radius: var(--radius-pill);
+    font-size: 24px;
+    color: var(--color-primary);
+  }
+}
