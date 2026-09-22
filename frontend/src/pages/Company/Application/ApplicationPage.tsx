@@ -6,7 +6,9 @@ import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"
+import { useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
+import { postApplication } from "../../../api/applicationApi"
 
 const TOTAL_STEPS = 3
 // the receipt is not a step, it has no progress bar and no way back
@@ -17,6 +19,7 @@ const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
   const user = getUser()
+  const submitApplication = useSubmitApplication()
 
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
@@ -44,8 +47,10 @@ const ApplicationFormPage = () => {
           PHONE_PATTERN.test(values.phoneNumber)
         : true
 
-  // TODO: post the application here once the backend endpoint exists
-  const handleSubmit = () => setStep(RECEIPT_STEP)
+  const handleSubmit = () => {
+    
+    submitApplication.mutate()
+  }
 
   if (step === RECEIPT_STEP) {
     return (
@@ -83,10 +88,11 @@ const ApplicationFormPage = () => {
         </Button>
         <Button
           className={s.submit}
-          disabled={!stepIsComplete}
+          // pending stops a double click from sending two applications
+          disabled={!stepIsComplete || submitApplication.isPending}
           onClick={step === TOTAL_STEPS ? handleSubmit : () => setStep(step + 1)}
         >
-          {step === TOTAL_STEPS ? "Skicka ansökan" : "Fortsätt"}
+          {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
         </Button>
       </div>
     </div>
