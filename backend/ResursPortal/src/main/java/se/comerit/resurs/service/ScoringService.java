@@ -61,14 +61,14 @@ public class ScoringService {
         // TODO: wrap in @Transactional
         // ===========================================================
 
+
+
+        // INSERT company — PII in plaintext, no encryption
+        // TODO: encrypt PII before go-live
+
+        //find company in database,  if not exists, set company to an ID less entity for future saving)
         Optional<Company> existingCompany = companyRepository.findByOrgNumber(orgNumber);
-
-
-        if (existingCompany.isEmpty()) {
-                // INSERT company — PII in plaintext, no encryption
-                // TODO: encrypt PII before go-live
-                company = companyRepository.save(new Company(orgNumber, companyName, authorizedSignatory));
-        }
+        company = existingCompany.orElse(new Company(orgNumber,companyName,authorizedSignatory));
 
             //session.setAttribute("companyId", companyId); Keeping this for now... incase its needed
 
@@ -232,7 +232,7 @@ public class ScoringService {
             // ===========================================================
             Decision decision = finalDecision(state);
 
-        company = existingCompany.orElse(company);
+
 
         return new NewApplicationDTO(requestedAmount, purpose, decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), company.getCompany_name(), company.getOrg_number(), company.getAuthorized_signatory(), state.getFlagCount());
 
