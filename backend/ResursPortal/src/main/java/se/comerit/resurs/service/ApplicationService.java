@@ -47,7 +47,7 @@ public class ApplicationService {
         creditApplication.setScoringResult(newApplication.scoring_result());
 
 
-        CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
+        CreditApplication saved = applicationRepository.save(creditApplication);
         //loggar efter att application finns sparad i databas.
         auditService.applicationCreated(saved);
         auditService.scoringRun(saved, newApplication.flagCount());
