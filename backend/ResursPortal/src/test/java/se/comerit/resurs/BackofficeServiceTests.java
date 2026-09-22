@@ -81,10 +81,10 @@ class BackofficeServiceTests {
     @BeforeEach
     void cleanDatabase() {
         // audit_events har FK mot applications och måste tömmas först
-        auditEventRepo.deleteAll();
-        documentRepo.deleteAll();
-        creditRepo.deleteAll();
-        companyRepo.deleteAll();
+            auditEventRepo.deleteAll();
+            documentRepo.deleteAll();
+            creditRepo.deleteAllInBatch();
+            companyRepo.deleteAll();
     }
 
     @Test
