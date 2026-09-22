@@ -18,7 +18,13 @@ public class CreditApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Using Internal postgres sequence, not letting JPA control it
     private Long id;
 
-    @ManyToOne
+    @Version
+    private int version;
+
+    //if application does not specify a company ID, create a new row in DB,  if it does. update the old row.
+    //we do this since when an application is created we use a source of truth (company validation)
+    //And so we should update the database to reflect that.
+    @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "company_id")
     private Company company;
 

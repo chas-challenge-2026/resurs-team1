@@ -10,6 +10,9 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private int version;
+
     @Column(unique = true,name = "org_number" )
     private String orgNumber;
 
