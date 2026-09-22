@@ -3,14 +3,14 @@ package se.comerit.resurs.service;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.security.PasswordHasher;
-import se.comerit.resurs.dto.CompanyValidationApiDTO;
+
 
 /**
  * AuthService -> hanterar inloggning för företag och handläggare.
@@ -26,33 +26,33 @@ import se.comerit.resurs.dto.CompanyValidationApiDTO;
 
 @Service
 public class AuthService {
-    private final CompanyRepository companyRepository;
+    private final CompanyValidationService validationService;
     private final CaseWorkerRepository caseWorkerRepository;
     private final PasswordHasher passwordHasher;
     private final BankIdService bankIdService;
 //    private final CompanyValidationService companyValidationService;
 
-    public AuthService(CaseWorkerRepository caseWorkerRepository, CompanyRepository companyRepository,
-                       PasswordHasher passwordHasher, BankIdService bankIdService) {
-        this.caseWorkerRepository = caseWorkerRepository;
-        this.companyRepository = companyRepository;
-        this.passwordHasher = passwordHasher;
+
+    public AuthService(BankIdService bankIdService, CompanyValidationService validationService,
+                       CaseWorkerRepository caseWorkerRepository,
+                       PasswordHasher passwordHasher) {
         this.bankIdService = bankIdService;
+        this.validationService = validationService
+        this.caseWorkerRepository = caseWorkerRepository;
+        this.passwordHasher = passwordHasher;
     }
 
     // BankID mock — hardcoded org numbers, real BankID integration skipped -> old comment
     // TODO: replace with real BankID integration -> old comment
     public CompanyLoginResponse loginCompany(String orgNumber, String personalNumber) {
-        Company company = companyRepository.findByOrgNumber(orgNumber)
-                .orElseThrow(() -> new LoginFailedException(LoginFailureReason.COMPANY_NOT_FOUND));
-        if (!bankIdService.verify(personalNumber).name().equalsIgnoreCase(company.getAuthorized_signatory())) {
-            throw new LoginFailedException(LoginFailureReason.BANKID_REJECTED);
-        }
+         bankIdService.verify(personalNumber);
+         CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+         validationService.validateSignatory(company, personalNumber);
 
         return new CompanyLoginResponse(
                 orgNumber,
                 "company",
-                company.getCompany_name()
+                company.companyName()
         );
     }
     // TODO: Ersätt med CompanyValidationService.validateSignatory() när feature/company-validation är mergad
