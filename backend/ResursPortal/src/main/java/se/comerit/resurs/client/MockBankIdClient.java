@@ -19,8 +19,8 @@ import java.util.Optional;
 @Component
 public class MockBankIdClient implements BankIdClient {
     private static final Map<String, String> APPROVED_IDENTITIES = Map.of(
-            "196701011234", "Anders Karlsson",
-            "196902024321", "Maria Svensson"
+            "197503121234", "Anders Karlsson",
+            "198206245678", "Maria Svensson"
     );
 
     @Override

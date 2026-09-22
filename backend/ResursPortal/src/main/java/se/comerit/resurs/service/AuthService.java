@@ -37,7 +37,7 @@ public class AuthService {
                        CaseWorkerRepository caseWorkerRepository,
                        PasswordHasher passwordHasher) {
         this.bankIdService = bankIdService;
-        this.validationService = validationService
+        this.validationService = validationService;
         this.caseWorkerRepository = caseWorkerRepository;
         this.passwordHasher = passwordHasher;
     }
