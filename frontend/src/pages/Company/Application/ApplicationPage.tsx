@@ -48,9 +48,19 @@ const ApplicationFormPage = () => {
         : true
 
   const handleSubmit = () => {
-    
+    //data being sent differs from the form data + back-end wants contact info nested :)
     submitApplication.mutate(
-      {...values, durationMonths: values.durationMonths! }, // 
+      { 
+        durationMonths: values.durationMonths!,
+        contactDetails: {
+          phoneNumber: values.phoneNumber,
+          email: values.email,
+          name: values.contactName
+        },
+        orgNumber: values.orgNumber,
+        purpose: values.purpose,
+        requestedAmount: values.requestedAmount
+      }, 
       { onSuccess: () => setStep(RECEIPT_STEP) }
     )
   }

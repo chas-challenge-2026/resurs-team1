@@ -48,11 +48,12 @@ export const getApplicationById = async (id: number): Promise<Application> => {
 // matches "ApplicationFormData" as of september, but may change later since we could send info that was not in form, hence its own type
 export interface NewApplicationPayload {
   orgNumber: string;
-  companyName: string;
 
-  contactName: string;
-  email: string;
-  phoneNumber: string;
+  contactDetails: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
 
   purpose: string;
   requestedAmount: number;
