@@ -49,7 +49,10 @@ const ApplicationFormPage = () => {
 
   const handleSubmit = () => {
     
-    submitApplication.mutate()
+    submitApplication.mutate(
+      {...values, durationMonths: values.durationMonths! }, // 
+      { onSuccess: () => setStep(RECEIPT_STEP) }
+    )
   }
 
   if (step === RECEIPT_STEP) {
