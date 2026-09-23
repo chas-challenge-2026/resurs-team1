@@ -20,12 +20,11 @@ import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.ApplicationShortDTO;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
-import se.comerit.resurs.service.ApplicationService;
-import se.comerit.resurs.service.CompanyService;
-import se.comerit.resurs.service.DocumentService;
-import se.comerit.resurs.service.ScoringService;
+import se.comerit.resurs.service.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -54,12 +53,17 @@ import java.util.*;
 @RequestMapping("api/application")
 public class ApplicationController {
 
+
+    private final CompanyValidationService validationService;
+    private final CompanyFinancialService financialService;
     private final DocumentService documentService;
     private final ApplicationService appService;
     private final CompanyService companyService; //Swap to CompanyService later
     private final ScoringService creditScoreService;
 
-    public ApplicationController(DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+        this.validationService = validationService;
+        this.financialService = financialService;
         this.documentService = documentService;
         this.appService = appService;
         this.companyService = companyService;
@@ -86,126 +90,38 @@ public class ApplicationController {
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
             @RequestParam("orgNumber") String orgNumber,
-            @RequestParam("companyName") String companyName,
-            @RequestParam("authorizedSignatory") String authorizedSignatory,
-            @RequestParam("egetKapital") String egetKapitalStr,
-            @RequestParam("totaltKapital") String totaltKapitalStr,
-            @RequestParam("omsattningstillgangar") String omsattningstillgangarStr,
-            @RequestParam("kortfristigaSkulder") String kortfristigaSkulderStr,
-            @RequestParam("totalaSkulder") String totalaSkulderStr,
-            @RequestParam("rorelseresultat") String rorelseresultatStr,
-            @RequestParam("nettoomsattning") String nettoomsattningStr,
-            @RequestParam("requestedAmount") String requestedAmountStr,
+            @RequestParam("requestedAmount") BigDecimal requestedAmountStr,
             @RequestParam("purpose") String purpose,
-            @RequestParam(value = "operativtKassaflode", defaultValue = "") String operativtKassaflodeStr,
-            @RequestParam(value = "investeringsKassaflode", defaultValue = "") String investeringsKassaflodeStr,
-            @RequestParam(value = "ranteKostnader", defaultValue = "") String ranteKostnaderStr,
             @RequestParam(value = "bransch", defaultValue = "") String bransch,
             HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
         if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         if (!"company".equals(session.getAttribute("role"))) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if(session.getAttribute("personalNumber") == null )return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
         // No validation or sanitization of inputs
 
-        // ---- Parse financial inputs (no proper error handling) ----
-        double egetKapital = 0;
-        double totaltKapital = 0;
-        double omsattningstillgangar = 0;
-        double kortfristigaSkulder = 0;
-        double totalaSkulder = 0;
-        double rorelseresultat = 0;
-        double nettoomsattning = 0;
-        BigDecimal requestedAmount = BigDecimal.ZERO;
+
+        //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
 
 
+        String personalNumber = session.getAttribute("personalNumber").toString();
+        CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
 
+        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
+                .orElseThrow();
 
-        try {
-            egetKapital = Double.parseDouble(egetKapitalStr.replace(",", ".").trim());
-            totaltKapital = Double.parseDouble(totaltKapitalStr.replace(",", ".").trim());
-            omsattningstillgangar = Double.parseDouble(omsattningstillgangarStr.replace(",", ".").trim());
-            kortfristigaSkulder = Double.parseDouble(kortfristigaSkulderStr.replace(",", ".").trim());
-            totalaSkulder = Double.parseDouble(totalaSkulderStr.replace(",", ".").trim());
-            rorelseresultat = Double.parseDouble(rorelseresultatStr.replace(",", ".").trim());
-            nettoomsattning = Double.parseDouble(nettoomsattningStr.replace(",", ".").trim());
-            requestedAmount = new BigDecimal(requestedAmountStr.replace(",", ".").trim());
-        } catch (NumberFormatException e) {
-            /*model.addAttribute("error", "Ogiltiga numeriska värden. Kontrollera dina inmatningar.");
-            model.addAttribute("companyName", companyName);
-            model.addAttribute("orgNumber", orgNumber);*/
-            ResponseEntity.badRequest().build();
-        }
-
-        //Optional?  Code comments say that they are
-        double operativtKassaflode = 0.0;
-        double investeringsKassaflode = 0.0;
-        double ranteKostnader = 0.0;
-
-        // Parse new optional params — om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-        try {
-            if (!operativtKassaflodeStr.isEmpty()) {
-                operativtKassaflode = Double.parseDouble(operativtKassaflodeStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            operativtKassaflode = 0.0;
-        }
-
-        try {
-            if (!investeringsKassaflodeStr.isEmpty()) {
-                investeringsKassaflode = Double.parseDouble(investeringsKassaflodeStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            investeringsKassaflode = 0.0;
-        }
-
-        try {
-            if (!ranteKostnaderStr.isEmpty()) {
-                ranteKostnader = Double.parseDouble(ranteKostnaderStr.replace(",", ".").trim());
-            }
-        } catch (NumberFormatException e) {
-            // om tomt, sätt 0 — kan ge felaktiga resultat nedströms
-            ranteKostnader = 0.0;
-        }
-
-
-
-        NewApplicationDTO scoredApplication = creditScoreService.ScoringEngine(
-                operativtKassaflode,
-                investeringsKassaflode,
-                ranteKostnader,
-                totaltKapital,
-                egetKapital,
-                kortfristigaSkulder,
-                omsattningstillgangar,
-                totalaSkulder,
-                nettoomsattning,
-                rorelseresultat,
-                requestedAmount,
-                bransch,
-                orgNumber,
-                companyName,
-                authorizedSignatory,
-                purpose
-        );
-
-
-
-
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, orgNumber, company.companyName(), signatory.name(), purpose);
 
         // ===========================================================
         // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
         // TODO: wrap in @Transactional
         // ===========================================================
         CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
-
-
-
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================

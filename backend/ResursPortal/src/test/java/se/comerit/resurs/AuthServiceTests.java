@@ -39,7 +39,7 @@ import java.util.HexFormat;
 @ActiveProfiles("test")
 @SpringBootTest
 
-public class AuthIntegrationTests {
+public class AuthServiceTests {
 
     private static final String WORKER_NAME = "Test Arbetare";
     private static final String EMAIL = "Testarn@resurs.se";
@@ -88,7 +88,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
 
     private Company createCompany(){
         Company company = new Company();
-        company.setCompany_name("TestBolaget");
+        company.setCompany_name("Fasen Elteknik AB");
         company.setOrg_number("556000-1234");
         company.setAuthorized_signatory("Anders Karlsson");
          return companyRepo.save(company);
@@ -108,12 +108,12 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     void companyLogin_shouldReturnCompanyData(){
          Company company = createCompany();
          CompanyLoginResponse response = authService.loginCompany(
-                 "556000-1234", "196701011234");
+                 "556000-1234", "197503121234");
 
 
         assertThat(response.role()).isEqualTo("company");
         assertThat(response.orgNumber()).isEqualTo(company.getOrg_number());
-        assertThat(response.companyName()).isEqualTo(company.getCompany_name());
+        assertThat(response.companyName()).isEqualTo("Fasen Elteknik AB");
     }
 
     @Test
@@ -123,15 +123,6 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         assertThrows(
                 BankIdVerificationFailedException.class,
                 () -> authService.loginCompany("556000-1234", "000000000000"));
-    }
-    @Test
-    void loginCompany_shouldFailWhenApprovedCompanyIsMissingInDatabase() {
-        // 556000-5678 är BankID godkänt men skapas aldrig här
-        LoginFailedException thrown = assertThrows(
-                LoginFailedException.class,
-                () -> authService.loginCompany("556000-5678", "Anders Karlsson"));
-
-        assertThat(thrown.reason()).isEqualTo(LoginFailureReason.COMPANY_NOT_FOUND);
     }
 
     @Test

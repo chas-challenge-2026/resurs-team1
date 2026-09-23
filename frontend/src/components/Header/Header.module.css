@@ -77,8 +77,8 @@
 }
 
 .divider {
-  align-self: stretch;
-  width: 1px;
+  height: 40px;
+  width: 1.5px;
   margin: 2px 0;
   background-color: var(--border);
 }
