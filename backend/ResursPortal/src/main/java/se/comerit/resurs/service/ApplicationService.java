@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -40,7 +41,7 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -52,6 +53,12 @@ public class ApplicationService {
         creditApplication.setDecisionReason(newApplication.decision_reason());
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
+
+        creditApplication.setDurationMonths(newApplication.durationMonths());
+
+        creditApplication.setContactEmail(contactDetails.email());
+        creditApplication.setContactNumber(contactDetails.phoneNumber());
+        creditApplication.setContactName(contactDetails.name());
 
 
         CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
