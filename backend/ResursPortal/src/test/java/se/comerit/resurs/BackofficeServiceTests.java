@@ -10,6 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -28,6 +29,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -217,6 +219,64 @@ class BackofficeServiceTests {
         assertThat(result).isNotNull();
         assertThat(result.application()).isNotNull();
         assertThat(result.documents()).isEmpty();
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnOnlyApplicationsForThatCompany() {
+        Company target = saveCompany("556000-1111");
+        Company other = saveCompany("556000-2222");
+
+        creditRepo.save(createApplicationFor(target, ApplicationStatus.UNDER_REVIEW));
+        creditRepo.save(createApplicationFor(target, ApplicationStatus.APPROVED));
+        creditRepo.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
+
+        List<CreditApplicationDTO> result =
+                backofficeService.getApplicationsByOrgNumber("556000-1111");
+
+        assertThat(result).hasSize(2);
+        assertThat(result)
+                .extracting(CreditApplicationDTO::orgNumber)
+                .containsOnly("556000-1111");
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnEmptyListWhenCompanyHasNoApplications() {
+        saveCompany("556000-1111");
+
+        assertThat(backofficeService.getApplicationsByOrgNumber("556000-1111")).isEmpty();
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenCompanyDoesNotExist() {
+        saveCompany("556000-1111");
+
+        assertThatThrownBy(() -> backofficeService.getApplicationsByOrgNumber("556000-9999"))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenOrgNumberIsBlank() {
+        assertThatThrownBy(() -> backofficeService.getApplicationsByOrgNumber("   "))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private Company saveCompany(String orgNumber) {
+        Company company = new Company();
+        company.setOrg_number(orgNumber);
+        company.setCompany_name("Test Company");
+        company.setAuthorized_signatory("Test Signatory");
+
+        return companyRepo.save(company);
+    }
+
+    private CreditApplication createApplicationFor(Company company, ApplicationStatus status) {
+        CreditApplication application = new CreditApplication();
+        application.setCompany(company);
+        application.setRequestedAmount(new BigDecimal("10000.00"));
+        application.setPurpose("Test loan");
+        application.setStatus(status);
+
+        return application;
     }
 
     private CreditApplication createApplication(ApplicationStatus status) {
