@@ -12,7 +12,10 @@ const useCompanyLogin = () => {
     mutationFn: (payload) => loginCompany(payload),
     onSuccess: (data) => {
       setUser(data)
-      navigate("/oversikt")
+
+      setTimeout(() => {
+        navigate("/oversikt")
+      }, 1500)
     },
     meta: {
       preventGlobalToast: true
