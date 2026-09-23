@@ -18,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.ApplicationShortDTO;
+import se.comerit.resurs.dto.application.ApplicationSubmission;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -89,10 +90,7 @@ public class ApplicationController {
     // ============================================================
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
-            @RequestParam("orgNumber") String orgNumber,
-            @RequestParam("requestedAmount") BigDecimal requestedAmountStr,
-            @RequestParam("purpose") String purpose,
-            @RequestParam(value = "bransch", defaultValue = "") String bransch,
+            @RequestBody ApplicationSubmission submission,
             HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
@@ -109,19 +107,21 @@ public class ApplicationController {
 
 
         String personalNumber = session.getAttribute("personalNumber").toString();
-        CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+        CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
         CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
 
-        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
+        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
                 .orElseThrow();
 
-        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, orgNumber, company.companyName(), signatory.name(), purpose);
+        //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(),submission.durationMonths());
+
 
         // ===========================================================
         // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
         // TODO: wrap in @Transactional
         // ===========================================================
-        CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
+        CreditApplicationDTO application =  appService.saveApplication(scoredApplication,submission.contactDetails());
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
