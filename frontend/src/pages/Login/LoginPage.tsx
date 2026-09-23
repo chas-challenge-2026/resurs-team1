@@ -189,7 +189,7 @@ const LoginPage = () => {
                     Logga in med BankID
                   </Button>
                   <div className={s.divider} />
-                  <p className="information-text">Behörig firmateckare i organisationen signerar med personligt BankID.</p>
+                  <p className="information-text">Behörig firmatecknare i organisationen signerar med personligt BankID.</p>
                 </>
               )}
             </form>
