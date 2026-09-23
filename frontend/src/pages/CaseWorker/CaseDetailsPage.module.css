@@ -1,0 +1,75 @@
+/* Top section */
+.topSection {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-secondary);
+}
+
+.topWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  padding: var(--space-base);
+}
+
+.applicationRefWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.applicationRef {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.infoText {
+  color: var(--color-text-muted);
+}
+
+/* Content section */
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  padding: var(--space-base);
+}
+
+/* Manage Case view */
+.actionsWrapper {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.actionButton {
+  flex: 1;
+}
+
+.accept {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.request {
+  background-color: #FBF1DF;
+  color: var(--color-warning-text);
+  border-color: var(--color-warning-text);
+}
+
+.reject {
+  background-color: #FAEAE9;
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.addingTitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+}
+
+.addingFooter {
+  display: flex;
+  gap: var(--space-sm);
+}
