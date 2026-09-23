@@ -69,8 +69,8 @@ CREATE INDEX idx_audit_action ON audit_events(action);
 
 -- Seed: two companies (matching BankID mock org numbers)
 INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
-('556000-1234', 'Malmö Fastigheter AB', 'Anders Karlsson'),
-('556000-5678', 'Göteborg Handel AB', 'Maria Svensson');
+('556000-1234', 'Fasen Elteknik AB', 'Anders Karlsson'),
+('556000-5678', 'Britt Maries Ögonfransar AB', 'Maria Svensson');
 
 -- Case worker (password = "password123")
 INSERT INTO case_workers (name, email, password_md5) VALUES
