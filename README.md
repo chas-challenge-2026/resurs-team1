@@ -15,11 +15,13 @@ Swagger UI nås på denna länk: http://localhost:8083/swagger-ui/index.html
 
 ### Testinloggningar
 
-| Roll | Uppgifter |
-|------|-----------|
-| Företag (Malmö Fastigheter AB) | Org.nr: `556000-1234` |
-| Företag (Göteborg Handel AB) | Org.nr: `556000-5678` |
-| Handläggare | `karin@resurs.se` / `password123` |
+| Roll | Uppgifter | FirmaTeknare(Företag)                     |
+|------|-----------|-------------------------------------------|
+| Företag (Fasen Elteknik AB) | Org.nr: `556000-1234` | Anders Karlsson<br/>Pers#: `197503121234` |
+| Företag (Ögonfransar AB) | Org.nr: `556000-5678` | Maria Svensson<br/>Pers#: `198206245678` |
+| Företag (Gunnar Kruts Dynamit AB) | Org.nr: `556000-7777` | Johan Berg<br/>Pers#: `196609307777`                               |
+| Företag (Frukt och grönt Göteborg) | Org.nr: `556000-9999` | Erik Lindqvist<br/>Pers#: `196811059999`                               |
+| Handläggare | `karin@resurs.se` / `password123` |                                           |
 
 ## Mappstruktur
 

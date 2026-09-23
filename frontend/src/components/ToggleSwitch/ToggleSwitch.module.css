@@ -1,25 +1,15 @@
 .wrapper {
   display: inline-flex;
-  background-color: #F3F3F3;
-  padding: var(--space-xs);
-  gap: var(--space-xs);
-  border-radius: var(--radius-sm);
 }
 
 .segment {
   display: flex;
   justify-content: center;
   padding: var(--space-xs);
-  border-radius: var(--radius-xs);
   color: var(--color-text-muted);
   width: 100%;
   cursor: pointer;
   user-select: none;
-}
-
-.active {
-  background-color: var(--bg-secondary);
-  color: var(--color-text-main);
 }
 
 .hiddenInput {
@@ -27,4 +17,37 @@
   width: 1px;
   height: 1px;
   clip-path: inset(50%);
+}
+
+/* neutral variant */
+.neutral {
+  background-color: #F3F3F3;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  gap: var(--space-xs);
+}
+
+.neutral .segment {
+  border-radius: var(--radius-xs);
+}
+
+.neutral .active {
+  color: var(--color-text-main);
+  background-color: var(--bg-secondary);
+}
+
+/* Accent variant */
+.accent {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.accent .segment {
+  font-weight: 500;
+}
+
+.accent .active {
+  border-bottom: 3px solid var(--color-primary);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
 }

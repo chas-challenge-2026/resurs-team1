@@ -7,6 +7,11 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.comerit.resurs.exception.auth.LoginFailedException;
+import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
+import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -115,6 +120,36 @@ public class GlobalExceptionHandler {
                 null
         );
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @ExceptionHandler(CompanyRegistryUnavailableException.class)
+    public ResponseEntity<ApiError> handleRegisterUnavailableException(
+            CompanyRegistryUnavailableException ex
+    ) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "COMPANY_REGISTRY_UNAVAILABLE",
+                "The company registry is temporarily unavailable. Please try again shortly.",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ExceptionHandler(CompanyValidationFailedException.class)
+    public ResponseEntity<ApiError> handleCompanyValidationFailed(CompanyValidationFailedException ex) {
+
+        HttpStatus status = switch (ex.reason()) {
+            case COMPANY_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case NOT_AUTHORIZED_SIGNATORY, REQUIRES_JOINT_SIGNATURE -> HttpStatus.FORBIDDEN;
+        };
+
+        String message = switch (ex.reason()) {
+            case COMPANY_NOT_FOUND -> "No company is registered with that organisation number";
+            case NOT_AUTHORIZED_SIGNATORY -> "You are not a registered signatory for this company";
+            case REQUIRES_JOINT_SIGNATURE -> "This company must be signed for jointly and cannot be signed by one person alone";
+        };
+
+        ApiError body = new ApiError(LocalDateTime.now(), ex.reason().name(), message, null);
+        return new ResponseEntity<>(body, status);
     }
 
 

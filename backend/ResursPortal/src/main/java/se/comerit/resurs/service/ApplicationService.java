@@ -3,14 +3,17 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -18,22 +21,27 @@ public class ApplicationService {
 
 
     private final AuditService auditService;
+    private final CompanyFinancialService financialService;
+    private final CompanyValidationService validationService;
 
 
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
+    private final ScoringService scoringService;
 
 
-
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
+        this.financialService = financialService;
+        this.validationService = validationService;
+        this.scoringService = scoringService;
     }
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -46,6 +54,12 @@ public class ApplicationService {
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
 
+        creditApplication.setDurationMonths(newApplication.durationMonths());
+
+        creditApplication.setContactEmail(contactDetails.email());
+        creditApplication.setContactNumber(contactDetails.phoneNumber());
+        creditApplication.setContactName(contactDetails.name());
+
 
         CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
         //loggar efter att application finns sparad i databas.
@@ -55,11 +69,13 @@ public class ApplicationService {
         return new CreditApplicationDTO(saved);
     }
 
+    /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
+    kör scoring engine och placerar rätt värde till rättattribut
+    */
+
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());
     }
-
-
 
     public List<CreditApplicationDTO> readApplicationsByCompany(Long companyID){
         return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();

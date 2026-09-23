@@ -22,8 +22,13 @@ CREATE TABLE applications (
     decision_reason TEXT,
     scoring_result TEXT,
     audit_log TEXT DEFAULT '[]',  -- JSON blob, no separate table
+    duration_months INT,
+    contact_name TEXT,
+    contact_number TEXT,
+    contact_email TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
+
 );
 
 CREATE TABLE documents (
@@ -64,16 +69,16 @@ CREATE INDEX idx_audit_action ON audit_events(action);
 
 -- Seed: two companies (matching BankID mock org numbers)
 INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
-('556000-1234', 'Malmö Fastigheter AB', 'Anders Karlsson'),
-('556000-5678', 'Göteborg Handel AB', 'Maria Svensson');
+('556000-1234', 'Fasen Elteknik AB', 'Anders Karlsson'),
+('556000-5678', 'Britt Maries Ögonfransar AB', 'Maria Svensson');
 
 -- Case worker (password = "password123")
 INSERT INTO case_workers (name, email, password_md5) VALUES
 ('Karin Handläggare', 'karin@resurs.se', '482c811da5d5b4bc6d497ffa98491e38');
 
 -- Pre-existing application in REVIEW
-INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log) VALUES
-(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]');
+INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log,contact_name,contact_number,contact_email, duration_months) VALUES
+(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]','Anders Karlsson','0702222222','Anka@gmail.bygg',12);
 
 -- Branch Specific medians for use
 INSERT INTO branches (
