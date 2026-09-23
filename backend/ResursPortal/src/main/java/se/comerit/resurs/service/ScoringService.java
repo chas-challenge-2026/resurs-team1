@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.comerit.resurs.config.ScoringThresholds;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.BranchRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
@@ -631,6 +632,30 @@ public class ScoringService {
 
 
     }
+
+    public NewApplicationDTO scoreFromFinancialObject(CompanyFinancialApiDTO financials, BigDecimal requestedAmount, String bransch,
+                                   String orgNumber, String companyName, String authorizedSignatory, String purpose) {
+
+        CompanyFinancialApiDTO.CompanyIncomeStatement income = financials.incomeStatement();
+        CompanyFinancialApiDTO.CompanyBalanceSheet balance = financials.balanceSheet();
+        CompanyFinancialApiDTO.CompanyCashFlowStatement cashFlow = financials.cashFlowStatement();
+
+        return ScoringEngine(
+                cashFlow.operatingCashFlow().doubleValue(),
+                cashFlow.investmentCashFlow().doubleValue(),
+                income.interestExpenses().doubleValue(),
+                balance.totalAssets().doubleValue(),
+                balance.equity().doubleValue(),
+                balance.shortTermLiabilities().doubleValue(),
+                balance.currentAssets().doubleValue(),
+                balance.shortTermLiabilities().add(balance.longTermLiabilities()).doubleValue(),
+                income.revenue().doubleValue(),
+                income.operatingResult().doubleValue(),
+                requestedAmount, bransch, orgNumber, companyName, authorizedSignatory, purpose
+        );
+    }
+
+
 
 
 }
