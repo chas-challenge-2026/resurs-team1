@@ -23,7 +23,10 @@ CREATE TABLE applications (
     scoring_result TEXT,
     audit_log TEXT DEFAULT '[]',  -- JSON blob, no separate table
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    contact_name TEXT,
+    contact_number TEXT,
+    contact_email TEXT
 );
 
 CREATE TABLE documents (
@@ -73,7 +76,7 @@ INSERT INTO case_workers (name, email, password_md5) VALUES
 
 -- Pre-existing application in REVIEW
 INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log) VALUES
-(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]');
+(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]','Anders Karlsson','0702222222','Anka@gmail.bygg');
 
 -- Branch Specific medians for use
 INSERT INTO branches (
