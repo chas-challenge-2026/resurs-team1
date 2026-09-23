@@ -3,6 +3,7 @@ import api from "./client"
 
 export interface CompanyLoginPayload {
   orgNumber: string
+  personalNumber: string
 }
 
 export interface CaseworkerLoginPayload {
