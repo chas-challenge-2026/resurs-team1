@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
@@ -76,6 +77,13 @@ public class BackofficeService {
                 documentRepo.findByApplicationId(id).stream().map(DocumentDTO::new).toList();
 
         return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
+    }
+
+    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
+         return creditRepo.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
+                .stream()
+                .map(CreditApplicationDTO::new)
+                .toList();
     }
 
 
