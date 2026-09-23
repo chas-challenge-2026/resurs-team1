@@ -20,7 +20,7 @@ export interface Application {
   purpose: string
   status: ApplicationStatus
   decision?: string | null
-  decisionRreason?: string | null
+  decisionReason?: string | null
   scoringResult?: string | null
   auditLog?: string | null
   createdAt: string
