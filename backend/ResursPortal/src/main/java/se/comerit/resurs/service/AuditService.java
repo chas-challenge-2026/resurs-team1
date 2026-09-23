@@ -62,9 +62,11 @@ public class AuditService {
         auditEventRepository.save(event);
     }
 
-    private Long nextSequenceNumber(Long applicationID){
-        return auditEventRepository.findFirstByApplicationIdOrderBySequenceNumberDesc(applicationID)
-                .orElseThrow().getSequenceNumber() + 1;
+    private Long nextSequenceNumber(Long applicationID) {
+        return auditEventRepository
+                .findFirstByApplicationIdOrderBySequenceNumberDesc(applicationID)
+                .map(AuditEvent::getSequenceNumber)
+                .orElse(0L);
     }
 
     public List<AuditEventDTO> findAuditEventsByApplicationID(Long applicationID){

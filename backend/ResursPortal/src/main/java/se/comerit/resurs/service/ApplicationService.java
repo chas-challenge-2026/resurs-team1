@@ -23,8 +23,6 @@ public class ApplicationService {
 
     private final AuditService auditService;
     private final CompanyService companyService;
-    private final CompanyFinancialService financialService;
-    private final CompanyValidationService validationService;
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
 
@@ -34,8 +32,6 @@ public class ApplicationService {
         this.companyService = companyService;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
-        this.financialService = financialService;
-        this.validationService = validationService;
         this.companyRepository = companyRepository;
     }
 
