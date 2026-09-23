@@ -30,7 +30,7 @@ export interface Application {
   authorizedSignatory: string
   durationMonths?: number
   documents?: ApplicationDocument[]
-  contactDetails: {
+  contactDetails?: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
     email: string;
     phoneNumber: string;
