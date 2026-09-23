@@ -21,6 +21,7 @@ export const useSubmitApplication = () => {
 
   return useMutation<Application, Error, NewApplicationPayload>({
     mutationFn: (payload) => postApplication(payload),
+    meta: { preventGlobalToast: true}, // the page shows its own error under the button
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"]}) // remove old memory to force refresh of new applications
     },

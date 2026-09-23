@@ -8,7 +8,6 @@ import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"
 import { useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
-import { postApplication } from "../../../api/applicationApi"
 
 const TOTAL_STEPS = 3
 // the receipt is not a step, it has no progress bar and no way back
@@ -51,13 +50,13 @@ const ApplicationFormPage = () => {
     //data being sent differs from the form data + back-end wants contact info nested :)
     submitApplication.mutate(
       { 
-        durationMonths: values.durationMonths!,
         contactDetails: {
           phoneNumber: values.phoneNumber,
           email: values.email,
           name: values.contactName
         },
         orgNumber: values.orgNumber,
+        durationMonths: values.durationMonths!,
         purpose: values.purpose,
         requestedAmount: values.requestedAmount
       }, 
@@ -108,6 +107,9 @@ const ApplicationFormPage = () => {
           {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
         </Button>
       </div>
+        {submitApplication.isError &&
+          <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen</p>
+        }
     </div>
   )
 }
