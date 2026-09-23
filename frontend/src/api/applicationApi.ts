@@ -30,6 +30,11 @@ export interface Application {
   authorizedSignatory: string
   durationMonths?: number
   documents?: ApplicationDocument[]
+  contactDetails: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
 }
 
 export const getApplications = async (): Promise<Application[]> => {
