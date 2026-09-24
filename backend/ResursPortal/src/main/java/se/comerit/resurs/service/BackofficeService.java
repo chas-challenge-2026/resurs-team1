@@ -26,14 +26,12 @@ public class BackofficeService {
     private final AuditService auditService;
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
-    private final CompanyRepository companyRepo;
 
     @Autowired
-    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo, CompanyRepository companyRepo) {
+    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
         this.auditService = auditService;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
-        this.companyRepo = companyRepo;
     }
 
 
@@ -82,21 +80,7 @@ public class BackofficeService {
         return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
     }
 
-    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
-        if (orgNumber == null || orgNumber.isBlank()) {
-            throw new IllegalArgumentException("orgNumber must not be blank");
-        }
 
-        List<CreditApplicationDTO> applications = creditRepo.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
-                .stream()
-                .map(CreditApplicationDTO::new)
-                .toList();
-
-        if (applications.isEmpty() && companyRepo.findByOrgNumber(orgNumber).isEmpty()) {
-            throw new NoSuchElementException("No company with organisation number " + orgNumber);
-        }
-        return applications;
-    }
 
 
 

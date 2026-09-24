@@ -14,6 +14,7 @@ import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class ApplicationService {
@@ -65,6 +66,23 @@ public class ApplicationService {
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
     kör scoring engine och placerar rätt värde till rättattribut
     */
+
+    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
+        if (orgNumber == null || orgNumber.isBlank()) {
+            throw new IllegalArgumentException("orgNumber must not be blank");
+        }
+
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
+                .stream()
+                .map(CreditApplicationDTO::new)
+                .toList();
+
+        if (applications.isEmpty() && companyRepository.findByOrgNumber(orgNumber).isEmpty()) {
+            throw new NoSuchElementException("No company with organisation number " + orgNumber);
+        }
+        return applications;
+    }
+
 
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());

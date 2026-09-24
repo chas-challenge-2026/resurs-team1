@@ -121,17 +121,4 @@ public class BackofficeController {
         return ResponseEntity.ok(details);
     }
 
-    @GetMapping("/company")
-    public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
-            @RequestParam("orgNumber") String orgNumber,
-            HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return ResponseEntity.ok(service.getApplicationsByOrgNumber(orgNumber));
-    }
 }
