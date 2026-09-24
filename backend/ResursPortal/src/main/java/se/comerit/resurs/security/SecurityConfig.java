@@ -43,6 +43,13 @@ public class SecurityConfig {
                        .authenticationEntryPoint(
                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
+               .logout(logout -> logout
+                       .logoutUrl("/api/auth/logout")
+                       .logoutSuccessHandler((req, res, auth) ->
+                               res.setStatus(HttpStatus.NO_CONTENT.value()))
+                       .invalidateHttpSession(true)
+                       .deleteCookies("JSESSIONID"))
+
                .httpBasic(AbstractHttpConfigurer::disable)
                .formLogin(AbstractHttpConfigurer::disable)
                .build();
