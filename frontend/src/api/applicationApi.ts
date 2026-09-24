@@ -20,7 +20,7 @@ export interface Application {
   purpose: string
   status: ApplicationStatus
   decision?: string | null
-  decisionRreason?: string | null
+  decisionReason?: string | null
   scoringResult?: string | null
   auditLog?: string | null
   createdAt: string
@@ -30,6 +30,11 @@ export interface Application {
   authorizedSignatory: string
   durationMonths?: number
   documents?: ApplicationDocument[]
+  contactDetails?: { // I put as optional because mock data differs and there cold be old data in current DB
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
 }
 
 export const getApplications = async (): Promise<Application[]> => {
@@ -43,4 +48,25 @@ export const getApplicationById = async (id: number): Promise<Application> => {
     ...response.data.app,
     documents: response.data.documents,
   }
+}
+
+// matches "ApplicationFormData" as of september, but may change later since we could send info that was not in form, hence its own type
+export interface NewApplicationPayload {
+  orgNumber: string;
+
+  contactDetails: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+  };
+
+  purpose: string;
+  requestedAmount: number;
+  durationMonths: number;
+}
+
+export const postApplication = async (application: NewApplicationPayload): Promise<Application> => {
+  const response = await api.post<Application>(`/application/apply`, application)
+
+  return response.data
 }
