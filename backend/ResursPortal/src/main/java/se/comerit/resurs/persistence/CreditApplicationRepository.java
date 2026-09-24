@@ -21,6 +21,6 @@ public interface CreditApplicationRepository extends JpaRepository<CreditApplica
 
     List<CreditApplication> findByCompanyId(Long companyID);
     List<CreditApplication> findByCompanyIdOrderByCreatedAtDesc(Long companyID, Pageable pagable);
-
+    List<CreditApplication> findByCompany_OrgNumberOrderByCreatedAtDesc(String orgNumber);
 
 }

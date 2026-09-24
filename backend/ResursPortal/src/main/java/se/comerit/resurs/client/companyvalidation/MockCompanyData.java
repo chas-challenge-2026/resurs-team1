@@ -29,7 +29,7 @@ final class MockCompanyData {
             ), UPDATED_AT),
 
             "556000-7777", new CompanyValidationApiDTO("Gunnar Kruts Dynamit AB","556000-7777", List.of(
-                    new Signatory("660930-7777", "Johan Berg", "Styrelseledamot", SigningRight.JOINTLY),
+                    new Signatory("660930-7777", "Johan Berg", "Styrelseledamot", SigningRight.ALONE),
                     new Signatory("710214-7777", "Eva Berg", "Styrelseledamot", SigningRight.JOINTLY)
             ), UPDATED_AT),
 
@@ -80,16 +80,16 @@ final class MockCompanyData {
             // Economically stable but struggling company which is likely to get stuck in review
             "556000-7777", new CompanyFinancialApiDTO(
                     new CompanyIncomeStatement(
-                            sek("2000000"),
+                            sek("200000"),
                             sek("150000"),
                             sek("9000")
                     ),
                     new CompanyBalanceSheet(
-                            sek("200000"),
-                            sek("600000"),
-                            sek("2500000"),
-                            sek("1100000"),
-                            sek("1400000")
+                            sek("50000"),
+                            sek("60000"),
+                            sek("250000"),
+                            sek("11000"),
+                            sek("14000")
                     ),
                     new CompanyCashFlowStatement(
                             sek("100000"),
