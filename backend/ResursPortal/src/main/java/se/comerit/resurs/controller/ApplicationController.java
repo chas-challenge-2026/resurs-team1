@@ -1,19 +1,12 @@
 package se.comerit.resurs.controller;
 
-import org.apache.coyote.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
@@ -22,32 +15,17 @@ import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
-import se.comerit.resurs.enums.ApplicationStatus;
-import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.security.CompanyPrincipal;
 import se.comerit.resurs.service.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
  * ApplicationController – Hanterar kreditansökningar.
- *
  * VARNING: Denna klass innehåller avsiktliga anti-patterns för pedagogiskt syfte.
  * Se docs/known-bugs.md för fullständig lista.
- *
- * Anti-patterns inkluderar:
- *  - JdbcTemplate direkt i kontrollern (ingen service/repository-lager)
- *  - Inline scoring-logik (800+ rader i en metod)
- *  - Audit log som JSON-blob i en kolumn
- *  - Ingen transaktion vid ansökningsskapande
- *  - PII i klartext
- *  - Session-check copy-pasteat i varje metod
- *  - Magic numbers spridda i scoring-logiken
  */
 @RestController
 @RequestMapping("api/application")
@@ -71,64 +49,34 @@ public class ApplicationController {
     }
 
     // ============================================================
-    // GET /apply — visa ansökningsformulär
-    // ============================================================
-    @GetMapping("/apply")
-    public String showApplyForm(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        model.addAttribute("companyName", session.getAttribute("companyName"));
-        model.addAttribute("orgNumber", session.getAttribute("orgNumber"));
-        return "apply";
-    }
-
-    // ============================================================
     // POST /apply — skapa ansökan + kör scoring inline
     // ============================================================
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
-            @RequestParam("orgNumber") String orgNumber,
             @RequestParam("requestedAmount") BigDecimal requestedAmountStr,
             @RequestParam("purpose") String purpose,
-            @RequestParam(value = "bransch", defaultValue = "") String bransch,
-            HttpSession session) {
-
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        if (!"company".equals(session.getAttribute("role"))) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        if(session.getAttribute("personalNumber") == null )return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            @RequestParam(value = "bransch", defaultValue = "") String bransch, @AuthenticationPrincipal CompanyPrincipal principal) {
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
         // No validation or sanitization of inputs
 
-
         //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
-
-
-        String personalNumber = session.getAttribute("personalNumber").toString();
-        CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+        String personalNumber = principal.personalNumber();
+        CompanyValidationApiDTO company = validationService.validateCompanyExists(principal.orgNumber());
         CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
 
-        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(orgNumber)
+        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(principal.orgNumber())
                 .orElseThrow();
 
-        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, orgNumber, company.companyName(), signatory.name(), purpose);
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, principal.orgNumber(), company.companyName(), signatory.name(), purpose);
 
-        // ===========================================================
-        // INSERT 2: Skapa ansökan — ingen transaktion, tre separata INSERTs
-        // TODO: wrap in @Transactional
-        // ===========================================================
         CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
         // INSERT 3: Uppdatera audit log med scoring-resultat
         // ===========================================================
-
-        // End of INSERT 3 — still no transaction around all three operations
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
@@ -144,64 +92,27 @@ public class ApplicationController {
     // ============================================================
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
-                                                                       HttpSession session,
-                                                                       Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                                                                       @AuthenticationPrincipal CompanyPrincipal principal) {
+        CreditApplicationDTO app = appService.findApplicationByID(id);
 
-        String role = (String) session.getAttribute("role");
-
-        CreditApplicationDTO app;
-        if ("caseWorker".equals(role)) {
-            app = appService.findApplicationByID(id);
-        } else {
-            // Company can only see their own applications
-            Long companyId = (Long) session.getAttribute("companyId");
-            if (companyId == null) {
-                // Try to find companyId from orgNumber
-                String orgNumber = (String) session.getAttribute("orgNumber");
-
-
-                companyId  = companyService.getCompanyFromOrgNumber(orgNumber).id();
-
-                session.setAttribute("companyId", companyId);
-            }
-
-
-            app = appService.findApplicationByID(id);
-
+        if (!principal.orgNumber().equals(app.orgNumber())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-        /*
-        // Parse audit log — manual JSON string splitting, no proper parser
-        String auditLogBlob = (String) app.get("auditLog");
-        model.addAttribute("auditLogRaw", auditLogBlob);*/
 
         // Fetch documents for this application
         List<DocumentDTO> docs = documentService.findByApplicationId(id);
-
-
-        ApplicationWithDocumentsDTO responseBody = new ApplicationWithDocumentsDTO(app,docs);
-        return ResponseEntity.ok(responseBody);
+        return ResponseEntity.ok(new ApplicationWithDocumentsDTO(app,docs));
     }
 
     // ============================================================
     // GET /applications — lista alla ansökningar för företaget
     // ============================================================
     @GetMapping()
-    public ResponseEntity<List<CreditApplicationDTO>> listApplications(HttpSession session) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        //if (!"company".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        String orgNumber = (String) session.getAttribute("orgNumber");
-
+    public ResponseEntity<List<CreditApplicationDTO>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal) {
             // Get companyId via orgNumber — no caching, hits DB every time
-            Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
-
+            Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
-
 
         return ResponseEntity.ok(apps);
 
@@ -211,23 +122,14 @@ public class ApplicationController {
     // GET /dashboard — startsida för inloggad företagsanvändare
     // ============================================================
     @GetMapping("/dashboard")
-    public ResponseEntity<List<ApplicationShortDTO>> dashboard(HttpSession session) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        //if (!"company".equals(session.getAttribute("role"))) return "redirect:/backoffice"; ?? What is this ??
+    public ResponseEntity<List<ApplicationShortDTO>> dashboard(@AuthenticationPrincipal CompanyPrincipal principal) {
 
-        String orgNumber = (String) session.getAttribute("orgNumber");
-
-        Long companyID = companyService.getCompanyFromOrgNumber(orgNumber).id();
+        Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
         // Count applications by status
         Pageable limit = PageRequest.of(0,5);
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,limit);
 
-
         return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
     }
-
-
-
 }

@@ -23,50 +23,22 @@ public class CaseWorkerController {
     }
 
     @PostMapping
-    public ResponseEntity<CaseWorkerResponse> create(@Valid @RequestBody CreateCaseWorkerRequest request,
-                                                     HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<CaseWorkerResponse> create(@Valid @RequestBody CreateCaseWorkerRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(caseWorkerService.create(request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CaseWorkerResponse> getById(@PathVariable("id") Long id, HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<CaseWorkerResponse> getById(@PathVariable("id") Long id) {
             return ResponseEntity.ok(caseWorkerService.getById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CaseWorkerResponse> update(@PathVariable("id") Long id,
-                                                     @Valid @RequestBody UpdateCaseWorkerRequest request,
-                                                     HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<CaseWorkerResponse> update(@PathVariable("id") Long id, @Valid @RequestBody UpdateCaseWorkerRequest request) {
         return ResponseEntity.ok(caseWorkerService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable("id") Long id, HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         caseWorkerService.delete(id);
         return ResponseEntity.noContent().build();
     }
