@@ -77,6 +77,26 @@ final class MockCompanyData {
                     null
             ),
 
+            // Economically stable but struggling company which is likely to get stuck in review
+            "556000-7777", new CompanyFinancialApiDTO(
+                    new CompanyIncomeStatement(
+                            sek("2000000"),
+                            sek("150000"),
+                            sek("9000")
+                    ),
+                    new CompanyBalanceSheet(
+                            sek("200000"),
+                            sek("600000"),
+                            sek("2500000"),
+                            sek("1100000"),
+                            sek("1400000")
+                    ),
+                    new CompanyCashFlowStatement(
+                            sek("100000"),
+                            sek("50000")
+                    )
+            ),
+
             // Weak company: negative operating result and low equity ratio
             "556000-9999", new CompanyFinancialApiDTO(
                     new CompanyIncomeStatement(

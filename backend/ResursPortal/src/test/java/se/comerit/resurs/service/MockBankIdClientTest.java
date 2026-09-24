@@ -13,7 +13,7 @@ public class MockBankIdClientTest {
 
     @Test
     void verify_shouldReturnApproved_whenIdentityIsFirstApprovedNumber() {
-        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("197503121234");
+        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("750312-1234");
 
         assertTrue(result.isPresent());
         assertEquals("Anders Karlsson", result.get().name());
@@ -21,7 +21,7 @@ public class MockBankIdClientTest {
 
     @Test
     void verify_shouldReturnApproved_whenIndentityIsSecondApprovedNumber() {
-        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("198206245678");
+        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("820624-5678");
 
         assertTrue(result.isPresent());
         assertEquals("Maria Svensson", result.get().name());
@@ -29,7 +29,7 @@ public class MockBankIdClientTest {
 
     @Test
     void verify_shouldReturnNotApproved_whenIdentityIsUnknown() {
-        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("197101011234");
+        Optional<BankIdVerificationResult> result = mockBankIdClient.verify("710101-1234");
 
         assertFalse(result.isPresent());
     }

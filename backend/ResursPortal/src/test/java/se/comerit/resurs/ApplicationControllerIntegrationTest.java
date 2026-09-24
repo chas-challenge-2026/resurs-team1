@@ -76,7 +76,7 @@ class ApplicationControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new CompanyLoginRequest(
                         "556000-1234",
-                        "197503121234"
+                        "750312-1234"
                 ))
                 .exchange()
                 .expectStatus()

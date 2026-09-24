@@ -50,13 +50,13 @@ class AuthControllerIntegrationTest {
     // Bolaget och firmatecknaren finns i MockCompanyData, personnumret även i MockBankIdClient
     private static final String ORG_NUMBER = "556000-1234";
     private static final String COMPANY_NAME = "Fasen Elteknik AB";
-    private static final String SIGNATORY_PERSONAL_NUMBER = "197503121234";
+    private static final String SIGNATORY_PERSONAL_NUMBER = "750312-1234";
 
     // Verifieras av BankID men är inte firmatecknare för ORG_NUMBER
-    private static final String OTHER_PERSONAL_NUMBER = "198206245678";
+    private static final String OTHER_PERSONAL_NUMBER = "820624-5678";
 
     // Okänt för BankID
-    private static final String UNKNOWN_PERSONAL_NUMBER = "000000000000";
+    private static final String UNKNOWN_PERSONAL_NUMBER = "000000-0000";
 
     // Handläggaren kommer från infra/seed.sql
     private static final String WORKER_EMAIL = "karin@resurs.se";
