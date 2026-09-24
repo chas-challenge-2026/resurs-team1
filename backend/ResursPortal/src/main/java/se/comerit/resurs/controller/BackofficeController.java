@@ -1,15 +1,15 @@
 package se.comerit.resurs.controller;
 
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.security.CaseWorkerPrincipal;
 import se.comerit.resurs.service.BackofficeService;
 
 
@@ -35,17 +35,7 @@ public class BackofficeController {
     }
 
     @GetMapping
-    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(HttpSession session) {
-
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview() {
         BackOfficeListsDTO applicationLists = service.applicationsForReview();
 
         /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
@@ -55,25 +45,17 @@ public class BackofficeController {
         model.addAttribute("reviewCount", applicationLists.reviewApplications().size());
         return "backoffice";
         */
-
         return ResponseEntity.ok(applicationLists);
 
     }
 
     @PostMapping("/decide")
     public ResponseEntity<Void> decide(@RequestParam("applicationId") Long applicationId,
-                         @RequestParam("decision") String decision,
-                         @RequestParam(value = "comment", defaultValue = "") String comment,
-                         HttpSession session) {
+                                       @RequestParam("decision") String decision,
+                                       @RequestParam(value = "comment", defaultValue = "") String comment,
+                                       @AuthenticationPrincipal CaseWorkerPrincipal principal
+                                       ) {
 
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         //Any status other than Approved or Rejected results in a redirection.
         //Update: REST-APIs should respond with bad request. /Jonathan
@@ -82,8 +64,8 @@ public class BackofficeController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        String workerName = (String) session.getAttribute("workerName");
-        String workerEmail = (String) session.getAttribute("workerEmail");
+        String workerName = principal.name();
+        String workerEmail = principal.email();
         ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
         service.application_decision(applicationId,newStatus,workerEmail, workerName,comment);
@@ -96,17 +78,8 @@ public class BackofficeController {
 
     @GetMapping("/application/{id}")
     public ResponseEntity<CreditApplicationDetails> viewApplicationDetail(
-            @PathVariable("id") Long id,
-            HttpSession session) {
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+            @PathVariable("id") Long id
+            ) {
         CreditApplicationDetails details = service.application_details(id);
         /*
         Map<String, Object> app = apps.get(0);
@@ -114,8 +87,6 @@ public class BackofficeController {
         model.addAttribute("auditLogRaw", app.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
-
-
         return ResponseEntity.ok(details);
     }
 }

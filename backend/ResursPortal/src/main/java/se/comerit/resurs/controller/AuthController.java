@@ -7,7 +7,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpSession;
 import se.comerit.resurs.dto.auth.*;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
 import se.comerit.resurs.security.CompanyPrincipal;
@@ -56,14 +55,6 @@ public class AuthController {
             CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.personalNumber());
             CompanyPrincipal principal = new CompanyPrincipal(response.orgNumber(), response.companyName(), request.personalNumber());
             sessionAuthenticator.authenticate(principal, SessionAuthenticator.COMPANY, httpServletRequest, httpServletResponse );
-
-            // TODO: tas bort när alla controllers läser via @AuthenticationPrincipal
-            HttpSession session = httpServletRequest.getSession();
-            session.setAttribute("userId", response.orgNumber());
-            session.setAttribute("role", "company");
-            session.setAttribute("orgNumber", response.orgNumber());
-            session.setAttribute("companyName", response.companyName());
-
             return ResponseEntity.ok(response);
         }
 
@@ -73,12 +64,6 @@ public class AuthController {
             CaseWorkerPrincipal principal = new CaseWorkerPrincipal(response.userId(), response.name(), response.email());
             sessionAuthenticator.authenticate(principal, SessionAuthenticator.CASE_WORKER, servletRequest, servletResponse);
 
-            // TODO: tas bort när alla controllers läser via @AuthenticationPrincipal
-            HttpSession session = servletRequest.getSession();
-            session.setAttribute("userId", response.userId());
-            session.setAttribute("role", "caseWorker");
-            session.setAttribute("workerName", response.name());
-            session.setAttribute("workerEmail", response.email());
             return ResponseEntity.ok(response);
         }
     }
