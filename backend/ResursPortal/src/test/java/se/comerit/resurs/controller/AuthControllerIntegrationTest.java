@@ -10,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -22,6 +23,7 @@ import se.comerit.resurs.exception.ApiError;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -105,7 +107,7 @@ class AuthControllerIntegrationTest {
         String session = sessionCookie(loginCompany(SIGNATORY_PERSONAL_NUMBER));
 
         ResponseEntity<Void> logout = restTemplate.exchange(
-                "/api/auth/logout", HttpMethod.POST, withSession(session), Void.class);
+                "/api/auth/logout", HttpMethod.POST, new HttpEntity<>(postHeaders(session)), Void.class);
         assertThat(logout.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
         ResponseEntity<ApiError> me = restTemplate.exchange(
@@ -115,9 +117,9 @@ class AuthControllerIntegrationTest {
 
     @Test
     void loginCompany_shouldFail_whenBankIdDoesNotKnowThePersonalNumber() {
-        ResponseEntity<ApiError> response = restTemplate.postForEntity(
-                "/api/auth/login/company",
-                new CompanyLoginRequest(ORG_NUMBER, UNKNOWN_PERSONAL_NUMBER),
+        ResponseEntity<ApiError> response = restTemplate.exchange(
+                "/api/auth/login/company", HttpMethod.POST,
+                new HttpEntity<>(new CompanyLoginRequest(ORG_NUMBER, UNKNOWN_PERSONAL_NUMBER), postHeaders(null)),
                 ApiError.class);
 
         // BankIdVerificationFailedException saknar egen @ExceptionHandler och fångas av den generella.
@@ -127,9 +129,9 @@ class AuthControllerIntegrationTest {
 
     @Test
     void loginCompany_shouldFail_whenPersonIsNotSignatoryForTheCompany() {
-        ResponseEntity<ApiError> response = restTemplate.postForEntity(
-                "/api/auth/login/company",
-                new CompanyLoginRequest(ORG_NUMBER, OTHER_PERSONAL_NUMBER),
+        ResponseEntity<ApiError> response = restTemplate.exchange(
+                "/api/auth/login/company", HttpMethod.POST,
+                new HttpEntity<>(new CompanyLoginRequest(ORG_NUMBER, OTHER_PERSONAL_NUMBER), postHeaders(null)),
                 ApiError.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
@@ -137,9 +139,9 @@ class AuthControllerIntegrationTest {
 
     @Test
     void loginCompany_shouldReturnBadRequest_whenPersonalNumberIsMissing() {
-        ResponseEntity<ApiError> response = restTemplate.postForEntity(
-                "/api/auth/login/company",
-                new CompanyLoginRequest(ORG_NUMBER, ""),
+        ResponseEntity<ApiError> response = restTemplate.exchange(
+                "/api/auth/login/company", HttpMethod.POST,
+                new HttpEntity<>(new CompanyLoginRequest(ORG_NUMBER, ""), postHeaders(null)),
                 ApiError.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -148,16 +150,40 @@ class AuthControllerIntegrationTest {
 
 
     private ResponseEntity<CompanyLoginResponse> loginCompany(String personalNumber) {
-        return restTemplate.postForEntity(
-                "/api/auth/login/company",
-                new CompanyLoginRequest(ORG_NUMBER, personalNumber),
+        return restTemplate.exchange(
+                "/api/auth/login/company", HttpMethod.POST,
+                new HttpEntity<>(new CompanyLoginRequest(ORG_NUMBER, personalNumber), postHeaders(null)),
                 CompanyLoginResponse.class);
+    }
+
+    private String csrfCookie() {
+        return cookie(restTemplate.postForEntity("/api/auth/logout", null, Void.class), "XSRF-TOKEN");
+    }
+
+    private String cookie(ResponseEntity<?> response, String name) {
+        List<String> cookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+        if (cookies == null) {
+            return null;
+        }
+        return cookies.stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith(name + "="))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private HttpHeaders postHeaders(String sessionCookie) {
+        String csrf = csrfCookie();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("X-XSRF-TOKEN", csrf.substring("XSRF-TOKEN=".length()));
+        headers.add(HttpHeaders.COOKIE, sessionCookie == null ? csrf : sessionCookie + "; " + csrf);
+        return headers;
     }
 
     /** TestRestTemplate sparar inga cookies, så JSESSIONID plockas ur svaret och skickas med manuellt. */
     private String sessionCookie(ResponseEntity<?> response) {
-        String cookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
-        return cookie == null ? null : cookie.split(";", 2)[0];
+        return cookie(response, "JSESSIONID");
     }
 
     private HttpEntity<Void> withSession(String sessionCookie) {

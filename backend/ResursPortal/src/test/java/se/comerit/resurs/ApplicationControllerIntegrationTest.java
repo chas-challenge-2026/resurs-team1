@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -18,6 +19,7 @@ import org.testcontainers.utility.MountableFile;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,9 +63,13 @@ class ApplicationControllerIntegrationTest {
     @Test
     void submitApplication_withoutSession_returns401() {
 
+        String token = csrfToken();
+
         restTestClient
                 .post()
                 .uri("/api/application/apply")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + token)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(
                         "orgNumber=556677-8899" +
@@ -132,5 +138,21 @@ class ApplicationControllerIntegrationTest {
                 .expectStatus()
                 .isUnauthorized();
     }
-}
 
+    private String csrfToken() {
+        List<String> cookies = restTestClient
+                .post()
+                .uri("/api/auth/logout")
+                .exchange()
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE);
+
+        return cookies.stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("XSRF-TOKEN="))
+                .findFirst()
+                .orElseThrow()
+                .substring("XSRF-TOKEN=".length());
+    }
+}
