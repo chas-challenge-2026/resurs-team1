@@ -156,7 +156,7 @@ const LoginPage = () => {
               }
 
               {companyLogin.isPending && (
-                <div className={s.pendingWrapper}>
+                <div className={s.pendingWrapper} role="status" aria-live="polite">
                   <Loading delay={false} />
                   <p className={s.pendingTitle}>Väntar på Bank-ID signering</p>
                   <p className="information-text">Öppna Bank-ID appen och godkänn inloggningen.</p>
@@ -164,8 +164,8 @@ const LoginPage = () => {
               )}
 
               {companyLogin.isSuccess && (
-                <div className={s.successWrapper}>
-                  <IoCheckmarkCircle />
+                <div className={s.successWrapper} role="status" aria-live="polite">
+                  <IoCheckmarkCircle aria-hidden="true" />
                   <div>
                     <p className={s.successTitle}>Signering godkänd</p>
                     <p className="information-text">Du loggas in...</p>
