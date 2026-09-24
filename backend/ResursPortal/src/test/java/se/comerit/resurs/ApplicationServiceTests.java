@@ -374,6 +374,67 @@ class ApplicationServiceTests {
                 .isEqualTo(first.id());
     }
 
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnOnlyApplicationsForThatCompany() {
+        Company target = saveCompany("556000-1111");
+        Company other = saveCompany("556000-2222");
+
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.UNDER_REVIEW));
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.APPROVED));
+        applicationRepository.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
+
+        List<CreditApplicationDTO> result =
+                applicationService.getApplicationsByOrgNumber("556000-1111");
+
+        assertThat(result).hasSize(2);
+        assertThat(result)
+                .extracting(CreditApplicationDTO::orgNumber)
+                .containsOnly("556000-1111");
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnEmptyListWhenCompanyHasNoApplications() {
+        saveCompany("556000-1111");
+
+        assertThat(applicationService.getApplicationsByOrgNumber("556000-1111")).isEmpty();
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenCompanyDoesNotExist() {
+        saveCompany("556000-1111");
+
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("556000-9999"))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenOrgNumberIsBlank() {
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("   "))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private Company saveCompany(String orgNumber) {
+        Company company = new Company();
+        company.setOrg_number(orgNumber);
+        company.setCompany_name("Test Company");
+        company.setAuthorized_signatory("Test Signatory");
+
+        return companyRepository.save(company);
+    }
+
+    private CreditApplication createApplicationFor(Company company, ApplicationStatus status) {
+        CreditApplication application = new CreditApplication();
+        application.setCompany(company);
+        application.setRequestedAmount(new BigDecimal("10000.00"));
+        application.setPurpose("Test loan");
+        application.setStatus(status);
+
+        return application;
+    }
+
+
+
+
     // ============================================================
     // Test data
     // ============================================================

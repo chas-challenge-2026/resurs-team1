@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
@@ -11,11 +12,13 @@ import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class BackofficeService {
@@ -48,7 +51,6 @@ public class BackofficeService {
                 )
         ).stream().map(HistoricalReviewInfo::new).toList();
 
-
         return new BackOfficeListsDTO(decidedReviewList,underReviewList);
     }
 
@@ -77,6 +79,8 @@ public class BackofficeService {
 
         return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
     }
+
+
 
 
 
