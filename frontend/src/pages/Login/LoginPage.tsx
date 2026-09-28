@@ -22,19 +22,13 @@ const INITIAL_FORM = {
   password: "",
 }
 
-const ORG_NUMBER_DIGITS = 10
-const PERSONAL_NUMBER_DIGITS = 12
+const ID_NUMBER_DIGITS = 10
 
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it
-const formatOrgNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, ORG_NUMBER_DIGITS)
+const format10DigitNumber = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
   return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
-}
-
-const formatPersonalNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, PERSONAL_NUMBER_DIGITS)
-  return digits.length > 8 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits // add "-"
 }
 
 const LoginPage = () => {
@@ -57,8 +51,8 @@ const LoginPage = () => {
     setErrors((prev) => ({ ...prev, [id]: "" }))
 
     let formattedValue = value
-    if (id === "orgNumber") formattedValue = formatOrgNumber(value)
-    if (id === "personalNumber") formattedValue = formatPersonalNumber(value)
+    if (id === "orgNumber") formattedValue = format10DigitNumber(value)
+    if (id === "personalNumber") formattedValue = format10DigitNumber(value)
 
     setFormData((prev) => ({
       ...prev,
@@ -74,8 +68,8 @@ const LoginPage = () => {
     
     // insta reject wrong format, wait for BankID on correct numbers
     const newErrors = {
-      orgNumber: rawOrg.length !== ORG_NUMBER_DIGITS ? "Organisationsnumret måste innehålla 10 siffror" : "",
-      personalNumber: rawPersonal.length !== PERSONAL_NUMBER_DIGITS ? "Personnumret måste innehålla 12 siffror" : "",
+      orgNumber: rawOrg.length !== ID_NUMBER_DIGITS ? "Organisationsnumret måste innehålla 10 siffror" : "",
+      personalNumber: rawPersonal.length !== ID_NUMBER_DIGITS ? "Personnumret måste innehålla 10 siffror" : "",
     }
 
     setErrors((prev) => ({ ...prev, ...newErrors }))
@@ -84,7 +78,7 @@ const LoginPage = () => {
 
     companyLogin.mutate({ 
       orgNumber: formData.orgNumber, 
-      personalNumber: rawPersonal
+      personalNumber: formData.personalNumber
     })
   }
 
@@ -147,8 +141,8 @@ const LoginPage = () => {
                 id="personalNumber"
                 inputMode="numeric"
                 label="Personnummer *"
-                placeholder="ÅÅÅÅMMDD-XXXX"
-                information="Ange 12 siffror"
+                placeholder="ÅÅMMDD-XXXX"
+                information="Ange 10 siffror"
                 error={errors.personalNumber}
                 value={formData.personalNumber}
                 onChange={handleChange}
@@ -162,7 +156,7 @@ const LoginPage = () => {
               }
 
               {companyLogin.isPending && (
-                <div className={s.pendingWrapper}>
+                <div className={s.pendingWrapper} role="status" aria-live="polite">
                   <Loading delay={false} />
                   <p className={s.pendingTitle}>Väntar på Bank-ID signering</p>
                   <p className="information-text">Öppna Bank-ID appen och godkänn inloggningen.</p>
@@ -170,8 +164,8 @@ const LoginPage = () => {
               )}
 
               {companyLogin.isSuccess && (
-                <div className={s.successWrapper}>
-                  <IoCheckmarkCircle />
+                <div className={s.successWrapper} role="status" aria-live="polite">
+                  <IoCheckmarkCircle aria-hidden="true" />
                   <div>
                     <p className={s.successTitle}>Signering godkänd</p>
                     <p className="information-text">Du loggas in...</p>
