@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
@@ -7,9 +8,7 @@ import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
-import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.security.PasswordHasher;
 
 
 /**
@@ -28,18 +27,16 @@ import se.comerit.resurs.security.PasswordHasher;
 public class AuthService {
     private final CompanyValidationService validationService;
     private final CaseWorkerRepository caseWorkerRepository;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
     private final BankIdService bankIdService;
 //    private final CompanyValidationService companyValidationService;
 
 
-    public AuthService(BankIdService bankIdService, CompanyValidationService validationService,
-                       CaseWorkerRepository caseWorkerRepository,
-                       PasswordHasher passwordHasher) {
+    public AuthService(BankIdService bankIdService, CompanyValidationService validationService, CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder) {
         this.bankIdService = bankIdService;
         this.validationService = validationService;
         this.caseWorkerRepository = caseWorkerRepository;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // BankID mock — hardcoded org numbers, real BankID integration skipped -> old comment
@@ -73,7 +70,7 @@ public class AuthService {
                 .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
 
 
-        if (!worker.getPasswordHash().equals(passwordHasher.md5Hash(password))) {
+        if (!passwordEncoder.matches(password, worker.getPasswordHash())) {
             throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
         }
         return new CaseWorkerLoginResponse(
