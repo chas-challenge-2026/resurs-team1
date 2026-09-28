@@ -1,5 +1,6 @@
 CREATE TABLE companies (
     id SERIAL PRIMARY KEY,
+    version INT,
     org_number VARCHAR(20) UNIQUE,
     company_name VARCHAR(200),
     authorized_signatory VARCHAR(100)
@@ -7,6 +8,7 @@ CREATE TABLE companies (
 
 CREATE TABLE case_workers (
     id SERIAL PRIMARY KEY,
+    version INT,
     name VARCHAR(100),
     email VARCHAR(100) UNIQUE,
     password_md5 VARCHAR(32)
@@ -14,6 +16,7 @@ CREATE TABLE case_workers (
 
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
+    version INT,
     company_id INT REFERENCES companies(id),
     requested_amount DECIMAL(15,2),
     purpose TEXT,
