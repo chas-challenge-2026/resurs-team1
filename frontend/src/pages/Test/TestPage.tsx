@@ -18,6 +18,7 @@ import type { Application } from "../../api/applicationApi"
 import SidebarCaseCard from "../../components/SidebarCaseCard/SidebarCaseCard"
 import AttachedFile from "../../components/AttachedFile/AttachedFile"
 import { EMAIL_PATTERN, PHONE_PATTERN } from "../../constants/constants"
+import Pagination from "../../components/Pagination/Pagination"
         
 const summaryApplication: Application = {
   id: 1,
@@ -105,6 +106,9 @@ const TestPage = () => {
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState<number>(3000000);
 
+  const [currentPage, setCurrentPage] = useState(4);
+  const totalPages = 10
+
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>(applicationData)
 
@@ -162,7 +166,16 @@ const TestPage = () => {
             value={amount}
             onChange={setAmount}
           />
-          <AttachedFile document={DOCUMENT_MOCK} />
+        <AttachedFile document={DOCUMENT_MOCK} />
+
+        {/* Pagination test */}
+        <p>Du befinner dig just nu på sida: <strong>{currentPage}</strong></p>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
       </Card>
 
       <ApplicationWizard step={step} onChange={handleChange} values={values}></ApplicationWizard>
