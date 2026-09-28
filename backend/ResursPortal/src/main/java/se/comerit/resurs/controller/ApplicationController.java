@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +58,7 @@ public class ApplicationController {
     // ============================================================
     // POST /apply — skapa ansökan + kör scoring inline
     // ============================================================
+    @PreAuthorize("hasRole('COMPANY')")
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
             @RequestBody ApplicationSubmission submission,
@@ -101,6 +103,7 @@ public class ApplicationController {
     // ============================================================
     // GET /application/{id} — visa enskild ansökan
     // ============================================================
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
                                                                        @AuthenticationPrincipal Object principal) {
@@ -115,6 +118,7 @@ public class ApplicationController {
     // ============================================================
     // GET /applications — lista alla ansökningar för företaget
     // ============================================================
+    @PreAuthorize("hasRole('COMPANY')")
     @GetMapping()
     public ResponseEntity<List<CreditApplicationDTO>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal) {
             // Get companyId via orgNumber — no caching, hits DB every time
@@ -125,6 +129,7 @@ public class ApplicationController {
         return ResponseEntity.ok(apps);
 
     }
+    @PreAuthorize("hasRole('CASE_WORKER')")
     @GetMapping("/company")
     public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
             @RequestParam("orgNumber") String orgNumber
@@ -135,6 +140,7 @@ public class ApplicationController {
     // ============================================================
     // GET /dashboard — startsida för inloggad företagsanvändare
     // ============================================================
+    @PreAuthorize("hasRole('COMPANY')")
     @GetMapping("/dashboard")
     public ResponseEntity<List<ApplicationShortDTO>> dashboard(@AuthenticationPrincipal CompanyPrincipal principal) {
 

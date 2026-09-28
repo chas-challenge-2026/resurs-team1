@@ -4,6 +4,7 @@ package se.comerit.resurs.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
@@ -23,6 +24,7 @@ import se.comerit.resurs.service.BackofficeService;
  *  - Session check copy-pasteat
  *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
+@PreAuthorize("hasRole('CASE_WORKER')")
 @RestController
 @RequestMapping("/api/backoffice")
 public class BackofficeController {
