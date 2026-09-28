@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public record NewApplicationDTO(
         BigDecimal requested_amount,
         String purpose,
+        Integer durationMonths,
         ApplicationStatus status,
         String decision,
         String decision_reason,

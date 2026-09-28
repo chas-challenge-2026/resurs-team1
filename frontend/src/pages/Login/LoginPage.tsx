@@ -8,6 +8,7 @@ import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Loading from "../../components/Loading/Loading";
 import s from "./LoginPage.module.css"
+import { IoCheckmarkCircle } from "react-icons/io5";
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
   { label: "Företag", value: "company" },
@@ -16,11 +17,13 @@ const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 
 const INITIAL_FORM = {
   orgNumber: "",
+  personalNumber: "",
   email: "",
   password: "",
 }
 
 const ORG_NUMBER_DIGITS = 10
+const PERSONAL_NUMBER_DIGITS = 12
 
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it
@@ -29,48 +32,68 @@ const formatOrgNumber = (value: string) => {
   return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
 }
 
+const formatPersonalNumber = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, PERSONAL_NUMBER_DIGITS)
+  return digits.length > 8 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits // add "-"
+}
+
 const LoginPage = () => {
   const [role, setRole] = useState<UserRole>("company")
   const [formData, setFormData] = useState(INITIAL_FORM)
-  const [orgNumberError, setOrgNumberError] = useState("")
-  const [emailError, setEmailError] = useState("")
+  const [errors, setErrors] = useState(INITIAL_FORM)
 
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
 
-  const companyFieldsEmpty = !formData.orgNumber.trim()
+  const companyFieldsEmpty = !formData.orgNumber.trim() || !formData.personalNumber.trim()
   const caseWorkerFieldsEmpty = !formData.email.trim() || !formData.password.trim()
 
   const activeLogin = role === "company" ? companyLogin : caseWorkerLogin
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
-    // reset error as soon as user ttypes again
+    // reset error as soon as user types again
     if (activeLogin.isError) activeLogin.reset()
-    setOrgNumberError("")
-    setEmailError("")
+    setErrors((prev) => ({ ...prev, [id]: "" }))
+
+    let formattedValue = value
+    if (id === "orgNumber") formattedValue = formatOrgNumber(value)
+    if (id === "personalNumber") formattedValue = formatPersonalNumber(value)
+
     setFormData((prev) => ({
       ...prev,
-      [id]: id === "orgNumber" ? formatOrgNumber(value) : value,
+      [id]: formattedValue
     }))
   }
 
   const handleCompanySubmit = (e: React.SubmitEvent) => {
     e.preventDefault()
 
-    // insta reject wrong format, wait for BankID on correct nyumbers
-    if (formData.orgNumber.replace(/\D/g, "").length !== ORG_NUMBER_DIGITS) {
-      setOrgNumberError("Organisationsnumret ska innehålla 10 siffror")
-      return
+    const rawOrg = formData.orgNumber.replace(/\D/g, "")
+    const rawPersonal = formData.personalNumber.replace(/\D/g, "")
+    
+    // insta reject wrong format, wait for BankID on correct numbers
+    const newErrors = {
+      orgNumber: rawOrg.length !== ORG_NUMBER_DIGITS ? "Organisationsnumret måste innehålla 10 siffror" : "",
+      personalNumber: rawPersonal.length !== PERSONAL_NUMBER_DIGITS ? "Personnumret måste innehålla 12 siffror" : "",
     }
 
-    companyLogin.mutate({ orgNumber: formData.orgNumber })
+    setErrors((prev) => ({ ...prev, ...newErrors }))
+
+    if (newErrors.orgNumber || newErrors.personalNumber) return
+
+    companyLogin.mutate({ 
+      orgNumber: formData.orgNumber, 
+      personalNumber: rawPersonal
+    })
   }
 
   // show error after leaving input field
   const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const email = e.target.value.trim()
-    setEmailError(!email || EMAIL_PATTERN.test(email) ? "" : "Ange en giltig e-postadress")
+    const errorMsg = !email || EMAIL_PATTERN.test(email) ? "" : "Ange en giltig e-postadress"
+
+    setErrors((prev) => ({...prev, email: errorMsg}))
   }
 
   const handleCaseWorkerSubmit = (e: React.SubmitEvent) => {
@@ -94,39 +117,81 @@ const LoginPage = () => {
           <p className={s.subTitle}>Välj inloggningsmetod nedan</p>
 
           <div className={s.divider} />
-          <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
+          <ToggleSwitch 
+            name="userRole" 
+            options={SWITCH_OPTIONS} 
+            selectedValue={role} 
+            onChange={(newRole) => {
+              setRole(newRole)
+              setFormData(INITIAL_FORM)
+              setErrors(INITIAL_FORM)
+              companyLogin.reset()
+              caseWorkerLogin.reset()
+            }}
+          />
 
           {role === "company" ? (
             <form className={s.form} onSubmit={handleCompanySubmit}>
-              {companyLogin.isPending &&
-                <Loading fullscreen size="lg" label="Väntar på BankID..." />
-              }
-
               <Input 
                 id="orgNumber"
                 inputMode="numeric"
                 label="Organisationsnummer *"
-                placeholder="XXXXXX-XXXX"
-                information="Ange 10 siffror"
-                error={orgNumberError}
+                placeholder="556XXX-XXXX"
+                error={errors.orgNumber}
                 value={formData.orgNumber}
                 onChange={handleChange}
+                disabled={companyLogin.isPending}
               />
+
+              <Input 
+                id="personalNumber"
+                inputMode="numeric"
+                label="Personnummer *"
+                placeholder="ÅÅÅÅMMDD-XXXX"
+                information="Ange 12 siffror"
+                error={errors.personalNumber}
+                value={formData.personalNumber}
+                onChange={handleChange}
+                disabled={companyLogin.isPending}
+              />
+
               {companyLogin.isError &&
                 <div>
-                  <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och försök igen.</p>
+                  <p role="alert" className={s.formError}>Inloggningen misslyckades. Kontrollera organisationsnumret och personnumret.</p>
                 </div>
               }
 
-              <Button
-                type="submit"
-                className={s.button}
-                disabled={companyFieldsEmpty || companyLogin.isPending}
-              >
-                {companyLogin.isPending ? "Loggar in..." : "Logga in med BankID"}
-              </Button>
-              <div className={s.divider} />
-              <p className="information-text">Behörig firmateckare i organisationen signerar med personligt BankID.</p>
+              {companyLogin.isPending && (
+                <div className={s.pendingWrapper}>
+                  <Loading delay={false} />
+                  <p className={s.pendingTitle}>Väntar på Bank-ID signering</p>
+                  <p className="information-text">Öppna Bank-ID appen och godkänn inloggningen.</p>
+                </div>
+              )}
+
+              {companyLogin.isSuccess && (
+                <div className={s.successWrapper}>
+                  <IoCheckmarkCircle />
+                  <div>
+                    <p className={s.successTitle}>Signering godkänd</p>
+                    <p className="information-text">Du loggas in...</p>
+                  </div>
+                </div>
+              )}
+
+              {!companyLogin.isPending && !companyLogin.isSuccess && (
+                <>
+                  <Button
+                    type="submit"
+                    className={s.button}
+                    disabled={companyFieldsEmpty || companyLogin.isPending}
+                  >
+                    Logga in med BankID
+                  </Button>
+                  <div className={s.divider} />
+                  <p className="information-text">Behörig firmatecknare i organisationen signerar med personligt BankID.</p>
+                </>
+              )}
             </form>
           ) : (
             <form className={s.form} onSubmit={handleCaseWorkerSubmit} noValidate>
@@ -135,7 +200,7 @@ const LoginPage = () => {
                 id="email"
                 label="E-postadress *"
                 placeholder="namn.exempel@foretag.se"
-                error={emailError}
+                error={errors.email}
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleEmailBlur}
@@ -145,7 +210,7 @@ const LoginPage = () => {
                 id="password" 
                 label="Lösenord *" 
                 placeholder="••••••••••" 
-                information="Lösenordet måste vara minst 8 tecken" 
+                error={errors.password}
                 value={formData.password} 
                 onChange={handleChange} 
               />

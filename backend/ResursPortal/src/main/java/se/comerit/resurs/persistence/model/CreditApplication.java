@@ -41,6 +41,9 @@ public class CreditApplication {
     @Column(name = "scoring_result")
     private String scoringResult;
 
+    @Column
+    private Integer durationMonths;
+
     @CreationTimestamp
     @Column(name = "createdAt")
     private LocalDateTime createdAt;
@@ -48,6 +51,48 @@ public class CreditApplication {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column
+    private String contactName;
+
+    @Column
+    private String contactNumber;
+
+    @Column
+    private String contactEmail;
+
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
+    }
+
+    public String getContactName() {
+        return contactName;
+    }
+
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
 
     //Need version field here for Optimistic Locking
 

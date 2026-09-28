@@ -5,9 +5,10 @@ import type { DropdownOption } from "../components/Dropdown/Dropdown"
 import type { ButtonGroupOption } from "../components/ButtonGroup/ButtonGroup"
 
 export const PURPOSE_OPTIONS: DropdownOption[] = [
-  { value: "waiting", label: "Väntar" },
-  { value: "for", label: "På" },
-  { value: "backend", label: "Back-end" },
+  { value: "Expansion", label: "Expansion" },
+  { value: "workingCapital", label: "Rörelsekapital" },
+  { value: "Investment", label: "Investering" },
+  { value: "Other", label: "Annat" },
 ]
 
 export const ICONS: Record<ApplicationStatus, IconType> = {
@@ -18,7 +19,7 @@ export const ICONS: Record<ApplicationStatus, IconType> = {
 }
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  PENDING_DOCS: "Komplettering krävs",
+  PENDING_DOCS: "Väntar på dokument",
   UNDER_REVIEW: "Under behandling",
   APPROVED: "Godkänd",
   REJECTED: "Avvisad"

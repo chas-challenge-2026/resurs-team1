@@ -16,7 +16,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.ContactDetails;
+import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.application.ApplicationSubmission;
+import se.comerit.resurs.dto.auth.CompanyLoginRequest;
+import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -59,6 +65,70 @@ class ApplicationControllerIntegrationTest {
     // ============================================================
     // POST /application/apply
     // ============================================================
+
+
+
+    @Test
+    void submitApplication_withCorrectSession_returns201() {
+
+        String token = csrfToken();
+
+        var loginResponse = restTestClient
+                .post()
+                .uri("/api/auth/login/company")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CompanyLoginRequest(
+                        "556000-1234",
+                        "750312-1234"
+                ))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .returnResult(CompanyLoginResponse.class);
+
+        String sessionCookie = loginResponse
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE)
+                        .stream()
+                                .map(value -> value.split(";", 2)[0])
+                                .filter(value -> value.startsWith("JSESSIONID="))
+                                .findFirst()
+                                .orElseThrow();
+
+
+        restTestClient
+                .post()
+                .uri("/api/application/apply")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, sessionCookie + "; XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationSubmission(
+                        "556000-1234",
+                        BigDecimal.valueOf(250000),
+                        "Expansion",
+                        12,
+                        new ContactDetails("Test", "mail", "number")
+                ))
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody(CreditApplicationDTO.class)
+                .value(application -> {
+                    assertThat(application).isNotNull();
+                    assertThat(application.orgNumber()).isEqualTo("556000-1234");
+                    assertThat(application.requestedAmount())
+                            .isEqualByComparingTo(BigDecimal.valueOf(250000));
+                    assertThat(application.purpose()).isEqualTo("Expansion");
+                    assertThat(application.durationMonths()).isEqualTo(12);
+                    assertThat(application.contactDetails().name()).isEqualTo("Test");
+                    assertThat(application.contactDetails().email()).isEqualTo("mail");
+                    assertThat(application.contactDetails().phoneNumber()).isEqualTo("number");
+                });
+    }
+
+
 
     @Test
     void submitApplication_withoutSession_returns401() {

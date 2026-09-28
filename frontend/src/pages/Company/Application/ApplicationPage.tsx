@@ -6,6 +6,7 @@ import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"
+import { useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
 
 const TOTAL_STEPS = 3
@@ -17,6 +18,7 @@ const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
   const user = getUser()
+  const submitApplication = useSubmitApplication()
 
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
@@ -27,7 +29,7 @@ const ApplicationFormPage = () => {
     phoneNumber: "",
     purpose: "",
     requestedAmount: 3000000,
-    repaymentPeriod: undefined,
+    durationMonths: undefined,
   })
 
   // old answers first, then the patch overwrites only what changed
@@ -37,15 +39,30 @@ const ApplicationFormPage = () => {
   // same rules the wizard shows errors for, so Fortsätt can't walk past a bad field
   const stepIsComplete =
     step === 1
-      ? values.purpose !== "" && values.repaymentPeriod !== undefined
+      ? values.purpose !== "" && values.durationMonths !== undefined
       : step === 2
         ? values.contactName !== "" &&
           EMAIL_PATTERN.test(values.email) &&
           PHONE_PATTERN.test(values.phoneNumber)
         : true
 
-  // TODO: post the application here once the backend endpoint exists
-  const handleSubmit = () => setStep(RECEIPT_STEP)
+  const handleSubmit = () => {
+    //data being sent differs from the form data + back-end wants contact info nested :)
+    submitApplication.mutate(
+      { 
+        contactDetails: {
+          phoneNumber: values.phoneNumber,
+          email: values.email,
+          name: values.contactName
+        },
+        orgNumber: values.orgNumber,
+        durationMonths: values.durationMonths!,
+        purpose: values.purpose,
+        requestedAmount: values.requestedAmount
+      }, 
+      { onSuccess: () => setStep(RECEIPT_STEP) }
+    )
+  }
 
   if (step === RECEIPT_STEP) {
     return (
@@ -83,12 +100,16 @@ const ApplicationFormPage = () => {
         </Button>
         <Button
           className={s.submit}
-          disabled={!stepIsComplete}
+          // pending stops a double click from sending two applications
+          disabled={!stepIsComplete || submitApplication.isPending}
           onClick={step === TOTAL_STEPS ? handleSubmit : () => setStep(step + 1)}
         >
-          {step === TOTAL_STEPS ? "Skicka ansökan" : "Fortsätt"}
+          {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
         </Button>
       </div>
+        {submitApplication.isError &&
+          <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen</p>
+        }
     </div>
   )
 }

@@ -47,6 +47,42 @@
   margin: var(--space-md) 0;
 }
 
+/* Company Status boxes */
+.pendingWrapper {
+  background-color: var(--color-primary-light);
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.pendingTitle {
+  font-weight: 500;
+}
+
+.successWrapper {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  background-color: var(--color-primary-light);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary);
+}
+
+.successWrapper svg {
+  color: var(--color-primary);
+  font-size: 40px;
+}
+
+.successTitle {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
 @media (min-width: 1024px) {
   .wrapper {
     display: flex;

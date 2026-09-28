@@ -19,6 +19,8 @@ interface ToggleSwitchProps<T extends string> {
   selectedValue: T;
   /** Callback fired when a new option is selected */
   onChange: (value: T) => void
+  /** Style variants, default neutral */
+  variant?: "neutral" | "accent"
 }
 
 /**
@@ -46,9 +48,9 @@ interface ToggleSwitchProps<T extends string> {
  * />
  * ```
  */
-const ToggleSwitch = <T extends string>({name, options, selectedValue, onChange}: ToggleSwitchProps<T>) => {
+const ToggleSwitch = <T extends string>({name, options, variant = "neutral", selectedValue, onChange}: ToggleSwitchProps<T>) => {
   return(
-    <div role="radiogroup" className={s.wrapper}>
+    <div role="radiogroup" className={`${s.wrapper} ${s[variant]}`}>
       {options.map(({ label, value }) => {
         const isSelected = value === selectedValue;
 

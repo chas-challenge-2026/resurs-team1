@@ -1,5 +1,7 @@
 package se.comerit.resurs.controller;
 
+import org.apache.coyote.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.ApplicationShortDTO;
+import se.comerit.resurs.dto.application.ApplicationSubmission;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -53,9 +56,9 @@ public class ApplicationController {
     // ============================================================
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
-            @RequestParam("requestedAmount") BigDecimal requestedAmountStr,
-            @RequestParam("purpose") String purpose,
-            @RequestParam(value = "bransch", defaultValue = "") String bransch, @AuthenticationPrincipal CompanyPrincipal principal) {
+            @RequestBody ApplicationSubmission submission,
+            @AuthenticationPrincipal CompanyPrincipal principal) {
+
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
@@ -64,19 +67,22 @@ public class ApplicationController {
         //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
         String personalNumber = principal.personalNumber();
         CompanyValidationApiDTO company = validationService.validateCompanyExists(principal.orgNumber());
-        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber );
+        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
 
         CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(principal.orgNumber())
                 .orElseThrow();
 
-        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, requestedAmountStr, bransch, principal.orgNumber(), company.companyName(), signatory.name(), purpose);
+        //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", principal.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
 
-        CreditApplicationDTO application =  appService.saveApplication(scoredApplication);
+        CreditApplicationDTO application = appService.saveApplication(scoredApplication, submission.contactDetails());
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
         // INSERT 3: Uppdatera audit log med scoring-resultat
         // ===========================================================
+
+        // End of INSERT 3 — still no transaction around all three operations
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
@@ -84,8 +90,9 @@ public class ApplicationController {
                 .buildAndExpand(application.id())
                 .toUri();
 
-        return  ResponseEntity.created( location).body(application);
+        return ResponseEntity.created(location).body(application);
     }
+
 
     // ============================================================
     // GET /application/{id} — visa enskild ansökan

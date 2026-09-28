@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -14,6 +15,7 @@ import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class ApplicationService {
@@ -40,7 +42,7 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -52,6 +54,12 @@ public class ApplicationService {
         creditApplication.setDecisionReason(newApplication.decision_reason());
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
+
+        creditApplication.setDurationMonths(newApplication.durationMonths());
+
+        creditApplication.setContactEmail(contactDetails.email());
+        creditApplication.setContactNumber(contactDetails.phoneNumber());
+        creditApplication.setContactName(contactDetails.name());
 
 
         CreditApplication saved = applicationRepository.saveAndFlush(creditApplication);
@@ -65,6 +73,23 @@ public class ApplicationService {
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
     kör scoring engine och placerar rätt värde till rättattribut
     */
+
+    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
+        if (orgNumber == null || orgNumber.isBlank()) {
+            throw new IllegalArgumentException("orgNumber must not be blank");
+        }
+
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
+                .stream()
+                .map(CreditApplicationDTO::new)
+                .toList();
+
+        if (applications.isEmpty() && companyRepository.findByOrgNumber(orgNumber).isEmpty()) {
+            throw new NoSuchElementException("No company with organisation number " + orgNumber);
+        }
+        return applications;
+    }
+
 
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());

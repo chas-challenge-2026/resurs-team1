@@ -108,7 +108,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     void companyLogin_shouldReturnCompanyData(){
          Company company = createCompany();
          CompanyLoginResponse response = authService.loginCompany(
-                 "556000-1234", "197503121234");
+                 "556000-1234", "750312-1234");
 
 
         assertThat(response.role()).isEqualTo("company");

@@ -26,3 +26,9 @@
   gap: var(--space-xs);
   margin-left: auto;
 }
+
+/* borrowed from .formError in login */
+.submitError {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}

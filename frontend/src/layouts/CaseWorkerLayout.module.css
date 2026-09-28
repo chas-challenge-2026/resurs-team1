@@ -14,12 +14,14 @@
 .sideBar {
   background-color: var(--bg-secondary);
   width: 100%;
+  overflow-y: auto;
 }
 
 .collapsed.sideBar {
   min-width: 0;
   width: fit-content;
   border-right: 1px solid var(--border);
+  overflow-y: hidden;
 }
 
 .collapsed .sideBarHeader {
@@ -40,10 +42,10 @@
 
 /* Main container */
 .main {
-  padding: var(--space-base);
   display: flex;
-  gap: var(--space-base);
+  flex-direction: column;
   flex: 1;
+  overflow-y: auto;
 }
 
 .hidden {

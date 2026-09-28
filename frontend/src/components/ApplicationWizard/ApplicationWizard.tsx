@@ -24,7 +24,7 @@ export interface ApplicationFormData {
   purpose: string; // becomes a union once the backend hands over the enum values -- A | B | C
   requestedAmount: number;
   // undefined until the customer picks one
-  repaymentPeriod?: number;
+  durationMonths?: number;
 }
 
 interface ApplicationWizardProps {
@@ -82,11 +82,11 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
               onChange={(loanAmount) => onChange({ requestedAmount: loanAmount })}
             />
             <ButtonGroup
-              name="repaymentPeriod"
+              name="durationMonths"
               label="Önskad återbetalningstid (månad)"
               options={REPAYMENT_OPTIONS}
-              selectedValue={values.repaymentPeriod}
-              onChange={(repaymentPeriod) => onChange({ repaymentPeriod })}
+              selectedValue={values.durationMonths}
+              onChange={(durationMonths) => onChange({ durationMonths })}
             />
           </CardBody>
         </Card>
@@ -154,7 +154,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
               <DataListItem label="Önskat belopp" value={formatCurrency(values.requestedAmount)} />
               <DataListItem
                 label="Önskad återbetalningstid"
-                value={values.repaymentPeriod ? `${values.repaymentPeriod} mån` : "Ej valt"}
+                value={values.durationMonths ? `${values.durationMonths} mån` : "Ej valt"}
               />
             </DataList>
             <p className="information-text">
