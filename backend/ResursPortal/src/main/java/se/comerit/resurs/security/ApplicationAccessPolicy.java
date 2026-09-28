@@ -20,4 +20,10 @@ public class ApplicationAccessPolicy {
             throw new AccessDeniedException("Not allowed to view application " + application.id());
         }
     }
+
+    public void checkCanSubmitFor(CompanyPrincipal principal, String orgNumber) {
+        if (!principal.orgNumber().equals(orgNumber)) {
+            throw new AccessDeniedException("Not allowed to submit applications for " + orgNumber);
+        }
+    }
 }

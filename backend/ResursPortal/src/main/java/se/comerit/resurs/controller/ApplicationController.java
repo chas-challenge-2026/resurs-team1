@@ -62,6 +62,7 @@ public class ApplicationController {
             @RequestBody ApplicationSubmission submission,
             @AuthenticationPrincipal CompanyPrincipal principal) {
 
+        accessPolicy.checkCanSubmitFor(principal, submission.orgNumber());
 
         // TODO: encrypt PII before go-live
         // PII stored in plaintext: companyName, orgNumber, authorizedSignatory
@@ -69,14 +70,14 @@ public class ApplicationController {
 
         //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
         String personalNumber = principal.personalNumber();
-        CompanyValidationApiDTO company = validationService.validateCompanyExists(principal.orgNumber());
+        CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
         CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
 
-        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(principal.orgNumber())
+        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
                 .orElseThrow();
 
         //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
-        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", principal.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
+        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
 
         CreditApplicationDTO application = appService.saveApplication(scoredApplication, submission.contactDetails());
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.

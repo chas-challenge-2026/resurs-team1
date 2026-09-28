@@ -46,4 +46,19 @@ public class ApplicationAccessPolicyTest {
         assertThrows(AccessDeniedException.class,
                 () -> policy.checkCanView(null, applicationFor(OWN_ORG_NUMBER)));
     }
+
+    @Test
+    void checkCanSubmitFor_shouldAllow_whenOrgNumberMatchesPrincipal() {
+        CompanyPrincipal company = new CompanyPrincipal(OWN_ORG_NUMBER, "Fasen Elteknik AB", "750312-1234");
+
+        assertDoesNotThrow(() -> policy.checkCanSubmitFor(company, OWN_ORG_NUMBER));
+    }
+
+    @Test
+    void checkCanSubmitFor_shouldDeny_whenOrgNumberDiffersFromPrincipal() {
+        CompanyPrincipal company = new CompanyPrincipal(OWN_ORG_NUMBER, "Fasen Elteknik AB", "750312-1234");
+
+        assertThrows(AccessDeniedException.class,
+                () -> policy.checkCanSubmitFor(company, OTHER_ORG_NUMBER));
+    }
 }
