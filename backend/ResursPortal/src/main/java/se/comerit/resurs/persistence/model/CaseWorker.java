@@ -16,7 +16,7 @@ public class CaseWorker {
     @Column(name = "email", unique = true)
     private String email;
 
-    @Column(name = "password_md5")
+    @Column(name = "password_hash")
     private  String passwordHash;
 
     public CaseWorker() {
