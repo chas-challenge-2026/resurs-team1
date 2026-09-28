@@ -32,6 +32,7 @@ public class SecurityConfig {
 
                        .requestMatchers("/api/backoffice/**").hasRole("CASE_WORKER")
                        .requestMatchers("/api/caseworkers/**").hasRole("CASE_WORKER")
+                       .requestMatchers("/api/application/company").hasRole("CASE_WORKER")
                        .requestMatchers("/api/application/**").hasRole("COMPANY")
 
                        .requestMatchers("/api/documents/**").authenticated()

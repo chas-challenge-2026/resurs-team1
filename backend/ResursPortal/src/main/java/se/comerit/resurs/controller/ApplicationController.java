@@ -124,6 +124,12 @@ public class ApplicationController {
         return ResponseEntity.ok(apps);
 
     }
+    @GetMapping("/company")
+    public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
+            @RequestParam("orgNumber") String orgNumber
+            ) {
+        return ResponseEntity.ok(appService.getApplicationsByOrgNumber(orgNumber));
+    }
 
     // ============================================================
     // GET /dashboard — startsida för inloggad företagsanvändare
