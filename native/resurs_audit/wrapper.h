@@ -12,9 +12,12 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash(const std::vector<uin
 
 int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t* output_buffer);
 
-int wrapper_sign(const uint8_t *canonicalData, size_t canonicalDateLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_buffer);
+int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t* output_hash_buffer, uint8_t *output_buffer);
 
-int wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength);
+int wrapper_hash_and_sign(const uint8_t* canonicalData, size_t canonicalDataLength, const uint8_t* privateKey, size_t privateKeyLength, uint8_t* output_hash_buffer, uint8_t* output_signature_buffer);
+
+VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength);
+
 
 unsigned char* generate_private_key();
 

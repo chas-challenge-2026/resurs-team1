@@ -4,6 +4,21 @@
 #include <iostream>
 #include <cstdint>
 
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <cstring>
+static void print_hex(const uint8_t *data, size_t length)
+{
+    for (size_t i = 0; i < length; ++i)
+    {
+        printf("%02x ", data[i]);
+    }
+    putchar('\n');
+}
+
+
 namespace resurs::audit
 {
     inline constexpr std::size_t SHA256_HASH_BYTES = 32;
@@ -23,6 +38,29 @@ struct AuditEntry
     //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousHash;
     //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> currentHash;
     uint64_t sequenceNumber;
+};
+
+enum DigitalSignResultCode
+{
+    SIGN_ALL_OK = 0,
+    EVP_DIGEST_SIGN_INIT_FAILED = -1,
+    EVP_DIGEST_SIGN_SIGNATURE_LENGTH_FAILED = -2,
+    EVP_DIGEST_SIGN_SIGNING_FAILED = -3
+};
+
+enum VerifyChainResultCode
+{
+    ALL_OK = 0,
+    PREVIOUS_HASH_MISSMATCH = -1,
+    CURRENT_HASH_MISSMATCH = -2,
+    EVP_DIGEST_VERIFY_INIT_FAILED = -3,
+    EVP_DIGEST_VERIFY_FAILED = -4
+};
+
+struct VerifyChainResult
+{
+    VerifyChainResultCode result_code;
+    uint8_t index;
 };
 
 /*

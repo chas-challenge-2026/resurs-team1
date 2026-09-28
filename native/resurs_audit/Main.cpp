@@ -3,19 +3,22 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <cstring>
+
+
 
 #define HASH_SIZE 32
 #define KEY_SIZE 32
 #define SIGNATURE_SIZE 64
 
-static void print_hex(const uint8_t *data, size_t length)
-{
-    for (size_t i = 0; i < length; ++i)
-    {
-        printf("%02x", data[i]);
-    }
-    putchar('\n');
-}
+// static void print_hex(const uint8_t *data, size_t length)
+// {
+//     for (size_t i = 0; i < length; ++i)
+//     {
+//         printf("%02x ", data[i]);
+//     }
+//     putchar('\n');
+// }
 
 int main(void)
 {
@@ -34,39 +37,74 @@ int main(void)
     };
     const uint8_t canonical_data[] =
         "{\"event\":\"application-created\",\"sequence\":1}";
+    printf("canonical data at start: %s\n", canonical_data);
 
+    uint8_t output_hash_buffer[HASH_SIZE] = {};
+
+    uint8_t output_signature_buffer[SIGNATURE_SIZE] = {};
     
     AuditEntry entry;
     entry.canonicalData = canonical_data;
     entry.canonicalDataLength = sizeof(canonical_data) - 1;
     entry.sequenceNumber = 1;
 
-    if (wrapper_hash(entry.canonicalData,
-                     entry.canonicalDataLength,
-                     entry.currentHash) != 0)
+    //entry.previousHash[HASH_SIZE] = {0};
+    memset(entry.previousHash, 0, sizeof(entry.previousHash));
+    //printf("entry.previousHash after define: %d\n", entry.previousHash);
+    std::cout << "entry.previousHash after define: " << std::endl;
+    print_hex(entry.previousHash, sizeof(entry.previousHash));
+
+
+
+
+
+    if (wrapper_hash_and_sign(
+        entry.canonicalData,
+        entry.canonicalDataLength,
+        private_key,
+        KEY_SIZE,
+        output_hash_buffer,
+        output_signature_buffer
+    ) != 0)
     {
-        fprintf(stderr, "Hashing failed.\n");
+        //fprint("wrapper_hash_and_sign error");
+        fprintf(stderr, "wrapper_hash_and_sign error");
         return 1;
     }
 
-    if (wrapper_sign(entry.canonicalData,
-                     entry.canonicalDataLength,
-                     private_key,
-                     sizeof(private_key),
-                     entry.signature) != 0)
-    {
-        fprintf(stderr, "Signing failed.\n");
-        return 1;
-    }
+    //entry.currentHash = output_hash_buffer;
+    std::memcpy(entry.currentHash, output_hash_buffer, sizeof(output_hash_buffer));
+
+    std::memcpy(entry.signature, output_signature_buffer, sizeof(output_signature_buffer));
+    // if (wrapper_hash(entry.canonicalData,
+    //                  entry.canonicalDataLength,
+    //                  entry.currentHash) != 0)
+    // {
+    //     fprintf(stderr, "Hashing failed.\n");
+    //     return 1;
+    // }
+
+    // if (wrapper_sign(entry.canonicalData,
+    //                  entry.canonicalDataLength,
+    //                  private_key,
+    //                  sizeof(private_key),
+    //                  entry.signature) != 0)
+    // {
+    //     fprintf(stderr, "Signing failed.\n");
+    //     return 1;
+    // }
 
     printf("Hash:      ");
     print_hex(entry.currentHash, HASH_SIZE);
     printf("Signature: ");
     print_hex(entry.signature, SIGNATURE_SIZE);
 
-    if (wrapper_verify_chain(&entry, 1, public_key, sizeof(public_key)) != 0)
+    VerifyChainResult result = wrapper_verify_chain(&entry, 1, public_key, sizeof(public_key));
+    if (result.result_code != 0)
     {
-        fprintf(stderr, "Chain verification failed.\n");
+        //fprintf(stderr, "Chain verification failed.\n");
+        printf("%s\n", "chain verification failed.");
+        printf("result code: %d\n", result.result_code);
         return 1;
     }
 

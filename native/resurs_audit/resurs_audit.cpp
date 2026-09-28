@@ -1,6 +1,10 @@
 #include "resurs_audit.h"
 #include <algorithm>
 
+#include <stdio.h>
+#include <string.h>
+#include <cstring>
+
 // VÅr initiala test.
 // std::array<std::size_t, resurs::audit::DIGITAL_SIGNATURE_BYTES> DigitalSign::sign(std::array<std::size_t, resurs::audit::SHA256_HASH_BYTES> &currentHash, EVP_PKEY *pkey)
 
@@ -39,7 +43,8 @@ DigitalSign::PkeyPtr DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(const
 }
 
 
-std::vector<uint8_t> DigitalSign::sign(const std::vector<uint8_t> &data, const uint8_t *privateKey, size_t privateKeyLength)
+DigitalSignResultCode DigitalSign::sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_hash_buffer, uint8_t *output_signature_buffer)
+//std::vector<uint8_t> DigitalSign::sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_hash_buffer, uint8_t *output_signature_buffer)
 {
     // Context är redan satt i konstruktor.
 
@@ -56,7 +61,8 @@ std::vector<uint8_t> DigitalSign::sign(const std::vector<uint8_t> &data, const u
             pKeyPtr.get()) != 1)
     {
         // EVP_MD_CTX_free(ctx);
-        throw std::runtime_error("EVP_DigestSignInit failed.");
+        //throw std::runtime_error("EVP_DigestSignInit failed.");
+        return EVP_DIGEST_SIGN_INIT_FAILED;
     }
 
     // Räkna ut signaturlängden baserad på algoritm.
@@ -67,29 +73,31 @@ std::vector<uint8_t> DigitalSign::sign(const std::vector<uint8_t> &data, const u
             ctx.get(),
             nullptr,
             &signatureLength,
-            data.data(),
-            data.size()) != 1)
+            input_hash_buffer,
+            resurs::audit::SHA256_HASH_BYTES) != 1)
     {
         // EVP_MD_CTX_free(ctx);
-        throw std::runtime_error("failed to get signature length");
+        //throw std::runtime_error("failed to get signature length");
+        return EVP_DIGEST_SIGN_SIGNATURE_LENGTH_FAILED;
     }
 
-    std::vector<uint8_t> signature(signatureLength);
+    //std::vector<uint8_t> signature(signatureLength);
 
     // Skapa faktiska signaturen
     if (EVP_DigestSign(
             ctx.get(),
-            signature.data(),
+            output_signature_buffer,
             &signatureLength,
-            data.data(),
-            data.size()) != 1)
+            input_hash_buffer,
+            resurs::audit::SHA256_HASH_BYTES) != 1)
     {
-        throw std::runtime_error("Signing failed.");
+        // throw std::runtime_error("Signing failed.");
+        return EVP_DIGEST_SIGN_SIGNING_FAILED;
     }
 
-    signature.resize(signatureLength);
+    //signature.resize(signatureLength);
 
-    return signature;
+    return SIGN_ALL_OK;
 
     // Vad vi behöver för att signera:
 
@@ -212,29 +220,69 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash_chain(co
 
 
 // int DigitalSign::verify_chain(const AuditEntryChain* chain, size_t entryCount, EVP_PKEY* publicKey)
-int DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength)
+VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength)
 {
+    VerifyChainResult verifyChainResult;
+
     // std::vector<uint8_t> previousEntryCurrentHash{};
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{};
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{0};
+    memset(previousEntryCurrentHash.data(), 0, sizeof(previousEntryCurrentHash.data()));
     
     // Convert the uint8_t publicKey pointer and the size_t publicKeyPointer length to an actual pkey
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(publicKey, publicKeyLength);
 
     for(int i = 0; i < entryCount; i++)
     {
-            if (entries[i].previousHash != previousEntryCurrentHash.data())
+            //if (*entries[i].previousHash != *previousEntryCurrentHash.data())
+            if (!std::equal(previousEntryCurrentHash.begin(), previousEntryCurrentHash.end(), entries[i].previousHash))
             {
-                return i;
+                //printf("previoushEntryCurrentHash: %d\n", previousEntryCurrentHash.data());
+                //printf("entry.previousHash: %d\n", entries[i].previousHash);
+                std::cout << "previousEntryCurrentHash: " << std::endl;
+                //print_hex(previousEntryCurrentHash.data(), sizeof(previousEntryCurrentHash.data()));
+                print_hex(previousEntryCurrentHash.data(), previousEntryCurrentHash.size());
+                printf("previousEntryCurrentHash.size():  %d\n", previousEntryCurrentHash.size());
+                
+                std::cout << "entry.previousHash"<< std::endl;
+                print_hex(entries[i].previousHash, sizeof(entries[i].previousHash));
+                printf("sizeof(entries[i].previousHash):  %d\n", sizeof(entries[i].previousHash));
+                verifyChainResult.result_code = PREVIOUS_HASH_MISSMATCH;
+                verifyChainResult.index = i;
+
+                return verifyChainResult;
             }
 
             // verifiera att hashen i sig ärgiltig
             std::vector<uint8_t> canonicalData(entries[i].canonicalData, entries[i].canonicalData + entries[i].canonicalDataLength);
 
+            //printf("%scanonicalData: \n", canonicalData.data());
+            // std::cout << "canonicalData: " << std::endl;
+            // print_hex(canonicalData.data(), sizeof(canonicalData.data()));
+            
             std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hashOfEntry = hash(canonicalData);
-            if (hashOfEntry.data() != entries[i].currentHash)
+            //printf("%sHashed Data: \n", hashOfEntry.data());
+            std::cout << "hashOfEntry: " << std::endl;
+            //print_hex(hashOfEntry.data(), sizeof(hashOfEntry.data()));
+            print_hex(hashOfEntry.data(), hashOfEntry.size());
+
+            std::cout << "entries[i].currentHash: " << std::endl;
+            print_hex(entries[i].currentHash, sizeof(entries[i].currentHash));
+
+
+            //if (reinterpret_cast<uint8_t>(*hashOfEntry.data()) != *entries[i].currentHash)
+            if (!std::equal(hashOfEntry.begin(), hashOfEntry.end(), entries[i].currentHash))
             {
-                throw std::runtime_error("Entry hash is not the same as current hash.");
-                return i;
+                //throw std::runtime_error("Entry hash is not the same as current hash.");
+                verifyChainResult.result_code = CURRENT_HASH_MISSMATCH;
+                verifyChainResult.index = i;
+                //printf("\nhasOfEntry: %d\ncurrentHash: %d\n", hashOfEntry.data(), entries[i].currentHash);
+                printf("hashOfEntry: ");
+                print_hex(hashOfEntry.data(), hashOfEntry.size());
+                printf("\ncurrentHash: ");
+                print_hex(entries[i].currentHash, sizeof(entries[i].currentHash));
+                printf("\n");
+
+                return verifyChainResult;
             }
 
             // Använd public key för att verifiera signatur
@@ -245,7 +293,11 @@ int DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, cons
                     nullptr,
                     pKeyPtr.get()) != 1)
             {
-                throw std::runtime_error("EVP_DigestVerifyInit failed.");
+                //throw std::runtime_error("EVP_DigestVerifyInit failed.");
+                verifyChainResult.result_code = EVP_DIGEST_VERIFY_INIT_FAILED;
+                verifyChainResult.index = i;
+
+                return verifyChainResult;
             }
 
             // Verify
@@ -253,24 +305,30 @@ int DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, cons
                 ctx.get(),
                 entries[i].signature,
                 resurs::audit::DIGITAL_SIGNATURE_BYTES,
-                entries[i].canonicalData,
-                entries[i].canonicalDataLength);
+                entries[i].currentHash,
+                sizeof(entries[i].currentHash));
 
             // EVP library function returns 1 is successfull and 0 if any error occured. If so, we return the index of the audit entry we got error from.
             if (result == 0)
             {
-                return i;
+                verifyChainResult.result_code = EVP_DIGEST_VERIFY_FAILED;
+                verifyChainResult.index = i;
+
+                return verifyChainResult;
             }
 
-            throw std::runtime_error("EVP_DigestVerify failed.");
+            //throw std::runtime_error("EVP_DigestVerify failed.");
 
             // Copy source, of destination.size, to destionation
-            std::copy_n(entries[i].previousHash, previousEntryCurrentHash.size(), previousEntryCurrentHash.begin());
+            std::copy_n(entries[i].currentHash, previousEntryCurrentHash.size(), previousEntryCurrentHash.begin());
 
             //previousEntryCurrentHash[0] = *entries[i].previousHash;
     }
 
-    return 0; // but in c/c++ 0 is success, and negative numbers if error codes
+    verifyChainResult.result_code = ALL_OK;
+
+    return verifyChainResult;
+    //return 0; // but in c/c++ 0 is success, and negative numbers if error codes
 
     /* Dum-kod eller dum-flöde
     1. Spara värde lokalt

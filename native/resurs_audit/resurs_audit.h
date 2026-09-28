@@ -36,12 +36,11 @@ class DigitalSign
         };
         std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash(const std::vector<uint8_t> &data);
 
-        std::vector<uint8_t> sign(const std::vector<uint8_t> &data, const uint8_t *privateKey, size_t privateKeyLength);
+        DigitalSignResultCode sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_hash_buffer, uint8_t *output_signature_buffer);
 
-        std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash_chain(const std::string &data, const std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> &prev_hash);
 
         std::array<unsigned char, resurs::audit::PKEY_BYTES> generate_private_key();
-        int verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength);
+        VerifyChainResult verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength);
 
         PkeyPtr convert_c_private_key_to_EVP_PKEY_POINTER(const uint8_t *privateKey, size_t privateKeyLength);
         PkeyPtr convert_c_public_key_to_EVP_PKEY_POINTER(const uint8_t *publicKey, size_t publicKeyLength);
