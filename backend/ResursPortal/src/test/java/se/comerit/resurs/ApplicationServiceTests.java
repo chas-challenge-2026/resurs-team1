@@ -11,6 +11,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -31,6 +32,8 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @Testcontainers
 class ApplicationServiceTests {
+
+    private static final ContactDetails mockContacts = new ContactDetails("Chunky","Chunk@Jungle.DKI","000999999");
 
     private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
             .resolve("../../infra/seed.sql")
@@ -82,7 +85,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_shouldPersistApplication() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO());
+        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
 
         assertThat(saved).isNotNull();
@@ -107,7 +110,7 @@ class ApplicationServiceTests {
 
         NewApplicationDTO dto = createApplicationDTO();
 
-        CreditApplicationDTO saved = applicationService.saveApplication(dto);
+        CreditApplicationDTO saved = applicationService.saveApplication(dto,mockContacts);
 
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
@@ -190,7 +193,7 @@ class ApplicationServiceTests {
         );
 
         CreditApplicationDTO saved =
-                applicationService.saveApplication(dto);
+                applicationService.saveApplication(dto,mockContacts);
 
         assertThat(saved.orgNumber())
                 .isEqualTo("111111-2222");
@@ -207,7 +210,7 @@ class ApplicationServiceTests {
         );
 
         assertThatThrownBy(() ->
-                applicationService.saveApplication(dto)
+                applicationService.saveApplication(dto,mockContacts)
         ).isInstanceOf(Exception.class);
 
         assertThat(applicationRepository.count())
@@ -223,7 +226,7 @@ class ApplicationServiceTests {
     void findApplicationByID_shouldReturnApplication() {
 //kolla över
         CreditApplicationDTO saved =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         CreditApplicationDTO result =
                 applicationService.findApplicationByID(saved.id());
@@ -264,21 +267,21 @@ class ApplicationServiceTests {
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                )
+                ),mockContacts
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                )
+                ),mockContacts
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "111111-2222",
                         "Other Company"
-                )
+                ),mockContacts
         );
 
         List<CreditApplicationDTO> applications =
@@ -310,11 +313,11 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnCompanyApplications() {
 //kolla över
         applicationService.saveApplication(
-                createApplicationDTO()
+                createApplicationDTO(),mockContacts
         );
 
         applicationService.saveApplication(
-                createApplicationDTO()
+                createApplicationDTO(),mockContacts
         );
 
         List<CreditApplicationDTO> applications =
@@ -333,9 +336,9 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompanyDesc_shouldRespectPageSize() {
 //kolla över
-        applicationService.saveApplication(createApplicationDTO());
-        applicationService.saveApplication(createApplicationDTO());
-        applicationService.saveApplication(createApplicationDTO());
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         Pageable pageable = PageRequest.of(0, 2);
 
@@ -353,10 +356,10 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnNewestFirst() {
 //kolla över
         CreditApplicationDTO first =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         CreditApplicationDTO second =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         List<CreditApplicationDTO> applications =
                 applicationService.readApplicationsByCompanyDesc(
@@ -373,6 +376,67 @@ class ApplicationServiceTests {
         assertThat(applications.get(1).id())
                 .isEqualTo(first.id());
     }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnOnlyApplicationsForThatCompany() {
+        Company target = saveCompany("556000-1111");
+        Company other = saveCompany("556000-2222");
+
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.UNDER_REVIEW));
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.APPROVED));
+        applicationRepository.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
+
+        List<CreditApplicationDTO> result =
+                applicationService.getApplicationsByOrgNumber("556000-1111");
+
+        assertThat(result).hasSize(2);
+        assertThat(result)
+                .extracting(CreditApplicationDTO::orgNumber)
+                .containsOnly("556000-1111");
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnEmptyListWhenCompanyHasNoApplications() {
+        saveCompany("556000-1111");
+
+        assertThat(applicationService.getApplicationsByOrgNumber("556000-1111")).isEmpty();
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenCompanyDoesNotExist() {
+        saveCompany("556000-1111");
+
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("556000-9999"))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenOrgNumberIsBlank() {
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("   "))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private Company saveCompany(String orgNumber) {
+        Company company = new Company();
+        company.setOrg_number(orgNumber);
+        company.setCompany_name("Test Company");
+        company.setAuthorized_signatory("Test Signatory");
+
+        return companyRepository.save(company);
+    }
+
+    private CreditApplication createApplicationFor(Company company, ApplicationStatus status) {
+        CreditApplication application = new CreditApplication();
+        application.setCompany(company);
+        application.setRequestedAmount(new BigDecimal("10000.00"));
+        application.setPurpose("Test loan");
+        application.setStatus(status);
+
+        return application;
+    }
+
+
+
 
     // ============================================================
     // Test data
@@ -391,7 +455,8 @@ class ApplicationServiceTests {
     ) {
         return new NewApplicationDTO(
                 new BigDecimal("250000"),     // requestedAmount
-                "Expansion",                  // purpose
+                "Expansion",                    // purpose
+                12,                             //durationMonths
                 ApplicationStatus.PENDING_DOCS, // status
                 "APPROVED",                   // decision
                 "Test decision reason",       // decision_reason

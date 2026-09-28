@@ -43,7 +43,8 @@ public class ScoringService {
             String orgNumber,
             String companyName,
             String authorizedSignatory,
-            String purpose
+            String purpose,
+            Integer durationMonths
             )
     {
 
@@ -218,6 +219,7 @@ public class ScoringService {
 
 
         return new NewApplicationDTO(requestedAmount, purpose, decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), companyName, orgNumber, authorizedSignatory, state.getFlagCount());
+        return new NewApplicationDTO(requestedAmount, purpose,durationMonths,  decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), companyName, orgNumber, authorizedSignatory, state.getFlagCount());
 
     }
 
@@ -616,7 +618,7 @@ public class ScoringService {
     }
 
     public NewApplicationDTO scoreFromFinancialObject(CompanyFinancialApiDTO financials, BigDecimal requestedAmount, String bransch,
-                                   String orgNumber, String companyName, String authorizedSignatory, String purpose) {
+                                   String orgNumber, String companyName, String authorizedSignatory, String purpose, Integer durationMonths) {
 
         CompanyFinancialApiDTO.CompanyIncomeStatement income = financials.incomeStatement();
         CompanyFinancialApiDTO.CompanyBalanceSheet balance = financials.balanceSheet();
@@ -633,7 +635,7 @@ public class ScoringService {
                 balance.shortTermLiabilities().add(balance.longTermLiabilities()).doubleValue(),
                 income.revenue().doubleValue(),
                 income.operatingResult().doubleValue(),
-                requestedAmount, bransch, orgNumber, companyName, authorizedSignatory, purpose
+                requestedAmount, bransch, orgNumber, companyName, authorizedSignatory, purpose,durationMonths
         );
     }
 

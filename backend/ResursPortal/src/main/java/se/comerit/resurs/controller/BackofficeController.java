@@ -12,6 +12,8 @@ import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.service.BackofficeService;
 
+import java.util.List;
+
 
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
@@ -42,7 +44,7 @@ public class BackofficeController {
         if (session.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
+        if (!"caseWorker".equals(session.getAttribute("role"))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -62,16 +64,16 @@ public class BackofficeController {
 
     @PostMapping("/decide")
     public ResponseEntity<Void> decide(@RequestParam("applicationId") Long applicationId,
-                         @RequestParam("decision") String decision,
-                         @RequestParam(value = "comment", defaultValue = "") String comment,
-                         HttpSession session) {
+                                       @RequestParam("decision") String decision,
+                                       @RequestParam(value = "comment", defaultValue = "") String comment,
+                                       HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
         // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
         if (session.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
+        if (!"caseWorker".equals(session.getAttribute("role"))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -86,7 +88,7 @@ public class BackofficeController {
         String workerEmail = (String) session.getAttribute("workerEmail");
         ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
-        service.application_decision(applicationId,newStatus,workerEmail, workerName,comment);
+        service.application_decision(applicationId, newStatus, workerEmail, workerName, comment);
 
         // No email notification — TODO: implement email via Spring Mail in v2
         // TODO: notify company via email when decision is made
@@ -103,7 +105,7 @@ public class BackofficeController {
         if (session.getAttribute("userId") == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
+        if (!"caseWorker".equals(session.getAttribute("role"))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -118,4 +120,5 @@ public class BackofficeController {
 
         return ResponseEntity.ok(details);
     }
+
 }

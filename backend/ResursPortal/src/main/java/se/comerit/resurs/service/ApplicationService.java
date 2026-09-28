@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -16,28 +17,35 @@ import se.comerit.resurs.persistence.model.CreditApplication;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.NoSuchElementException;
 
 @Service
 public class ApplicationService {
 
 
     private final AuditService auditService;
+    private final CompanyFinancialService financialService;
+    private final CompanyValidationService validationService;
     private final CompanyService companyService;
+
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
+    private final ScoringService scoringService;
 
 
-
-    public ApplicationService(CompanyService companyService, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyRepository companyRepository) {
-        this.companyService = companyService;
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService,CompanyService companyService) {
+        this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
-        this.companyRepository = companyRepository;
+        this.financialService = financialService;
+        this.validationService = validationService;
+        this.scoringService = scoringService;
+        this.companyService = companyService;
     }
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -65,9 +73,14 @@ public class ApplicationService {
         creditApplication.setRequestedAmount(newApplication.requested_amount());
         creditApplication.setScoringResult(newApplication.scoring_result());
 
-        //persist entity
-        CreditApplication saved = applicationRepository.save(creditApplication);
+        creditApplication.setDurationMonths(newApplication.durationMonths());
 
+        creditApplication.setContactEmail(contactDetails.email());
+        creditApplication.setContactNumber(contactDetails.phoneNumber());
+        creditApplication.setContactName(contactDetails.name());
+
+
+        CreditApplication saved = applicationRepository.save(creditApplication);
         //loggar efter att application finns sparad i databas.
         auditService.applicationCreated(saved);
         auditService.scoringRun(saved, newApplication.flagCount());
@@ -78,6 +91,23 @@ public class ApplicationService {
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
     kör scoring engine och placerar rätt värde till rättattribut
     */
+
+    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
+        if (orgNumber == null || orgNumber.isBlank()) {
+            throw new IllegalArgumentException("orgNumber must not be blank");
+        }
+
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
+                .stream()
+                .map(CreditApplicationDTO::new)
+                .toList();
+
+        if (applications.isEmpty() && companyRepository.findByOrgNumber(orgNumber).isEmpty()) {
+            throw new NoSuchElementException("No company with organisation number " + orgNumber);
+        }
+        return applications;
+    }
+
 
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());

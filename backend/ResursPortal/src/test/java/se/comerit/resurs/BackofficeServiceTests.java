@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -32,6 +33,7 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -225,6 +227,7 @@ class BackofficeServiceTests {
         assertThat(result.application()).isNotNull();
         assertThat(result.documents()).isEmpty();
     }
+
 
     private CreditApplication createApplication(ApplicationStatus status) {
         Company company = new Company();

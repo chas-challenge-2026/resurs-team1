@@ -20,21 +20,21 @@ final class MockCompanyData {
 
     static final Map<String, CompanyValidationApiDTO> REGISTRY = Map.of(
             "556000-1234", new CompanyValidationApiDTO("Fasen Elteknik AB","556000-1234", List.of(
-                    new Signatory("197503121234", "Anders Karlsson", "Styrelseordförande", SigningRight.ALONE)
+                    new Signatory("750312-1234", "Anders Karlsson", "Styrelseordförande", SigningRight.ALONE)
             ), UPDATED_AT),
 
             "556000-5678", new CompanyValidationApiDTO("Britt Maries Ögonfransar AB", "556000-5678", List.of(
-                    new Signatory("198206245678", "Maria Svensson", "Styrelseordförande", SigningRight.ALONE),
-                    new Signatory("197503121234", "Anders Karlsson", "Styrelseledamot", SigningRight.ALONE)
+                    new Signatory("820624-5678", "Maria Svensson", "Styrelseordförande", SigningRight.ALONE),
+                    new Signatory("750312-1234", "Anders Karlsson", "Styrelseledamot", SigningRight.ALONE)
             ), UPDATED_AT),
 
             "556000-7777", new CompanyValidationApiDTO("Gunnar Kruts Dynamit AB","556000-7777", List.of(
-                    new Signatory("196609307777", "Johan Berg", "Styrelseledamot", SigningRight.JOINTLY),
-                    new Signatory("197102147777", "Eva Berg", "Styrelseledamot", SigningRight.JOINTLY)
+                    new Signatory("660930-7777", "Johan Berg", "Styrelseledamot", SigningRight.ALONE),
+                    new Signatory("710214-7777", "Eva Berg", "Styrelseledamot", SigningRight.JOINTLY)
             ), UPDATED_AT),
 
             "556000-9999", new CompanyValidationApiDTO("Frukt och grönt Göteborg","556000-9999", List.of(
-                    new Signatory("196811059999", "Erik Lindqvist", "Styrelseordförande", SigningRight.ALONE)
+                    new Signatory("681105-9999", "Erik Lindqvist", "Styrelseordförande", SigningRight.ALONE)
             ), UPDATED_AT)
     );
 
@@ -75,6 +75,26 @@ final class MockCompanyData {
                             sek("700000")
                     ),
                     null
+            ),
+
+            // Economically stable but struggling company which is likely to get stuck in review
+            "556000-7777", new CompanyFinancialApiDTO(
+                    new CompanyIncomeStatement(
+                            sek("200000"),
+                            sek("150000"),
+                            sek("9000")
+                    ),
+                    new CompanyBalanceSheet(
+                            sek("50000"),
+                            sek("60000"),
+                            sek("250000"),
+                            sek("11000"),
+                            sek("14000")
+                    ),
+                    new CompanyCashFlowStatement(
+                            sek("100000"),
+                            sek("50000")
+                    )
             ),
 
             // Weak company: negative operating result and low equity ratio

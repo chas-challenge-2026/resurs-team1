@@ -50,6 +50,7 @@ public class AuthController {
             session.setAttribute("role", "company");
             session.setAttribute("orgNumber", response.orgNumber());
             session.setAttribute("companyName", response.companyName());
+            session.setAttribute("personalNumber",request.personalNumber());
 
             return ResponseEntity.ok(response);
         }

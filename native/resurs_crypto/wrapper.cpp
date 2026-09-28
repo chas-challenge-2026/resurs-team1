@@ -8,7 +8,8 @@ int aes_256_gcm_encrypt(const uint8_t *plaintext, int plaintext_len, const unsig
     if (!plaintext || !aes_key || !iv || !ciphertext || !tag)
         return CRYPTO_INVALID_ARGUMENT;
     
-    if (plaintext_len < 0 || aes_key_len < 0 || iv_len < 0 || ciphertext_len < 0 || tag_len < 0)
+    // Reject empty input even when the caller supplies a non-null pointer.
+    if (plaintext_len <= 0 || aes_key_len < 0 || iv_len < 0 || ciphertext_len < 0 || tag_len < 0)
     {
         return CRYPTO_INVALID_ARGUMENT;
     }
@@ -18,11 +19,11 @@ int aes_256_gcm_encrypt(const uint8_t *plaintext, int plaintext_len, const unsig
         return CRYPTO_INVALID_ARGUMENT;
     }
     
-    if (iv_len < static_cast<int>(resurs::crypto::GCM_IV_SIZE_BYTES)
-    || tag_len < static_cast<int>(resurs::crypto::GCM_TAG_SIZE_BYTES)
+    if (iv_len != static_cast<int>(resurs::crypto::GCM_IV_SIZE_BYTES)
+    || tag_len != static_cast<int>(resurs::crypto::GCM_TAG_SIZE_BYTES)
     || ciphertext_len < plaintext_len)
     {
-        return CRYPTO_BUFFER_TOO_SMALL;
+        return CRYPTO_INVALID_BUFFER_SIZE;
     }
 
     // Then execute the code in a try-block, so we catch any errors and can return errors in a JNA-compatible way.
@@ -58,7 +59,7 @@ int aes_256_gcm_decrypt(const uint8_t *ciphertext, int ciphertext_len, const uns
         return CRYPTO_INVALID_ARGUMENT;
     }
     
-    if (ciphertext_len < 0 || aes_key_len < 0 || iv_len < 0 || plaintext_len < 0 || tag_len < 0)
+    if (ciphertext_len <= 0 || aes_key_len < 0 || iv_len < 0 || plaintext_len < 0 || tag_len < 0)
     {
         return CRYPTO_INVALID_ARGUMENT;
     }
@@ -68,9 +69,9 @@ int aes_256_gcm_decrypt(const uint8_t *ciphertext, int ciphertext_len, const uns
         return CRYPTO_INVALID_ARGUMENT;
     }
 
-    if (iv_len < resurs::crypto::GCM_IV_SIZE_BYTES || tag_len < resurs::crypto::GCM_TAG_SIZE_BYTES || plaintext_len < ciphertext_len)
+    if (iv_len != static_cast<int>(resurs::crypto::GCM_IV_SIZE_BYTES) || tag_len != static_cast<int>(resurs::crypto::GCM_TAG_SIZE_BYTES) || plaintext_len < ciphertext_len)
     {
-        return CRYPTO_BUFFER_TOO_SMALL;
+        return CRYPTO_INVALID_BUFFER_SIZE;
     }
 
     
