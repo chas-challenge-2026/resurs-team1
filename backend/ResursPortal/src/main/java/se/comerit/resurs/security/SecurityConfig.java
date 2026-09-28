@@ -3,6 +3,7 @@ package se.comerit.resurs.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -33,6 +34,7 @@ public class SecurityConfig {
                        .requestMatchers("/api/backoffice/**").hasRole("CASE_WORKER")
                        .requestMatchers("/api/caseworkers/**").hasRole("CASE_WORKER")
                        .requestMatchers("/api/application/company").hasRole("CASE_WORKER")
+                       .requestMatchers(HttpMethod.GET, "/api/application/{id:[0-9]+}").hasAnyRole("COMPANY", "CASE_WORKER")
                        .requestMatchers("/api/application/**").hasRole("COMPANY")
 
                        .requestMatchers("/api/documents/**").authenticated()

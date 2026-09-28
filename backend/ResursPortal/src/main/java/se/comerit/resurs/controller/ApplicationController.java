@@ -18,6 +18,7 @@ import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
+import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
 import se.comerit.resurs.service.*;
 
@@ -41,14 +42,16 @@ public class ApplicationController {
     private final ApplicationService appService;
     private final CompanyService companyService; //Swap to CompanyService later
     private final ScoringService creditScoreService;
+    private final ApplicationAccessPolicy accessPolicy;
 
-    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService) {
+    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService, ApplicationAccessPolicy accessPolicy) {
         this.validationService = validationService;
         this.financialService = financialService;
         this.documentService = documentService;
         this.appService = appService;
         this.companyService = companyService;
         this.creditScoreService = creditScoreService;
+        this.accessPolicy = accessPolicy;
     }
 
     // ============================================================
@@ -99,12 +102,9 @@ public class ApplicationController {
     // ============================================================
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
-                                                                       @AuthenticationPrincipal CompanyPrincipal principal) {
+                                                                       @AuthenticationPrincipal Object principal) {
         CreditApplicationDTO app = appService.findApplicationByID(id);
-
-        if (!principal.orgNumber().equals(app.orgNumber())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        accessPolicy.checkCanView(principal, app);
 
         // Fetch documents for this application
         List<DocumentDTO> docs = documentService.findByApplicationId(id);
