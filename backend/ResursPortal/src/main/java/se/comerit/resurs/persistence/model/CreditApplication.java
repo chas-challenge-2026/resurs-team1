@@ -18,6 +18,9 @@ public class CreditApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Using Internal postgres sequence, not letting JPA control it
     private Long id;
 
+    @Version
+    private Integer version;
+
     @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
