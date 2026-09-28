@@ -171,11 +171,12 @@ class BackofficeServiceTests {
         creditRepo.save(createApplication(ApplicationStatus.REJECTED));
         creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
-        BackOfficeListsDTO result = backofficeService.applicationsForReview();
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                0, 20, 0, 20);
 
         assertThat(result).isNotNull();
-        assertThat(result.reviewApplications()).hasSize(2);
-        assertThat(result.decidedApplications()).hasSize(2);
+        assertThat(result.reviewApplications().content()).hasSize(2);
+        assertThat(result.decidedApplications().content()).hasSize(2);
     }
 
     @Test
@@ -239,5 +240,14 @@ class BackofficeServiceTests {
         application.setStatus(status);
 
         return application;
+    }
+
+    // Säkerställer att en väldigt stor begärd sidstorlek (99999) håller sig till det satta MAX_PAGE_SIZE
+    @Test
+    void applicationForReview_shouldCapPageSizeAtMax() {
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                0, 99999, 0, 20);
+
+        assertThat(result.reviewApplications().size()).isEqualTo(100); //MAX_PAGE_SIZE = 100
     }
 }

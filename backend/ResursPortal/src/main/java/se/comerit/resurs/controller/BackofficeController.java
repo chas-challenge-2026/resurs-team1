@@ -18,12 +18,14 @@ import java.util.List;
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
  *
+ * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut och se detaljer,
+ * samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern
  *  - Audit log uppdateras via JSON string manipulation
  *  - Ingen e-postnotifiering vid beslut
  *  - Session check copy-pasteat
- *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
 @RestController
 @RequestMapping("/api/backoffice")
@@ -37,7 +39,12 @@ public class BackofficeController {
     }
 
     @GetMapping
-    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(HttpSession session) {
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(
+            @RequestParam(defaultValue = "0") int reviewPage,
+            @RequestParam(defaultValue = "20") int reviewSize,
+            @RequestParam(defaultValue = "0") int decidedPage,
+            @RequestParam(defaultValue = "20") int decidedSize,
+            HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
         // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
@@ -48,7 +55,8 @@ public class BackofficeController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        BackOfficeListsDTO applicationLists = service.applicationsForReview();
+        BackOfficeListsDTO applicationLists = service.applicationsForReview(
+                reviewPage, reviewSize, decidedPage, decidedSize);
 
         /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
         model.addAttribute("reviewApplications", applicationLists.reviewApplications());
