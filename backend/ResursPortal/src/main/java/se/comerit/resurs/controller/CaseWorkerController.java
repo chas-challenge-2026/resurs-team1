@@ -3,6 +3,7 @@ package se.comerit.resurs.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import se.comerit.resurs.dto.caseworker.CaseWorkerResponse;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
@@ -12,6 +13,7 @@ import se.comerit.resurs.service.CaseWorkerService;
  * TODO: We need to create a Admin role that manages CRUD on caseworkers, a casual caseworker should not have this
  *  permission.
  * */
+@PreAuthorize("hasRole('CASE_WORKER')")
 @RestController
 @RequestMapping("/api/caseworkers")
 public class CaseWorkerController {
