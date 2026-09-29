@@ -2,7 +2,7 @@ import { RiCloseLine, RiDownloadLine, RiFileLine } from "react-icons/ri"
 import type { ApplicationDocument } from "../../api/applicationApi"
 import s from "./AttachedFile.module.css"
 import Button from "../Button/Button"
-import { formatDate, formatFileName } from "../../utils/formatters"
+import { formatDate, formatFilename } from "../../utils/formatters"
 import { useDownloadDocument } from "../../hooks/useDocument"
 
 interface AttachedFileProps {
@@ -16,11 +16,11 @@ const AttachedFile = ({document, isUploading = false, removeFile}: AttachedFileP
 
   const isLocalFile = document instanceof File
 
-  const fileName = isLocalFile ? document.name : formatFileName(document.fileName)
+  const filename = isLocalFile ? document.name : formatFilename(document.filename)
 
   const handleDownload = () => {
     if(!isLocalFile) {
-      download({ id: document.id, fileName: fileName })
+      download({ id: document.id, filename: filename })
     }
   }
 
@@ -30,7 +30,7 @@ const AttachedFile = ({document, isUploading = false, removeFile}: AttachedFileP
         <RiFileLine />
       </div>
       <div className={s.fileInformation}>
-        <p className={s.fileName}>{fileName}</p>
+        <p className={s.filename}>{filename}</p>
         {isLocalFile ? (
           <p className={s.fileMeta}>Vald fil för uppladdning</p>
         ) : (

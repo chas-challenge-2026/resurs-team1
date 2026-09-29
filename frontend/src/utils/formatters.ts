@@ -30,8 +30,8 @@ export const formatReferenceNumber = (id: number) => {
   return `REF-${id}`
 }
 
-export function formatFileName(fileName: string): string {
-  return fileName.replace(/^\d+_/, "");
+export function formatFilename(filename: string): string {
+  return filename.replace(/^\d+_/, "");
 }
 
 export function getPurposeLabel(purpose: string): string {

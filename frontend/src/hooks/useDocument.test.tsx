@@ -21,7 +21,7 @@ const createWrapper = (queryClient = createTestQueryClient()) => {
 const mockDocument: ApplicationDocument = {
   id: 1,
   applicationId: 3,
-  fileName: "arsredovisning.pdf",
+  filename: "arsredovisning.pdf",
   docType: "pdf",
   uploadedAt: "2026-09-29T10:00:00Z",
 }
@@ -56,7 +56,7 @@ describe("useDocument hooks", () => {
       })
   
       //Trigger download
-      result.current.mutate({id: 1, fileName: "arsredovisning_2025.pdf"})
+      result.current.mutate({id: 1, filename: "arsredovisning_2025.pdf"})
   
       //Verify
       await waitFor(() => {
