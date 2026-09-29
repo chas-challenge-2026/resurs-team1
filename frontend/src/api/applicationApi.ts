@@ -6,6 +6,12 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
 
+export type PurposeValue =
+  | "Expansion"
+  | "workingCapital"
+  | "Investment"
+  | "Other"
+
 export interface ApplicationDocument {
   id: number
   applicationId: number,
@@ -17,7 +23,7 @@ export interface ApplicationDocument {
 export interface Application {
   id: number
   requestedAmount: number
-  purpose: string
+  purpose: PurposeValue
   status: ApplicationStatus
   decision?: string | null
   decisionReason?: string | null

@@ -6,8 +6,6 @@ import StatusTag from "../../components/StatusTag/StatusTag"
 import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
 import { Card } from "../../components/Card/Card"
-import Dropdown from "../../components/Dropdown/Dropdown"
-import type { DropdownOption } from "../../components/Dropdown/Dropdown"
 import ButtonGroup from "../../components/ButtonGroup/ButtonGroup"
 import Slider from "../../components/Slider/Slider"
 import type { UserRole } from "../../types/user"
@@ -22,7 +20,7 @@ import { EMAIL_PATTERN, PHONE_PATTERN } from "../../constants/constants"
 const summaryApplication: Application = {
   id: 1,
   requestedAmount: 850000,
-  purpose: "Investering i maskiner/utrustning",
+  purpose: "Expansion",
   status: "UNDER_REVIEW",
   createdAt: "2026-08-20T10:00:00Z",
   updatedAt: "2026-08-20T10:00:00Z",
@@ -45,11 +43,6 @@ const DOCUMENT_MOCK = {
   uploadedAt: "2026-08-27T10:30:00Z",
 }
 
-const reasonOptions: DropdownOption[] = [
-  { value: "renovering", label: "Renovering" },
-  { value: "fruktkop", label: "Fruktköp" },
-  { value: "ovrigt", label: "Övrigt" },
-]
 const TENURE_OPTIONS = [
   { label: "12 mån", value: 12 },
   { label: "24 mån", value: 24 },
@@ -71,10 +64,10 @@ const applicationData: ApplicationFormData = {
 
 // copy pasted mock cases to try it out
 const SAMPLE_CASES: Application[] = [
-  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "Rörelsekapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z" },
-  { id: 387142, companyName: "Lindqvist Logistik AB", orgNumber: "559012-3456", authorizedSignatory: "Erik Lindqvist", purpose: "Maskininvestering", requestedAmount: 850000, status: "UNDER_REVIEW", createdAt: "2026-08-29T09:00:00Z", updatedAt: "2026-08-29T09:00:00Z" },
+  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "workingCapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z" },
+  { id: 387142, companyName: "Lindqvist Logistik AB", orgNumber: "559012-3456", authorizedSignatory: "Erik Lindqvist", purpose: "Investment", requestedAmount: 850000, status: "UNDER_REVIEW", createdAt: "2026-08-29T09:00:00Z", updatedAt: "2026-08-29T09:00:00Z" },
   { id: 387150, companyName: "Solberga Café & Bageri AB", orgNumber: "556788-1122", authorizedSignatory: "Sara Solberg", purpose: "Expansion", requestedAmount: 1200000, status: "APPROVED", createdAt: "2026-09-02T09:00:00Z", updatedAt: "2026-09-02T09:00:00Z" },
-  { id: 387155, companyName: "Västra Götalands Maskin- och Fastighetsservice AB", orgNumber: "559334-7788", authorizedSignatory: "Johan Hallberg", purpose: "Rörelsekapital", requestedAmount: 400000, status: "REJECTED", createdAt: "2026-09-08T09:00:00Z", updatedAt: "2026-09-08T09:00:00Z" },
+  { id: 387155, companyName: "Västra Götalands Maskin- och Fastighetsservice AB", orgNumber: "559334-7788", authorizedSignatory: "Johan Hallberg", purpose: "workingCapital", requestedAmount: 400000, status: "REJECTED", createdAt: "2026-09-08T09:00:00Z", updatedAt: "2026-09-08T09:00:00Z" },
 ]
 
 // to make button appear and dissapear
@@ -102,7 +95,6 @@ type TenureValue = typeof TENURE_OPTIONS[number]["value"];
 const TestPage = () => {
   const [role, setRole] = useState<UserRole>("company");
   const [tenure, setTenure] = useState<TenureValue>()
-  const [reason, setReason] = useState("");
   const [amount, setAmount] = useState<number>(3000000);
 
   const [step, setStep] = useState(1)
@@ -137,14 +129,6 @@ const TestPage = () => {
         <Button variant="ghost">
         <StatusTag status="APPROVED"/>
         </Button>
-      <Dropdown
-        id="selectReason"
-        label="Ange orsak för lån"
-        placeholder="Välj orsak..."
-        options={reasonOptions}
-        value={reason}
-        onChange={setReason}
-      />
         <ToggleSwitch name="userRole" options={SWITCH_OPTIONS} selectedValue={role} onChange={(newRole) => setRole(newRole)} />
         <ButtonGroup<TenureValue>
           name="tenure"
