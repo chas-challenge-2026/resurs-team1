@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
-import type { Application } from "../../api/applicationApi"
 import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
 import { Card, CardFooter } from "../../components/Card/Card"
 import { DataList, DataListItem } from "../../components/DataList/DataList"
@@ -8,13 +7,14 @@ import ApplicationSummary from "../../components/ApplicationSummary/ApplicationS
 import StatusTag from "../../components/StatusTag/StatusTag"
 import Button from "../../components/Button/Button"
 import TextArea from "../../components/Textarea/Textarea"
+import Loading from "../../components/Loading/Loading"
 import s from "./CaseDetailsPage.module.css"
+import { useBackofficeApplication } from "../../hooks/useApplication"
+import { useParams } from "react-router-dom"
 
-// TODO: Switch out MOCK_DATA to real data, have to wait for backend to send correct information/fields
-const SAMPLE_CASE: Application =
-  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "Rörelsekapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z"}
+// TODO: swap out EXTRA_INFO once backend sends the data they use for the calculations, they are convinced yearly company statements are gdpr and delete it =,)
 const EXTRA_INFO = {
-  contactName: "Anna Nordvik", email: "anna@nordvik.se", phoneNumber: "070-000 00 00", currentAssets: 4200000, industry: "Bygg & Anläggning" 
+  currentAssets: 4200000, industry: "Bygg & Anläggning" 
 }
 
 type viewOptions = "overview" | "manageCase"
@@ -27,6 +27,13 @@ const options: SwitchOption<viewOptions>[] = [
 const CaseDetailsPage = () => {
   const [view, setView] = useState<viewOptions>("overview")
   const [ isAdding, setIsAdding ] = useState(false)
+  const { id } = useParams()
+  const applicationId = Number(id)
+
+  const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
+
+  if (isPending) return <Loading size="lg" label="Hämtar ärende..." delay />
+  if (isError) return <p>{error.message}</p>
 
   return(
     <>
@@ -34,16 +41,16 @@ const CaseDetailsPage = () => {
         <div className={s.topWrapper}>
           <div>
             <div className={s.applicationRefWrapper}>
-              <h2 className={s.applicationRef}>{formatReferenceNumber(SAMPLE_CASE.id)}</h2>
-              <StatusTag status={SAMPLE_CASE.status} />
+              <h2 className={s.applicationRef}>{formatReferenceNumber(data.id)}</h2>
+              <StatusTag status={data.status} />
             </div>
 
             <div>
-              <p className="title">{SAMPLE_CASE.companyName}</p>
-              <p className={s.infoText}>Org.nr {SAMPLE_CASE.orgNumber} · Inkommet {formatDate(SAMPLE_CASE.createdAt)}</p>
+              <p className="title">{data.companyName}</p>
+              <p className={s.infoText}>Org.nr {data.orgNumber} · Inkommet {formatDate(data.createdAt)}</p>
             </div>
           </div>
-          <ApplicationSummary application={SAMPLE_CASE} />
+          <ApplicationSummary application={data} />
         </div>
 
         <ToggleSwitch variant="accent" name="view" options={options} selectedValue={view} onChange={(newView) => setView(newView)} />
@@ -54,9 +61,9 @@ const CaseDetailsPage = () => {
           <Card>
             <h3>Kontakt</h3>
             <DataList>
-              <DataListItem label="Namn" value={EXTRA_INFO.contactName} />
-              <DataListItem label="E-postadress" value={EXTRA_INFO.email} />
-              <DataListItem label="Telefonnummer" value={EXTRA_INFO.phoneNumber} />
+              <DataListItem label="Namn" value={data.contactDetails?.name ?? "Saknas"} /> {/* "Saknas" incase its an old application that had the different format */}
+              <DataListItem label="E-postadress" value={data.contactDetails?.email ?? "Saknas"} />
+              <DataListItem label="Telefonnummer" value={data.contactDetails?.phoneNumber ?? "Saknas"} />
             </DataList>
           </Card>
 
@@ -72,7 +79,7 @@ const CaseDetailsPage = () => {
 
       {view === "manageCase" &&
         <section className={s.contentWrapper}>
-          {/* TODO: Connect status-change buttons with backend */}
+          {/* TODO: Connect status-change buttons with backend + refresh the querykeydata upon selecting a button */}
           <div className={s.actionsWrapper}>
             <Button variant="secondary" className={`${s.actionButton} ${s.accept}`}>
               Godkänn
