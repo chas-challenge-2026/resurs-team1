@@ -30,7 +30,6 @@ export const useDocuments = (applicationId: number) => {
   })
 }
 
-// TODO: Does not work, have to check with backend
 export const useUploadDocument = () => {
   const queryClient = useQueryClient()
 
