@@ -30,7 +30,7 @@ export const useSubmitApplication = () => {
 
 export const useBackofficeApplication = (id: number | undefined) => {
   return useQuery<Application, Error>({
-    queryKey: ["BackofficeApplications", id],
+    queryKey: ["backofficeApplications", id],
     queryFn: () => getBackofficeApplicationById(id!),
     enabled: typeof id === "number" && !isNaN(id),
   })
