@@ -2,7 +2,7 @@ import { RiCloseLine, RiDownloadLine, RiFileLine } from "react-icons/ri"
 import type { ApplicationDocument } from "../../api/applicationApi"
 import s from "./AttachedFile.module.css"
 import Button from "../Button/Button"
-import { formatDate } from "../../utils/formatters"
+import { formatDate, formatFileName } from "../../utils/formatters"
 import { useDownloadDocument } from "../../hooks/useDocument"
 
 interface AttachedFileProps {
@@ -16,7 +16,7 @@ const AttachedFile = ({document, isUploading = false, removeFile}: AttachedFileP
 
   const isLocalFile = document instanceof File
 
-  const fileName = isLocalFile ? document.name : document.filename
+  const fileName = isLocalFile ? document.name : formatFileName(document.filename)
 
   const handleDownload = () => {
     if(!isLocalFile) {

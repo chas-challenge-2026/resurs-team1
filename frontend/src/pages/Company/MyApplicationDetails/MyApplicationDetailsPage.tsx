@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useParams } from "react-router-dom"
-import { RiChat3Line, RiUploadCloud2Line } from "react-icons/ri"
+import { RiChat3Line, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
 import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
 import { useApplication } from "../../../hooks/useApplication"
@@ -60,7 +60,7 @@ const MyApplicationDetailsPage = () => {
       uploadDocument({
         applicationId,
         docType: "pdf",
-        fileName: selectedFile.name,
+        file: selectedFile,
       }, {
         onSuccess: () => {
           setSelectedFile(null)
@@ -81,12 +81,17 @@ const MyApplicationDetailsPage = () => {
 
       {application.status === "UNDER_REVIEW" &&
         <Card as="section" variant="info">
-          <div className={s.headerText}>
-            <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
-            <p className={s.infoSubtitle}>
-              Din ansökan behandlas just nu av en handläggare. Normal handläggningstid är 1-2 bankdagar. Vi hör av oss här i portalen om vi behöver kompletterande information.
-            </p>
-          </div>
+          <CardHeader className={s.infoHeader}>
+            <div className={s.iconWrapper}>
+              <RiTimeLine />
+            </div>
+            <div className={s.headerText}>
+              <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
+              <p className={s.infoSubtitle}>
+                En handläggare granskar just nu dina uppgifter. Normal handläggningstid är 1–2 bankdagar. Vi hör av oss om vi behöver kompletterande information.
+              </p>
+            </div>
+          </CardHeader>
         </Card>
       }
 
