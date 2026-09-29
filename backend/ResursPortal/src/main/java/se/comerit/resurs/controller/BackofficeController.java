@@ -7,12 +7,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.backoffice.ApplicationWithFinancesDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.service.CompanyFinancialService;
 
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -30,10 +34,12 @@ import java.util.List;
 public class BackofficeController {
 
     private final BackofficeService service;
+    private final CompanyFinancialService financeService;
 
     @Autowired
-    public BackofficeController(BackofficeService service) {
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
         this.service = service;
+        this.financeService = financeService;
     }
 
     @GetMapping
@@ -97,7 +103,7 @@ public class BackofficeController {
     }
 
     @GetMapping("/application/{id}")
-    public ResponseEntity<CreditApplicationDetails> viewApplicationDetail(
+    public ResponseEntity<ApplicationWithFinancesDTO> viewApplicationDetail(
             @PathVariable("id") Long id,
             HttpSession session) {
         // Session check copy-pasted in every method — should be an interceptor
@@ -110,6 +116,7 @@ public class BackofficeController {
         }
 
         CreditApplicationDetails details = service.application_details(id);
+        Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
         /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
@@ -118,7 +125,7 @@ public class BackofficeController {
         */
 
 
-        return ResponseEntity.ok(details);
+        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
     }
 
 }
