@@ -16,6 +16,15 @@
   font-weight: 500;
 }
 
+/* Info Card */
+.infoCard {
+  gap: var(--space-xs);
+}
+
+.infoTitle {
+  font-weight: 500;
+}
+
 /* Warning Card Header */
 .warningHeader {
   flex-direction: row;

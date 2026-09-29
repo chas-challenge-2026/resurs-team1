@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { useParams } from "react-router-dom"
 import { RiChat3Line, RiUploadCloud2Line } from "react-icons/ri"
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../../utils/formatters"
+import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
 import { useApplication } from "../../../hooks/useApplication"
 import { Card, CardBody, CardFooter, CardHeader } from "../../../components/Card/Card"
@@ -20,6 +20,8 @@ const MyApplicationDetailsPage = () => {
   const { data: application, isPending, isError, error } = useApplication(applicationId)
   const { data: documents } = useDocuments(applicationId)
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
+
+  console.log(application)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -74,8 +76,17 @@ const MyApplicationDetailsPage = () => {
           <h2 className="title">{formatReferenceNumber(application.id)}</h2>
           <StatusTag status={application.status} />
         </div>
-        <p className={s.description}>{application.purpose} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
+        <p className={s.description}>{getPurposeLabel(application.purpose)} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
       </div>
+
+      {application.status === "UNDER_REVIEW" &&
+        <Card as="section" variant="warning" className={s.infoCard}>
+          <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
+          <p>
+            Din ansökan behandlas just nu av en handläggare. Normal handläggningstid är 1-2 bankdagar. Vi hör av oss här i portalen om vi behöver kompletterande information.
+          </p>
+        </Card>
+      }
 
       {application.status === "PENDING_DOCS" &&
         <Card as="section" variant="warning">
@@ -142,7 +153,7 @@ const MyApplicationDetailsPage = () => {
           <h3 className="subtitle">Ansökningsuppgifter</h3>
           <DataList>
             <DataListItem label="Ärendenummer" value={formatReferenceNumber(application.id)} />
-            <DataListItem label="Ändamål" value={application.purpose} />
+            <DataListItem label="Ändamål" value={getPurposeLabel(application.purpose)} />
             <DataListItem label="Belopp" value={formatCurrency(application.requestedAmount)} />
             {application.durationMonths && <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />}
             <DataListItem label="Inskickad" value={formatDate(application.createdAt)} />
