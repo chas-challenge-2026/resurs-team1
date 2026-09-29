@@ -64,10 +64,10 @@ const applicationData: ApplicationFormData = {
 
 // copy pasted mock cases to try it out
 const SAMPLE_CASES: Application[] = [
-  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "workingCapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z" },
-  { id: 387142, companyName: "Lindqvist Logistik AB", orgNumber: "559012-3456", authorizedSignatory: "Erik Lindqvist", purpose: "Investment", requestedAmount: 850000, status: "UNDER_REVIEW", createdAt: "2026-08-29T09:00:00Z", updatedAt: "2026-08-29T09:00:00Z" },
-  { id: 387150, companyName: "Solberga Café & Bageri AB", orgNumber: "556788-1122", authorizedSignatory: "Sara Solberg", purpose: "Expansion", requestedAmount: 1200000, status: "APPROVED", createdAt: "2026-09-02T09:00:00Z", updatedAt: "2026-09-02T09:00:00Z" },
-  { id: 387155, companyName: "Västra Götalands Maskin- och Fastighetsservice AB", orgNumber: "559334-7788", authorizedSignatory: "Johan Hallberg", purpose: "workingCapital", requestedAmount: 400000, status: "REJECTED", createdAt: "2026-09-08T09:00:00Z", updatedAt: "2026-09-08T09:00:00Z" },
+  { id: 387139, companyName: "Nordvik Bygg AB", orgNumber: "556600-0000", authorizedSignatory: "Anna Nordvik", purpose: "workingCapital", requestedAmount: 3000000, status: "PENDING_DOCS", createdAt: "2026-08-27T09:00:00Z", updatedAt: "2026-08-27T09:00:00Z", durationMonths: 24 },
+  { id: 387142, companyName: "Lindqvist Logistik AB", orgNumber: "559012-3456", authorizedSignatory: "Erik Lindqvist", purpose: "Investment", requestedAmount: 850000, status: "UNDER_REVIEW", createdAt: "2026-08-29T09:00:00Z", updatedAt: "2026-08-29T09:00:00Z", durationMonths: 12 },
+  { id: 387150, companyName: "Solberga Café & Bageri AB", orgNumber: "556788-1122", authorizedSignatory: "Sara Solberg", purpose: "Expansion", requestedAmount: 1200000, status: "APPROVED", createdAt: "2026-09-02T09:00:00Z", updatedAt: "2026-09-02T09:00:00Z", durationMonths: 60 },
+  { id: 387155, companyName: "Västra Götalands Maskin- och Fastighetsservice AB", orgNumber: "559334-7788", authorizedSignatory: "Johan Hallberg", purpose: "workingCapital", requestedAmount: 400000, status: "REJECTED", createdAt: "2026-09-08T09:00:00Z", updatedAt: "2026-09-08T09:00:00Z", durationMonths: 24 },
 ]
 
 // to make button appear and dissapear

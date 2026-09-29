@@ -34,7 +34,7 @@ export interface Application {
   companyName: string
   orgNumber: string
   authorizedSignatory: string
-  durationMonths?: number
+  durationMonths: number
   documents?: ApplicationDocument[]
   contactDetails?: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;

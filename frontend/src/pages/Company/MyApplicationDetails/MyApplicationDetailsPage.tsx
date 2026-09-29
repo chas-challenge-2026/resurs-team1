@@ -155,7 +155,7 @@ const MyApplicationDetailsPage = () => {
             <DataListItem label="Ärendenummer" value={formatReferenceNumber(application.id)} />
             <DataListItem label="Ändamål" value={getPurposeLabel(application.purpose)} />
             <DataListItem label="Belopp" value={formatCurrency(application.requestedAmount)} />
-            {application.durationMonths && <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />}
+            <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />
             <DataListItem label="Inskickad" value={formatDate(application.createdAt)} />
           </DataList>
         </CardHeader>
