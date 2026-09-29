@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, type Application, type NewApplicationPayload } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, type Application, type NewApplicationPayload } from "../api/applicationApi"
 
 export const useApplications = () => {
   return useQuery<Application[], Error>({
@@ -25,5 +25,13 @@ export const useSubmitApplication = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"]}) // remove old memory to force refresh of new applications
     },
+  })
+}
+
+export const useBackofficeApplication = (id: number | undefined) => {
+  return useQuery<Application, Error>({
+    queryKey: ["backofficeApplications", id],
+    queryFn: () => getBackofficeApplicationById(id!),
+    enabled: typeof id === "number" && !isNaN(id),
   })
 }
