@@ -80,26 +80,28 @@ const MyApplicationDetailsPage = () => {
       </div>
 
       {application.status === "UNDER_REVIEW" &&
-        <Card as="section" variant="warning" className={s.infoCard}>
-          <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
-          <p>
-            Din ansökan behandlas just nu av en handläggare. Normal handläggningstid är 1-2 bankdagar. Vi hör av oss här i portalen om vi behöver kompletterande information.
-          </p>
+        <Card as="section" variant="info">
+          <div className={s.headerText}>
+            <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
+            <p className={s.infoSubtitle}>
+              Din ansökan behandlas just nu av en handläggare. Normal handläggningstid är 1-2 bankdagar. Vi hör av oss här i portalen om vi behöver kompletterande information.
+            </p>
+          </div>
         </Card>
       }
 
       {application.status === "PENDING_DOCS" &&
-        <Card as="section" variant="warning">
-          <CardHeader className={s.warningHeader}>
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
             <div className={s.iconWrapper}>
               <RiChat3Line />
             </div>
             <div className={s.headerText}>
-              <h3 className={s.warningTitle}>Vi behöver mer information</h3>
-              <p className={s.warningSubtitle}>Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare.</p>
+              <h3 className={s.infoTitle}>Vi behöver mer information</h3>
+              <p className={s.infoSubtitle}>Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare.</p>
             </div>
           </CardHeader>
-          <CardBody className={s.warningBody}>
+          <CardBody className={s.infoBody}>
             <p>{application.decision}</p>
 
             <Button
