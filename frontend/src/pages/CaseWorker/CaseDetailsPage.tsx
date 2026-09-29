@@ -61,9 +61,9 @@ const CaseDetailsPage = () => {
           <Card>
             <h3>Kontakt</h3>
             <DataList>
-              <DataListItem label="Namn" value={data.contactDetails?.name ?? "Saknas"} /> {/* "Saknas" incase its an old application that had the different format */}
-              <DataListItem label="E-postadress" value={data.contactDetails?.email ?? "Saknas"} />
-              <DataListItem label="Telefonnummer" value={data.contactDetails?.phoneNumber ?? "Saknas"} />
+              <DataListItem label="Namn" value={data.contactDetails.name} />
+              <DataListItem label="E-postadress" value={data.contactDetails.email} />
+              <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
             </DataList>
           </Card>
 
