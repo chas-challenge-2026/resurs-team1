@@ -30,24 +30,11 @@ export interface Application {
   authorizedSignatory: string
   durationMonths?: number
   documents?: ApplicationDocument[]
-  contactDetails?: { // I put as optional because mock data differs and there cold be old data in current DB
+  contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
     email: string;
     phoneNumber: string;
   };
-}
-
-export const getApplications = async (): Promise<Application[]> => {
-  const response = await api.get<Application[]>("/application")
-  return response.data
-}
-
-export const getApplicationById = async (id: number): Promise<Application> => {
-  const response = await api.get(`application/${id}`)
-  return {
-    ...response.data.app,
-    documents: response.data.documents,
-  }
 }
 
 // matches "ApplicationFormData" as of september, but may change later since we could send info that was not in form, hence its own type
@@ -65,8 +52,29 @@ export interface NewApplicationPayload {
   durationMonths: number;
 }
 
+export const getApplications = async (): Promise<Application[]> => {
+  const response = await api.get<Application[]>("/application")
+  return response.data
+}
+
+export const getApplicationById = async (id: number): Promise<Application> => {
+  const response = await api.get(`application/${id}`)
+  return {
+    ...response.data.app,
+    documents: response.data.documents,
+  }
+}
+
 export const postApplication = async (application: NewApplicationPayload): Promise<Application> => {
   const response = await api.post<Application>(`/application/apply`, application)
 
   return response.data
+}
+
+export const getBackofficeApplicationById = async (id: number): Promise<Application> => {
+  const response = await api.get(`/backoffice/application/${id}`) 
+  return {
+    ...response.data.application,
+    documents: response.data.documents,
+  }
 }

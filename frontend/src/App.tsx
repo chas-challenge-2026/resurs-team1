@@ -3,7 +3,6 @@ import PublicOnlyRoute from "./components/PublicOnlyRoute/PublicOnlyRoute"
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute"
 import { Toaster } from "sonner"
 import CardLayout from "./layouts/CardLayout"
-import TestPage from "./pages/Test/TestPage"
 import NotFoundPage from "./pages/NotFound/NotFoundPage"
 import LoginPage from "./pages/Login/LoginPage"
 import CompanyHomePage from "./pages/Company/Home/CompanyHomePage"
@@ -47,7 +46,6 @@ function App() {
 
         {/* Other */}
         <Route element={<CardLayout />}>
-          <Route path='test' element={<TestPage />} />
           <Route path='*' element={<NotFoundPage />} />
         </Route>
       </Routes>
