@@ -15,7 +15,7 @@ export type PurposeValue =
 export interface ApplicationDocument {
   id: number
   applicationId: number,
-  filename: string
+  fileName: string
   docType: string
   uploadedAt: string
 }

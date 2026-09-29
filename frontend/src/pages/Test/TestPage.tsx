@@ -38,7 +38,7 @@ const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
 const DOCUMENT_MOCK = {
   id: 1,
   applicationId: 1,
-  filename: "årsredovisning_2025.pdf",
+  fileName: "årsredovisning_2025.pdf",
   docType: "PDF",
   uploadedAt: "2026-08-27T10:30:00Z",
 }

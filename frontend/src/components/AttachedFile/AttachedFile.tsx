@@ -16,7 +16,7 @@ const AttachedFile = ({document, isUploading = false, removeFile}: AttachedFileP
 
   const isLocalFile = document instanceof File
 
-  const fileName = isLocalFile ? document.name : formatFileName(document.filename)
+  const fileName = isLocalFile ? document.name : formatFileName(document.fileName)
 
   const handleDownload = () => {
     if(!isLocalFile) {
