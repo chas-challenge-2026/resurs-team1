@@ -13,7 +13,7 @@ import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
 import s from "./MyApplicationDetailsPage.module.css"
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
 
 const MyApplicationDetailsPage = () => {
   const { id } = useParams()
