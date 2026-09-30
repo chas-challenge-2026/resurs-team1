@@ -60,7 +60,7 @@ enum VerifyChainResultCode
 struct VerifyChainResult
 {
     VerifyChainResultCode result_code;
-    uint8_t index;
+    uint64_t index;
 };
 
 /*

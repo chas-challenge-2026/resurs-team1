@@ -40,6 +40,7 @@ class DigitalSign
 
 
         std::array<unsigned char, resurs::audit::PKEY_BYTES> generate_private_key();
+        std::array<uint8_t, 32> get_public_key(EVP_PKEY* privateKey);
         VerifyChainResult verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength);
 
         PkeyPtr convert_c_private_key_to_EVP_PKEY_POINTER(const uint8_t *privateKey, size_t privateKeyLength);

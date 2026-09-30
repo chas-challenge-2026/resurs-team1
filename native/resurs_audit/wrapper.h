@@ -19,7 +19,9 @@ int wrapper_hash_and_sign(const uint8_t* canonicalData, size_t canonicalDataLeng
 VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength);
 
 
-unsigned char* generate_private_key();
+void generate_private_key(unsigned char* output_buffer);
+
+int get_public_key(unsigned char* privateKey, unsigned char* output_publicKey);
 
 
 

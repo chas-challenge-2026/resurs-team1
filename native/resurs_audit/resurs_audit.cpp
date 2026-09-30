@@ -139,6 +139,23 @@ std::array<unsigned char, resurs::audit::PKEY_BYTES> DigitalSign::generate_priva
     return privateKey;
 }
 
+
+std::array<uint8_t, resurs::audit::PKEY_BYTES> DigitalSign::get_public_key(EVP_PKEY* privateKey)
+{
+    std::array<uint8_t, resurs::audit::PKEY_BYTES> publicKey;
+    size_t length = publicKey.size();
+
+    if (EVP_PKEY_get_raw_public_key(
+            privateKey,
+            publicKey.data(),
+            &length) <= 0)
+    {
+        throw std::runtime_error("Failed to get public key");
+    }
+
+    return publicKey;
+}
+
 std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash(const std::vector<uint8_t> &data)
 {
 
@@ -231,7 +248,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
     // Convert the uint8_t publicKey pointer and the size_t publicKeyPointer length to an actual pkey
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(publicKey, publicKeyLength);
 
-    for(int i = 0; i < entryCount; i++)
+    for(size_t i = 0; i < entryCount; i++)
     {
             //if (*entries[i].previousHash != *previousEntryCurrentHash.data())
             if (!std::equal(previousEntryCurrentHash.begin(), previousEntryCurrentHash.end(), entries[i].previousHash))

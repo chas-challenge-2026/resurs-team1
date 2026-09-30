@@ -49,6 +49,11 @@ The tests can be run without rebuilding the image:
 docker run --rm resurs-crypto-demo /resurs-build/resurs_crypto_tests
 ```
 
+## Run Audit tests
+```bash
+docker run --rm resurs-crypto-demo /resurs-build/resurs_audit_tests
+```
+
 Alternatively, run them through CTest inside the container:
 
 ```bash

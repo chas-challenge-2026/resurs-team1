@@ -12,7 +12,10 @@ RUN cmake -S . -B /resurs-build \
         -DBUILD_TESTING=ON \
         -DRESURS_BUILD_CRYPTO_DEMO=ON \
     && cmake --build /resurs-build \
-        --target resurs_crypto_demo resurs_crypto_tests resurs_audit \
+        --target resurs_crypto_demo \
+                 resurs_crypto_tests \
+                 resurs_audit \
+                 resurs_audit_tests \
         --parallel \
     && ctest --test-dir /resurs-build --output-on-failure
 

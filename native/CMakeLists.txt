@@ -47,16 +47,66 @@ install(TARGETS resurs_crypto resurs_audit
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 include(CTest)
+
 if(BUILD_TESTING)
+
+    # ============================================================
+    # Crypto tests
+    # ============================================================
+
     add_executable(resurs_crypto_tests
         tests/resurs_crypto_tests.cpp)
-    target_link_libraries(resurs_crypto_tests PRIVATE resurs_crypto OpenSSL::Crypto)
-    target_include_directories(resurs_crypto_tests PRIVATE
+
+    target_link_libraries(resurs_crypto_tests
+        PRIVATE
+        resurs_crypto
+        OpenSSL::Crypto)
+
+    target_include_directories(resurs_crypto_tests
+        PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/resurs_crypto)
+
     if(MSVC)
         target_compile_options(resurs_crypto_tests PRIVATE /W4)
     else()
-        target_compile_options(resurs_crypto_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(resurs_crypto_tests PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic)
     endif()
-    add_test(NAME resurs_crypto_tests COMMAND resurs_crypto_tests)
+
+    add_test(
+        NAME resurs_crypto_tests
+        COMMAND resurs_crypto_tests)
+
+
+    # ============================================================
+    # Audit tests
+    # ============================================================
+
+    add_executable(resurs_audit_tests
+        tests/resurs_audit_tests.cpp)
+
+    target_link_libraries(resurs_audit_tests
+        PRIVATE
+        resurs_audit
+        OpenSSL::Crypto)
+
+    target_include_directories(resurs_audit_tests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+
+    if(MSVC)
+        target_compile_options(resurs_audit_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_audit_tests PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic)
+    endif()
+
+    add_test(
+        NAME resurs_audit_tests
+        COMMAND resurs_audit_tests)
+
 endif()
