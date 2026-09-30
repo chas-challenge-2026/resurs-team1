@@ -52,6 +52,45 @@ export interface NewApplicationPayload {
   durationMonths: number;
 }
 
+// same as ReviewInfo.java. uses "requested_amount" for some reason with snake case =)
+export interface ReviewApplication {
+  id: number
+  requested_amount: number
+  purpose: string
+  createdAt: string
+  scoringResult: string | null
+  decisionReason: string | null
+  companyName: string
+  orgNumber: string
+}
+
+// HistoricalReviewInfo.java
+export interface DecidedApplication {
+  id: number
+  requestedAmount: number
+  purpose: string
+  decision: string | null
+  createdAt: string
+  updatedAt: string
+  companyName: string
+  orgNumber: string
+}
+
+// BackOfficeListsDTO.java
+export interface BackofficeLists {
+  reviewApplications: ReviewApplication[]
+  decidedApplications: DecidedApplication[]
+}
+
+// one row in the caseworker sidebar, built from both lists above
+export interface CaseListItem {
+  id: number
+  status: ApplicationStatus
+  companyName: string
+  requestedAmount: number
+  createdAt: string
+}
+
 export const getApplications = async (): Promise<Application[]> => {
   const response = await api.get<Application[]>("/application")
   return response.data
@@ -77,4 +116,9 @@ export const getBackofficeApplicationById = async (id: number): Promise<Applicat
     ...response.data.application,
     documents: response.data.documents,
   }
+}
+
+export const getBackofficeApplications = async (): Promise<BackofficeLists> => {
+  const response = await api.get<BackofficeLists>("/backoffice")
+  return response.data
 }
