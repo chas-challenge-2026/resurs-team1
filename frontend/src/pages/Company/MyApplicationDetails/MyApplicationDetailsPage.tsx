@@ -13,6 +13,8 @@ import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
 import s from "./MyApplicationDetailsPage.module.css"
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
 const MyApplicationDetailsPage = () => {
   const { id } = useParams()
   const applicationId = Number(id)
@@ -20,8 +22,6 @@ const MyApplicationDetailsPage = () => {
   const { data: application, isPending, isError, error } = useApplication(applicationId)
   const { data: documents } = useDocuments(applicationId)
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
-
-  console.log(application)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -33,7 +33,15 @@ const MyApplicationDetailsPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+
     if (!file) return
+    setFileError(null)
+
+    if(file.size > MAX_FILE_SIZE_BYTES) {
+      setFileError("Filen får inte vara större än 10 MB.")
+      setSelectedFile(null)
+      return
+    }
 
     if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
       setFileError("Endast PDF-filer är tillåtna.")
@@ -116,7 +124,7 @@ const MyApplicationDetailsPage = () => {
             >
               <RiUploadCloud2Line className={s.dropzoneIcon} aria-hidden="true" />
               <span className={s.dropzoneTitle}>Bifoga fil</span>
-              <span className={s.dropzoneHint}>Klicka för att bifoga en PDF-fil</span>
+              <span className={s.dropzoneHint}>Klicka för att bifoga en PDF (max 10 MB)</span>
             </Button>
 
             {selectedFile && (
