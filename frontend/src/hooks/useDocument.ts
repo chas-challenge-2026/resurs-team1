@@ -4,14 +4,14 @@ import type { ApplicationDocument } from "../api/applicationApi"
 
 export const useDownloadDocument = () => {
   return useMutation({
-    mutationFn: async({id, fileName}: {id: number, fileName: string}) => {
+    mutationFn: async({id, filename}: {id: number, filename: string}) => {
       const blob = await getDocument(id)
 
       //Create temporary link and trigger download in browser
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = fileName
+      a.download = filename
       document.body.appendChild(a)
       a.click()
 
@@ -30,7 +30,6 @@ export const useDocuments = (applicationId: number) => {
   })
 }
 
-// TODO: Does not work, have to check with backend
 export const useUploadDocument = () => {
   const queryClient = useQueryClient()
 

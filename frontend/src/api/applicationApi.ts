@@ -6,6 +6,12 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
 
+export type PurposeValue =
+  | "Expansion"
+  | "workingCapital"
+  | "Investment"
+  | "Other"
+
 export interface ApplicationDocument {
   id: number
   applicationId: number,
@@ -17,7 +23,7 @@ export interface ApplicationDocument {
 export interface Application {
   id: number
   requestedAmount: number
-  purpose: string
+  purpose: PurposeValue
   status: ApplicationStatus
   decision?: string | null
   decisionReason?: string | null
@@ -28,7 +34,7 @@ export interface Application {
   companyName: string
   orgNumber: string
   authorizedSignatory: string
-  durationMonths?: number
+  durationMonths: number
   documents?: ApplicationDocument[]
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
