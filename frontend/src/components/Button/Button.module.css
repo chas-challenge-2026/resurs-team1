@@ -44,13 +44,20 @@
   color: #fff;
 }
 
+.primary:hover,
+.secondary.active:hover {
+  background-color: color-mix(in srgb, var(--accent-color, var(--color-primary)) 88%, #000);
+  border-color: color-mix(in srgb, var(--accent-color, var(--color-primary)) 88%, #000);
+}
+
 .secondary {
   background-color: #fff;
   color: var(--accent-color, var(--color-primary));
   border-color: var(--accent-color, var(--color-primary));
 }
 
-.secondary:hover {
+.secondary:hover,
+.secondary.active {
   background-color: var(--accent-color, var(--color-primary));
   color: #fff;
   border-color: var(--accent-color, var(--color-primary));

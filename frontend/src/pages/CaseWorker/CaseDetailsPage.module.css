@@ -46,22 +46,10 @@
   flex: 1;
 }
 
-.accept {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.request {
-  background-color: #FBF1DF;
-  color: var(--color-warning-text);
-  border-color: var(--color-warning-text);
-}
-
-.reject {
-  background-color: #FAEAE9;
-  color: var(--color-error);
-  border-color: var(--color-error);
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .addingTitle {

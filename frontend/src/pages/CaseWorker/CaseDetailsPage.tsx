@@ -25,13 +25,23 @@ const options: SwitchOption<viewOptions>[] = [
   { label: "Hantera ärende", value: "manageCase" },
 ]
 
+type ActionType = "approve" | "requestDocs" | "reject" | null
+
 const CaseDetailsPage = () => {
   const [view, setView] = useState<viewOptions>("overview")
-  const [ isAdding, setIsAdding ] = useState(false)
+  const [ activeAction, setActiveAction ] = useState<ActionType>(null)
   const { id } = useParams()
   const applicationId = Number(id)
 
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
+
+  const handleActionToggle = (action: ActionType) => {
+    if(action === activeAction) {
+      setActiveAction(null)
+      return
+    }
+    setActiveAction(action)
+  }
 
   if (isPending) return <Loading size="lg" label="Hämtar ärende..." centerOnPage delay />
 
@@ -91,37 +101,84 @@ const CaseDetailsPage = () => {
 
       {view === "manageCase" &&
         <section className={s.contentWrapper}>
-          {/* TODO: Connect status-change buttons with backend + refresh the querykeydata upon selecting a button */}
           <div className={s.actionsWrapper}>
-            <Button variant="secondary" className={s.actionButton}>
+            <Button
+              variant="secondary" 
+              className={s.actionButton}
+              active={activeAction === "approve"}
+              onClick={() => handleActionToggle("approve")}
+            >
               Godkänn
             </Button>
-            <Button variant="secondary" color="var(--color-warning-strong)" className={s.actionButton} onClick={() => setIsAdding(!isAdding)}>
+            <Button 
+              variant="secondary"
+              color="var(--color-warning-strong)"
+              className={s.actionButton}
+              active={activeAction === "requestDocs"}
+              onClick={() => handleActionToggle("requestDocs")}
+            >
               Komplettera
             </Button>
-            <Button variant="secondary" color="var(--color-error)" className={s.actionButton}>
+            <Button
+              variant="secondary" 
+              color="var(--color-error)"
+              className={s.actionButton}
+              active={activeAction === "reject"}
+              onClick={() => handleActionToggle("reject")}
+            >
               Avvisa
             </Button>
           </div>
 
-          {isAdding && (
-            <section>
-              <Card>
-                <h3 className={s.addingTitle}>Beskriv vilket dokument du behöver från kunden</h3>
-                <TextArea id="message" label="message" placeholder="T.ex. årsredovisning, kontoutdrag, offert..." />
-                <CardFooter className={s.addingFooter}>
-                  <Button disabled>
-                    Skicka förfrågan
-                  </Button>
-                  <Button variant="secondary" onClick={() => setIsAdding(false)}>
-                    Avbryt
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* TODO: Add view for requests and corresponding attachments */}
-            </section>
+          {/* TODO: Connect submit buttons with backend */}
+          {activeAction === "approve" && (
+            <Card as="section">
+              <div className={s.textContainer}>
+                <h3 className={s.addingTitle}>Vill du godkänna ärendet?</h3>
+                <p>Kontrollera att uppgifterna och eventuella kompletteringar är granskade. Ingen kommentar krävs.</p>
+              </div>
+              <CardFooter className={s.addingFooter}>
+                <Button>
+                  Godkänn ärendet
+                </Button>
+                <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                  Avbryt
+                </Button>
+              </CardFooter>
+            </Card>
           )}
+
+          {activeAction === "requestDocs" && (
+            <Card as="section">
+              <h3 className={s.addingTitle}>Beskriv vilket dokument du behöver från kunden</h3>
+              <TextArea id="message" label="message" placeholder="T.ex. årsredovisning, kontoutdrag, offert..." />
+              <CardFooter className={s.addingFooter}>
+                <Button>
+                  Skicka förfrågan
+                </Button>
+                <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                  Avbryt
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {activeAction === "reject" && (
+            <Card as="section">
+              <h3 className={s.addingTitle}>Skriv en kommentar till varför ärendet avvisas</h3>
+              <TextArea id="message" label="message" placeholder="Beskriv anledningen till avslaget..." />
+              <CardFooter className={s.addingFooter}>
+                <Button>
+                  Avvisa ärendet
+                </Button>
+                <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                  Avbryt
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {/* TODO: Add view for requests and corresponding attachments */}
         </section>
       }
     </>

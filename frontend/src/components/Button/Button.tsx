@@ -4,12 +4,14 @@ import s from "./Button.module.css"
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost";
   color?: string
+  active?: boolean
 }
 
-const Button = ({variant="primary", color, className, children, style, ...props}: ButtonProps) => {
+const Button = ({variant="primary", color, className, children, style, active = false, ...props}: ButtonProps) => {
   const combinedClassName = [
     s.base,
     s[variant],
+    active && s.active,
     className
   ].filter(Boolean).join(" ")
 
