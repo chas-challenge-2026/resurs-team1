@@ -2,6 +2,7 @@ package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class BackofficeService {
     private final AuditService auditService;
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
-    private static final int MAX_PAGE_SIZE = 100;
+
 
     @Autowired
     public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
@@ -45,17 +46,11 @@ public class BackofficeService {
         this.documentRepo = documentRepo;
     }
 
-    private Pageable buildPageable(int page, int size) {
-        return PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE));
-    }
-
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
     //Further requires indexation, and sorting options
     public BackOfficeListsDTO applicationsForReview(
-            int reviewPage, int reviewSize, int decidedPage, int decidedSize) {
+            @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-        Pageable reviewPageable = buildPageable(reviewPage, reviewSize);
-        Pageable decidedPageable = buildPageable(decidedPage, decidedSize);
 
         PagedResult<ReviewInfo> underReview = PagedResult.from(
                 creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW, reviewPageable)

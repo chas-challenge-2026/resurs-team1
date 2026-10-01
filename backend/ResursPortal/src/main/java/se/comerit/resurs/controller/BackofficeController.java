@@ -3,6 +3,8 @@ package se.comerit.resurs.controller;
 
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,10 +42,7 @@ public class BackofficeController {
 
     @GetMapping
     public ResponseEntity<BackOfficeListsDTO> backofficeOverview(
-            @RequestParam(defaultValue = "0") int reviewPage,
-            @RequestParam(defaultValue = "20") int reviewSize,
-            @RequestParam(defaultValue = "0") int decidedPage,
-            @RequestParam(defaultValue = "20") int decidedSize,
+            @Qualifier("review") Pageable reviewPageable, @Qualifier("decided") Pageable decidedPageable,
             HttpSession session) {
 
         // Session check copy-pasted in every method — should be an interceptor
@@ -55,8 +54,10 @@ public class BackofficeController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+
+
         BackOfficeListsDTO applicationLists = service.applicationsForReview(
-                reviewPage, reviewSize, decidedPage, decidedSize);
+                reviewPageable, decidedPageable);
 
         /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
         model.addAttribute("reviewApplications", applicationLists.reviewApplications());
