@@ -1,6 +1,6 @@
 .base {
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-pill);
   transition: all 0.2s;
   border: 1px solid var(--border);
 }
@@ -46,6 +46,14 @@
 
 .secondary {
   background-color: #fff;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.secondary:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 .ghost {
