@@ -9,6 +9,8 @@ type LoadingProps = {
   label?: string;
   /** Centered overlay covering the viewport. */
   fullscreen?: boolean;
+  /** Center loading icon on page but don't cover viewport */
+  centerOnPage?: boolean
   /** Stay invisible for 300ms so a fast response never flashes a spinner. */
   delay?: boolean;
 };
@@ -23,11 +25,12 @@ function Loading({
   size = "md",
   label = "Laddar...",
   fullscreen,
+  centerOnPage,
   delay = true,
 }: LoadingProps) {
   const content = (
     <span
-    className={delay ? `${styles.wrapper} ${styles.delayed}` : styles.wrapper}
+    className={`${styles.wrapper} ${delay && styles.delayed} ${centerOnPage && styles.centerWrapper}`}
     role="status"
     >
       <svg

@@ -94,14 +94,13 @@ input, button, textarea, select {
   display: flex;
   gap: var(--space-xs);
   padding: var(--space-sm);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 .input-base:focus-visible {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
 .error-border {

@@ -15,16 +15,20 @@
   background-color: var(--bg-secondary);
   width: 100%;
   overflow-y: auto;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s ease-in-out;
 }
 
 .collapsed.sideBar {
-  min-width: 0;
-  width: fit-content;
+  min-width: 54px;
+  width: 54px;
   border-right: 1px solid var(--border);
   overflow-y: hidden;
 }
 
 .collapsed .sideBarHeader {
+  justify-content: center;
   padding: var(--space-xs) 2px;
 }
 
