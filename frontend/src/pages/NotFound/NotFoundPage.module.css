@@ -6,5 +6,5 @@
   width: 100%;
   max-width: 1200px;
   padding: var(--space-md) var(--space-base);
-  gap: var(--space-md);
+  gap: var(--space-base);
 }

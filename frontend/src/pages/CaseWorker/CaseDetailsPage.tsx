@@ -11,6 +11,7 @@ import Loading from "../../components/Loading/Loading"
 import s from "./CaseDetailsPage.module.css"
 import { useBackofficeApplication } from "../../hooks/useApplication"
 import { useParams } from "react-router-dom"
+import NotFoundPage from "../NotFound/NotFoundPage"
 
 // TODO: swap out EXTRA_INFO once backend sends the data they use for the calculations, they are convinced yearly company statements are gdpr and delete it =,)
 const EXTRA_INFO = {
@@ -32,8 +33,19 @@ const CaseDetailsPage = () => {
 
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
 
-  if (isPending) return <Loading size="lg" label="Hämtar ärende..." delay />
-  if (isError) return <p>{error.message}</p>
+  if (isPending) return <Loading size="lg" label="Hämtar ärende..." centerOnPage delay />
+
+  if (isError) {
+    if(error.status === 404) {
+      return (
+        <NotFoundPage
+          description = "Ärendet du söker finns inte, kontrollera att du har skrivit in rätt ärendenummer eller länk. Fungerar det fortfarande inte? Då kan ärendet ha blivit borttaget eller arkiverat. Försök hitta ärendet du söker via ärendelistan."
+          showRedirectButton = {false}
+        />
+      )
+    }
+    return <div className={s.centerWrapper}><p>{error.message}</p></div>
+  }
 
   return(
     <>
