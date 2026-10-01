@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -14,7 +15,6 @@ import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
 import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.security.PasswordHasher;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,7 +55,7 @@ public class CaseWorkerServiceTest {
     private CaseWorkerRepository caseWorkerRepository;
 
     @Autowired
-    private PasswordHasher passwordHasher;
+    private PasswordEncoder passwordEncoder;
 
     private String uniqueEmail() {
         return UUID.randomUUID() + "@resurs.se";
@@ -65,7 +65,7 @@ public class CaseWorkerServiceTest {
         CaseWorker caseWorker = new CaseWorker();
         caseWorker.setName("Test Handläggare");
         caseWorker.setEmail(email);
-        caseWorker.setPasswordHash(passwordHasher.md5Hash("password123"));
+        caseWorker.setPasswordHash(passwordEncoder.encode("password123"));
         return caseWorkerRepository.saveAndFlush(caseWorker);
     }
 
@@ -81,7 +81,7 @@ public class CaseWorkerServiceTest {
         assertEquals(email, response.email());
 
         CaseWorker saved = caseWorkerRepository.findById(response.id()).orElseThrow();
-        assertEquals(passwordHasher.md5Hash("hemligt123"), saved.getPasswordHash());
+        assertTrue(passwordEncoder.matches("hemligt123", saved.getPasswordHash()));
     }
 
     @Test
