@@ -93,13 +93,13 @@ const CaseDetailsPage = () => {
         <section className={s.contentWrapper}>
           {/* TODO: Connect status-change buttons with backend + refresh the querykeydata upon selecting a button */}
           <div className={s.actionsWrapper}>
-            <Button variant="secondary" className={`${s.actionButton} ${s.accept}`}>
+            <Button variant="secondary" className={s.actionButton}>
               Godkänn
             </Button>
-            <Button variant="secondary" className={`${s.actionButton} ${s.request}`} onClick={() => setIsAdding(!isAdding)}>
+            <Button variant="secondary" color="var(--color-warning-strong)" className={s.actionButton} onClick={() => setIsAdding(!isAdding)}>
               Komplettera
             </Button>
-            <Button variant="secondary" className={`${s.actionButton} ${s.reject}`}>
+            <Button variant="secondary" color="var(--color-error)" className={s.actionButton}>
               Avvisa
             </Button>
           </div>
