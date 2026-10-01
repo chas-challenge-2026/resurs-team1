@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { useParams } from "react-router-dom"
-import { RiChat3Line, RiUploadCloud2Line } from "react-icons/ri"
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../../utils/formatters"
+import { RiChat3Line, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
+import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
 import { useApplication } from "../../../hooks/useApplication"
 import { Card, CardBody, CardFooter, CardHeader } from "../../../components/Card/Card"
@@ -12,6 +12,8 @@ import StatusTag from "../../../components/StatusTag/StatusTag"
 import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
 import s from "./MyApplicationDetailsPage.module.css"
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
 
 const MyApplicationDetailsPage = () => {
   const { id } = useParams()
@@ -31,7 +33,15 @@ const MyApplicationDetailsPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+
     if (!file) return
+    setFileError(null)
+
+    if(file.size > MAX_FILE_SIZE_BYTES) {
+      setFileError("Filen får inte vara större än 10 MB.")
+      setSelectedFile(null)
+      return
+    }
 
     if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
       setFileError("Endast PDF-filer är tillåtna.")
@@ -58,7 +68,7 @@ const MyApplicationDetailsPage = () => {
       uploadDocument({
         applicationId,
         docType: "pdf",
-        fileName: selectedFile.name,
+        file: selectedFile,
       }, {
         onSuccess: () => {
           setSelectedFile(null)
@@ -74,21 +84,37 @@ const MyApplicationDetailsPage = () => {
           <h2 className="title">{formatReferenceNumber(application.id)}</h2>
           <StatusTag status={application.status} />
         </div>
-        <p className={s.description}>{application.purpose} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
+        <p className={s.description}>{getPurposeLabel(application.purpose)} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
       </div>
 
+      {application.status === "UNDER_REVIEW" &&
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
+            <div className={s.iconWrapper}>
+              <RiTimeLine />
+            </div>
+            <div className={s.headerText}>
+              <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
+              <p className={s.infoSubtitle}>
+                En handläggare granskar just nu dina uppgifter. Normal handläggningstid är 1–2 bankdagar. Vi hör av oss om vi behöver kompletterande information.
+              </p>
+            </div>
+          </CardHeader>
+        </Card>
+      }
+
       {application.status === "PENDING_DOCS" &&
-        <Card as="section" variant="warning">
-          <CardHeader className={s.warningHeader}>
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
             <div className={s.iconWrapper}>
               <RiChat3Line />
             </div>
             <div className={s.headerText}>
-              <h3 className={s.warningTitle}>Vi behöver mer information</h3>
-              <p className={s.warningSubtitle}>Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare.</p>
+              <h3 className={s.infoTitle}>Vi behöver mer information</h3>
+              <p className={s.infoSubtitle}>Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare.</p>
             </div>
           </CardHeader>
-          <CardBody className={s.warningBody}>
+          <CardBody className={s.infoBody}>
             <p>{application.decision}</p>
 
             <Button
@@ -98,7 +124,7 @@ const MyApplicationDetailsPage = () => {
             >
               <RiUploadCloud2Line className={s.dropzoneIcon} aria-hidden="true" />
               <span className={s.dropzoneTitle}>Bifoga fil</span>
-              <span className={s.dropzoneHint}>Klicka för att bifoga en PDF-fil</span>
+              <span className={s.dropzoneHint}>Klicka för att bifoga en PDF (max 10 MB)</span>
             </Button>
 
             {selectedFile && (
@@ -142,9 +168,9 @@ const MyApplicationDetailsPage = () => {
           <h3 className="subtitle">Ansökningsuppgifter</h3>
           <DataList>
             <DataListItem label="Ärendenummer" value={formatReferenceNumber(application.id)} />
-            <DataListItem label="Ändamål" value={application.purpose} />
+            <DataListItem label="Ändamål" value={getPurposeLabel(application.purpose)} />
             <DataListItem label="Belopp" value={formatCurrency(application.requestedAmount)} />
-            {application.durationMonths && <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />}
+            <DataListItem label="Återbetalningstid" value={`${application.durationMonths} månader`} />
             <DataListItem label="Inskickad" value={formatDate(application.createdAt)} />
           </DataList>
         </CardHeader>

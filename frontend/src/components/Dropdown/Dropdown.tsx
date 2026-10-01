@@ -1,17 +1,17 @@
 import InputError from "../InputError/InputError";
 import s from "./Dropdown.module.css";
 
-export interface DropdownOption {
-  value: string;
+export interface DropdownOption<T = string> {
+  value: T;
   label: string;
 }
 
-export interface DropdownProps {
+export interface DropdownProps<T = string> {
   id: string;
   label: string;
-  options: DropdownOption[];
+  options: DropdownOption<T>[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: T) => void;
   placeholder?: string;
   hideLabel?: boolean;
   error?: string;

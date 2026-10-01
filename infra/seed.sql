@@ -11,7 +11,7 @@ CREATE TABLE case_workers (
     version INT,
     name VARCHAR(100),
     email VARCHAR(100) UNIQUE,
-    password_md5 VARCHAR(32)
+    password_hash VARCHAR(60)
 );
 
 CREATE TABLE applications (
@@ -76,8 +76,8 @@ INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
 ('556000-5678', 'Britt Maries Ögonfransar AB', 'Maria Svensson');
 
 -- Case worker (password = "password123")
-INSERT INTO case_workers (name, email, password_md5) VALUES
-('Karin Handläggare', 'karin@resurs.se', '482c811da5d5b4bc6d497ffa98491e38');
+INSERT INTO case_workers (name, email, password_hash) VALUES
+('Karin Handläggare', 'karin@resurs.se', '$2a$10$mIgdY8b1wHXrzawxupEmruSMcn3kA5Aeci8J2cEyGS6yk2ErUJ62C');
 
 -- Pre-existing application in REVIEW
 INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log,contact_name,contact_number,contact_email, duration_months, version) VALUES

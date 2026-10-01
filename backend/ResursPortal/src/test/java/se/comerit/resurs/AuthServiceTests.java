@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -46,7 +47,8 @@ public class AuthServiceTests {
     //icke hashat lösenordet
     private static final String PASSWORD = "password123";
     //samma lösen fast hashat
-    private static final String PASSWORD_MD5 = "482c811da5d5b4bc6d497ffa98491e38";
+    @Autowired
+    private  PasswordEncoder passwordEncoder;
 
 private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
             .resolve("../../infra/seed.sql")
@@ -99,7 +101,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         CaseWorker worker = new CaseWorker();
         worker.setName(WORKER_NAME);
         worker.setEmail(EMAIL);
-        worker.setPasswordHash(PASSWORD_MD5);
+        worker.setPasswordHash(passwordEncoder.encode(PASSWORD));
         return caseWorkerRepo.save(worker);
 
     }
@@ -148,14 +150,6 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
                 () -> authService.loginCaseWorker("Testarn@resurs.se", "fel"));
 
         assertThat(thrown.reason()).isEqualTo(LoginFailureReason.BAD_CREDENTIALS);
-    }
-
-    @Test
-    void passwordConstant_shouldBeMd5OfKnownPassword() throws Exception {
-        byte[] digest = MessageDigest.getInstance("MD5")
-                .digest(PASSWORD.getBytes(StandardCharsets.UTF_8));
-
-        assertThat(HexFormat.of().formatHex(digest)).isEqualTo(PASSWORD_MD5);
     }
 }
 
