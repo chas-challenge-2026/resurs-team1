@@ -9,6 +9,7 @@
 .group {
   display: flex;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .button {
@@ -20,6 +21,7 @@
   font-weight: 500;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .button:hover {
