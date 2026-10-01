@@ -4,11 +4,12 @@ import type { CaseworkerLoginPayload, CompanyLoginPayload } from "../api/authApi
 import { loginCaseWorker, loginCompany } from "../api/authApi"
 import { setUser } from "../utils/auth"
 import type { CaseWorkerUser, CompanyUser } from "../types/user"
+import type { ApiErrorPayload } from "../api/client"
 
 const useCompanyLogin = () => {
   const navigate = useNavigate()
 
-  return useMutation<CompanyUser, Error, CompanyLoginPayload>({
+  return useMutation<CompanyUser, ApiErrorPayload, CompanyLoginPayload>({
     mutationFn: (payload) => loginCompany(payload),
     onSuccess: (data) => {
       setUser(data)
@@ -26,7 +27,7 @@ const useCompanyLogin = () => {
 const useCaseWorkerLogin = () => {
   const navigate = useNavigate()
 
-  return useMutation<CaseWorkerUser, Error, CaseworkerLoginPayload>({
+  return useMutation<CaseWorkerUser, ApiErrorPayload, CaseworkerLoginPayload>({
     mutationFn: (payload) => loginCaseWorker(payload),
     onSuccess: (data) => {
       setUser(data)
