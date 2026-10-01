@@ -12,6 +12,7 @@ import StatusTag from "../../../components/StatusTag/StatusTag"
 import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
 import s from "./MyApplicationDetailsPage.module.css"
+import NotFoundPage from "../../NotFound/NotFoundPage"
 
 const MyApplicationDetailsPage = () => {
   const { id } = useParams()
@@ -26,8 +27,20 @@ const MyApplicationDetailsPage = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  if(isPending) return <Loading label="Hämtar ansökan..." delay />
-  if (isError) return <p>{error.message}</p>
+  if(isPending) return <Loading size="lg" label="Hämtar ansökan..." centerOnPage delay />
+  
+  if (isError) {
+    if(error.status === 404) {
+      return (
+        <NotFoundPage
+          description = "Ansökan du söker finns inte, kontrollera att du har rätt ärendenummer eller länk. Fungerar det fortfarande inte? Då kan ansökan ha blivit borttagen. Försök hitta informationen du söker via dina övriga ansökningar."
+          backLinkText="Gå till ansökningar"
+          backLinkUrl="/mina-ansokningar"
+        />
+      )
+    }
+    return <p>{error.message}</p>
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

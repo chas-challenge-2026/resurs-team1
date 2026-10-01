@@ -7,6 +7,7 @@ interface NotFoundPageProps {
   description?: string
   backLinkText?: string
   backLinkUrl?: string
+  showRedirectButton?: boolean
 }
 
 const NotFoundPage = ({
@@ -14,6 +15,7 @@ const NotFoundPage = ({
   description = "Sidan du söker finns inte, kontrollera att du skrivit in rätt webbadress. Fungerar det fortfarande inte? Då kan sidan vara borttagen. Försök hitta informationen du söker på någon av de andra sidorna.",
   backLinkText = "Gå till startsidan",
   backLinkUrl = "/",
+  showRedirectButton = true
 }: NotFoundPageProps) => {
 
   const navigate = useNavigate()
@@ -22,9 +24,11 @@ const NotFoundPage = ({
     <div className={s.wrapper}>
       <h2 className="title">{title}</h2>
       <p>{description}</p>
-      <Button onClick={() => navigate(backLinkUrl)}>
-        {backLinkText}
-      </Button>
+      {showRedirectButton && 
+        <Button onClick={() => navigate(backLinkUrl)}>
+          {backLinkText}
+        </Button>
+      }
     </div>
   )
 }
