@@ -5,6 +5,13 @@
   gap: var(--space-xs);
 }
 
+.centerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
 .label {
   position: absolute;
   width: 1px;
