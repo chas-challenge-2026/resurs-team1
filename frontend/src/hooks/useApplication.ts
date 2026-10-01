@@ -1,15 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, getBackofficeApplications, type Application, type ApplicationStatus, type BackofficeLists, type CaseListItem, type NewApplicationPayload } from "../api/applicationApi"
+import type { ApiErrorPayload } from "../api/client"
 
 export const useApplications = () => {
-  return useQuery<Application[], Error>({
+  return useQuery<Application[], ApiErrorPayload>({
     queryKey: ["applications"],
     queryFn: getApplications,
   })
 }
 
 export const useApplication = (id: number | undefined) => {
-  return useQuery<Application, Error>({
+  return useQuery<Application, ApiErrorPayload>({
     queryKey: ["applications", id],
     queryFn: () => getApplicationById(id!),
     enabled: typeof id === "number" && !isNaN(id),
@@ -19,7 +20,7 @@ export const useApplication = (id: number | undefined) => {
 export const useSubmitApplication = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<Application, Error, NewApplicationPayload>({
+  return useMutation<Application, ApiErrorPayload, NewApplicationPayload>({
     mutationFn: (payload) => postApplication(payload),
     meta: { preventGlobalToast: true}, // the page shows its own error under the button
     onSuccess: () => {
@@ -29,7 +30,7 @@ export const useSubmitApplication = () => {
 }
 
 export const useBackofficeApplication = (id: number | undefined) => {
-  return useQuery<Application, Error>({
+  return useQuery<Application, ApiErrorPayload>({
     queryKey: ["backofficeApplications", id],
     queryFn: () => getBackofficeApplicationById(id!),
     enabled: typeof id === "number" && !isNaN(id),
@@ -37,7 +38,7 @@ export const useBackofficeApplication = (id: number | undefined) => {
 }
 
 export const useBackofficeApplications = () => {
-  return useQuery<BackofficeLists, Error, CaseListItem[]>({
+  return useQuery<BackofficeLists, ApiErrorPayload, CaseListItem[]>({
     queryKey: ["backofficeApplications"],
     queryFn: getBackofficeApplications,
     // backend sends two lists without status, the sidebar wants one list with it
