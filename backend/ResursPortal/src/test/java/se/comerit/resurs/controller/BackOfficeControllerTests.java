@@ -6,11 +6,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -30,6 +35,7 @@ import se.comerit.resurs.service.BackofficeService;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,11 +87,13 @@ public class BackOfficeControllerTests {
     @Test
     void applicationForReview_shouldCapPageSizeAtMax() {
 
-
+        String token = csrfToken();
 
         var loginResponse = restTestClient
                 .post()
                 .uri("/api/auth/login/caseworker")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new CaseWorkerLoginRequest(
                         "karin@resurs.se",
@@ -96,9 +104,15 @@ public class BackOfficeControllerTests {
                 .isOk()
                 .returnResult(CaseWorkerLoginResponse.class);
 
-        String sessionCookie = loginResponse
+        String sessionId = loginResponse
                 .getResponseHeaders()
-                .getFirst(HttpHeaders.SET_COOKIE);
+                .get(HttpHeaders.SET_COOKIE)
+                .stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("JSESSIONID="))
+                .map(value -> value.substring("JSESSIONID=".length()))
+                .findFirst()
+                .orElseThrow();
 
 
 
@@ -111,7 +125,8 @@ public class BackOfficeControllerTests {
                         .queryParam("decided_page", 0)
                         .queryParam("decided_size", 500)
                         .build())
-                .header(HttpHeaders.COOKIE, sessionCookie)
+                .cookie("JSESSIONID", sessionId)
+                .cookie("XSRF-TOKEN", token)
                 .exchange()
                 .expectStatus().isOk();
 
@@ -120,6 +135,24 @@ public class BackOfficeControllerTests {
                 argThat(pageable -> pageable.getPageSize() == maxPageSize)
         );
 
+    }
+
+
+    private String csrfToken() {
+        List<String> cookies = restTestClient
+                .post()
+                .uri("/api/auth/logout")
+                .exchange()
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE);
+
+        return cookies.stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("XSRF-TOKEN="))
+                .findFirst()
+                .orElseThrow()
+                .substring("XSRF-TOKEN=".length());
     }
 
 
