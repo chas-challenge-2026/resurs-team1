@@ -1,10 +1,6 @@
 package se.comerit.resurs.controller;
 
-import org.apache.coyote.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +19,6 @@ import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
 import se.comerit.resurs.service.*;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.*;
 
@@ -120,11 +115,11 @@ public class ApplicationController {
     // ============================================================
     @PreAuthorize("hasRole('COMPANY')")
     @GetMapping()
-    public ResponseEntity<List<CreditApplicationDTO>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal) {
+    public ResponseEntity<List<CreditApplicationDTO>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal, Pageable pageable) {
             // Get companyId via orgNumber — no caching, hits DB every time
             Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
-        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID);
+        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID, pageable);
 
         return ResponseEntity.ok(apps);
 
@@ -132,9 +127,8 @@ public class ApplicationController {
     @PreAuthorize("hasRole('CASE_WORKER')")
     @GetMapping("/company")
     public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
-            @RequestParam("orgNumber") String orgNumber
-            ) {
-        return ResponseEntity.ok(appService.getApplicationsByOrgNumber(orgNumber));
+            @RequestParam("orgNumber") String orgNumber, Pageable pageable) {
+        return ResponseEntity.ok(appService.getApplicationsByOrgNumber(orgNumber, pageable));
     }
 
     // ============================================================
@@ -142,13 +136,13 @@ public class ApplicationController {
     // ============================================================
     @PreAuthorize("hasRole('COMPANY')")
     @GetMapping("/dashboard")
-    public ResponseEntity<List<ApplicationShortDTO>> dashboard(@AuthenticationPrincipal CompanyPrincipal principal) {
+    public ResponseEntity<List<ApplicationShortDTO>> dashboard(
+            @AuthenticationPrincipal CompanyPrincipal principal, Pageable pageable) {
 
         Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
         // Count applications by status
-        Pageable limit = PageRequest.of(0,5);
-        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,limit);
+        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,pageable);
 
         return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
     }

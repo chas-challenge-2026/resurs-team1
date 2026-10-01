@@ -387,7 +387,7 @@ class ApplicationServiceTests {
         applicationRepository.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
 
         List<CreditApplicationDTO> result =
-                applicationService.getApplicationsByOrgNumber("556000-1111");
+                applicationService.getApplicationsByOrgNumber("556000-1111", PageRequest.of(0,20));
 
         assertThat(result).hasSize(2);
         assertThat(result)
@@ -399,20 +399,20 @@ class ApplicationServiceTests {
     void getApplicationsByOrgNumber_shouldReturnEmptyListWhenCompanyHasNoApplications() {
         saveCompany("556000-1111");
 
-        assertThat(applicationService.getApplicationsByOrgNumber("556000-1111")).isEmpty();
+        assertThat(applicationService.getApplicationsByOrgNumber("556000-1111", PageRequest.of(0,20))).isEmpty();
     }
 
     @Test
     void getApplicationsByOrgNumber_shouldThrowWhenCompanyDoesNotExist() {
         saveCompany("556000-1111");
 
-        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("556000-9999"))
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("556000-9999", PageRequest.of(0,20)))
                 .isInstanceOf(java.util.NoSuchElementException.class);
     }
 
     @Test
     void getApplicationsByOrgNumber_shouldThrowWhenOrgNumberIsBlank() {
-        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("   "))
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("   ", PageRequest.of(0,20)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

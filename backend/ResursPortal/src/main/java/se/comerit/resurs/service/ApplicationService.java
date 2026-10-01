@@ -92,12 +92,12 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
-    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber){
+    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber, Pageable pageable){
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
 
-        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber)
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber, pageable)
                 .stream()
                 .map(CreditApplicationDTO::new)
                 .toList();
