@@ -17,13 +17,11 @@ import java.util.Optional;
 @Service
 public class ScoringService {
 
-    private final CompanyRepository companyRepository;
     private final BranchRepository branchRepository;
     private final ScoringThresholds thresholds;
 
 
     public ScoringService(CompanyRepository companyRepository, BranchRepository branchRepository, ScoringThresholds threshold) {
-        this.companyRepository = companyRepository;
         this.branchRepository = branchRepository;
         this.thresholds = threshold;
     }
@@ -54,25 +52,9 @@ public class ScoringService {
         String finalDecision = null;
         ScoringState state = new ScoringState(thresholds.initialScore());
 
-        Company company = null;
 
 
-        // ===========================================================
-        // INSERT 1: Upsert company (no ON CONFLICT — just check first)
-        // No transaction — three separate INSERTs follow
-        // TODO: wrap in @Transactional
-        // ===========================================================
 
-        Optional<Company> existingCompany = companyRepository.findByOrgNumber(orgNumber);
-
-
-        if (existingCompany.isEmpty()) {
-                // INSERT company — PII in plaintext, no encryption
-                // TODO: encrypt PII before go-live
-                company = companyRepository.save(new Company(orgNumber, companyName, authorizedSignatory));
-        }
-
-            //session.setAttribute("companyId", companyId); Keeping this for now... incase its needed
 
             // ===========================================================
             // SCORING ENGINE — giant if-else chain, all inline, no service
@@ -234,9 +216,9 @@ public class ScoringService {
             // ===========================================================
             Decision decision = finalDecision(state);
 
-        company = existingCompany.orElse(company);
 
-        return new NewApplicationDTO(requestedAmount, purpose,durationMonths,  decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), company.getCompany_name(), company.getOrg_number(), company.getAuthorized_signatory(), state.getFlagCount());
+
+        return new NewApplicationDTO(requestedAmount, purpose,durationMonths,  decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), companyName, orgNumber, authorizedSignatory, state.getFlagCount());
 
     }
 

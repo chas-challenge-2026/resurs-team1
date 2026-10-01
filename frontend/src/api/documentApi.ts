@@ -4,7 +4,7 @@ import api from "./client"
 export interface DocumentUploadPayload {
   applicationId: number
   docType: string
-  fileName: string
+  file: File
 }
 
 export const getDocument = async (id: number): Promise<Blob> => {
@@ -17,16 +17,10 @@ export const getDocuments = async (applicationId: number): Promise<ApplicationDo
   return response.data
 }
 
-//TODO: Fix this so it works
-export const postDocument = async ({applicationId, docType, fileName}: DocumentUploadPayload) => {
-  const response = await api.post<ApplicationDocument>("/documents/upload",
-    { file: fileName },
-    {
-      params: {
-        applicationId,
-        docType,
-      },
-    }
-  )
+export const postDocument = async ({applicationId, docType, file}: DocumentUploadPayload) => {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await api.post<ApplicationDocument>(`/documents/upload?applicationId=${applicationId}&docType=${docType}`, formData)
   return response.data
 }

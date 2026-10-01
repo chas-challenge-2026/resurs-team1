@@ -7,11 +7,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.backoffice.ApplicationWithFinancesDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
 import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.service.CompanyFinancialService;
+
+import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -30,10 +37,12 @@ import se.comerit.resurs.service.BackofficeService;
 public class BackofficeController {
 
     private final BackofficeService service;
+    private final CompanyFinancialService financeService;
 
     @Autowired
-    public BackofficeController(BackofficeService service) {
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
         this.service = service;
+        this.financeService = financeService;
     }
 
     @GetMapping
@@ -79,16 +88,18 @@ public class BackofficeController {
     }
 
     @GetMapping("/application/{id}")
-    public ResponseEntity<CreditApplicationDetails> viewApplicationDetail(
+    public ResponseEntity<ApplicationWithFinancesDTO> viewApplicationDetail(
             @PathVariable("id") Long id
             ) {
         CreditApplicationDetails details = service.application_details(id);
+        Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
         /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
         model.addAttribute("auditLogRaw", app.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
-        return ResponseEntity.ok(details);
+
+        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
     }
 }

@@ -6,6 +6,12 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
 
+export type PurposeValue =
+  | "Expansion"
+  | "workingCapital"
+  | "Investment"
+  | "Other"
+
 export interface ApplicationDocument {
   id: number
   applicationId: number,
@@ -17,7 +23,7 @@ export interface ApplicationDocument {
 export interface Application {
   id: number
   requestedAmount: number
-  purpose: string
+  purpose: PurposeValue
   status: ApplicationStatus
   decision?: string | null
   decisionReason?: string | null
@@ -28,26 +34,13 @@ export interface Application {
   companyName: string
   orgNumber: string
   authorizedSignatory: string
-  durationMonths?: number
+  durationMonths: number
   documents?: ApplicationDocument[]
-  contactDetails?: { // I put as optional because mock data differs and there cold be old data in current DB
+  contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
     email: string;
     phoneNumber: string;
   };
-}
-
-export const getApplications = async (): Promise<Application[]> => {
-  const response = await api.get<Application[]>("/application")
-  return response.data
-}
-
-export const getApplicationById = async (id: number): Promise<Application> => {
-  const response = await api.get(`application/${id}`)
-  return {
-    ...response.data.app,
-    documents: response.data.documents,
-  }
 }
 
 // matches "ApplicationFormData" as of september, but may change later since we could send info that was not in form, hence its own type
@@ -65,8 +58,73 @@ export interface NewApplicationPayload {
   durationMonths: number;
 }
 
+// same as ReviewInfo.java. uses "requested_amount" for some reason with snake case =)
+export interface ReviewApplication {
+  id: number
+  requested_amount: number
+  purpose: string
+  createdAt: string
+  scoringResult: string | null
+  decisionReason: string | null
+  companyName: string
+  orgNumber: string
+}
+
+// HistoricalReviewInfo.java
+export interface DecidedApplication {
+  id: number
+  requestedAmount: number
+  purpose: string
+  decision: string | null
+  createdAt: string
+  updatedAt: string
+  companyName: string
+  orgNumber: string
+}
+
+// BackOfficeListsDTO.java
+export interface BackofficeLists {
+  reviewApplications: ReviewApplication[]
+  decidedApplications: DecidedApplication[]
+}
+
+// one row in the caseworker sidebar, built from both lists above
+export interface CaseListItem {
+  id: number
+  status: ApplicationStatus
+  companyName: string
+  requestedAmount: number
+  createdAt: string
+}
+
+export const getApplications = async (): Promise<Application[]> => {
+  const response = await api.get<Application[]>("/application")
+  return response.data
+}
+
+export const getApplicationById = async (id: number): Promise<Application> => {
+  const response = await api.get(`application/${id}`)
+  return {
+    ...response.data.app,
+    documents: response.data.documents,
+  }
+}
+
 export const postApplication = async (application: NewApplicationPayload): Promise<Application> => {
   const response = await api.post<Application>(`/application/apply`, application)
 
+  return response.data
+}
+
+export const getBackofficeApplicationById = async (id: number): Promise<Application> => {
+  const response = await api.get(`/backoffice/application/${id}`) 
+  return {
+    ...response.data.application,
+    documents: response.data.documents,
+  }
+}
+
+export const getBackofficeApplications = async (): Promise<BackofficeLists> => {
+  const response = await api.get<BackofficeLists>("/backoffice")
   return response.data
 }

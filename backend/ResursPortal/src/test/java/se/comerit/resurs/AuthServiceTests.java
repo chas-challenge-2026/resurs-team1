@@ -83,8 +83,8 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @BeforeEach
     void cleanDatabase() {
         documentRepo.deleteAll();
-        creditRepo.deleteAll();
-        companyRepo.deleteAll();
+        creditRepo.deleteAllInBatch();
+        companyRepo.deleteAllInBatch();
         caseWorkerRepo.deleteAll();
     }
 
