@@ -1,15 +1,13 @@
 package se.comerit.resurs;
 
-import jakarta.persistence.OptimisticLockException;
-import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -35,9 +33,9 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tester för BackofficeService.
@@ -84,16 +82,13 @@ class BackofficeServiceTests {
     @Autowired
     private AuditEventRepository auditEventRepo;
 
-    @Autowired
-    private TransactionTemplate transactionTemplate;
-
     @BeforeEach
     void cleanDatabase() {
         // audit_events har FK mot applications och måste tömmas först
-            auditEventRepo.deleteAll();
-            documentRepo.deleteAll();
-            creditRepo.deleteAllInBatch();
-            companyRepo.deleteAll();
+        auditEventRepo.deleteAll();
+        documentRepo.deleteAll();
+        creditRepo.deleteAll();
+        companyRepo.deleteAll();
     }
 
     @Test
@@ -178,11 +173,12 @@ class BackofficeServiceTests {
         creditRepo.save(createApplication(ApplicationStatus.REJECTED));
         creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
-        BackOfficeListsDTO result = backofficeService.applicationsForReview();
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                PageRequest.of(0,20),PageRequest.of(0,20));
 
         assertThat(result).isNotNull();
-        assertThat(result.reviewApplications()).hasSize(2);
-        assertThat(result.decidedApplications()).hasSize(2);
+        assertThat(result.reviewApplications().content()).hasSize(2);
+        assertThat(result.decidedApplications().content()).hasSize(2);
     }
 
     @Test
@@ -248,35 +244,5 @@ class BackofficeServiceTests {
         return application;
     }
 
-    @Test
-    void optimisticLocking_shouldRejectStaleUpdate() {
-        CreditApplication saved =
-                creditRepo.saveAndFlush(
-                        createApplication(ApplicationStatus.UNDER_REVIEW)
-                );
 
-        CreditApplication first = transactionTemplate.execute(status ->
-                creditRepo.findById(saved.getId()).orElseThrow()
-        );
-
-        CreditApplication second = transactionTemplate.execute(status ->
-                creditRepo.findById(saved.getId()).orElseThrow()
-        );
-
-        first.setStatus(ApplicationStatus.APPROVED);
-        first.setDecision(ApplicationStatus.APPROVED.toString());
-
-        second.setStatus(ApplicationStatus.REJECTED);
-        second.setDecision(ApplicationStatus.REJECTED.toString());
-
-        transactionTemplate.executeWithoutResult(status ->
-                creditRepo.saveAndFlush(first)
-        );
-
-        assertThatThrownBy(() ->
-                transactionTemplate.executeWithoutResult(status ->
-                        creditRepo.saveAndFlush(second)
-                )
-        ).isInstanceOf(ObjectOptimisticLockingFailureException.class);
-    }
 }

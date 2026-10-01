@@ -2,6 +2,8 @@ package se.comerit.resurs.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,12 +26,14 @@ import java.util.Optional;
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
  *
+ * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut och se detaljer,
+ * samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern
  *  - Audit log uppdateras via JSON string manipulation
  *  - Ingen e-postnotifiering vid beslut
  *  - Session check copy-pasteat
- *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
 @PreAuthorize("hasRole('CASE_WORKER')")
 @RestController
@@ -46,8 +50,12 @@ public class BackofficeController {
     }
 
     @GetMapping
-    public ResponseEntity<BackOfficeListsDTO> backofficeOverview() {
-        BackOfficeListsDTO applicationLists = service.applicationsForReview();
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(
+            @Qualifier("review") Pageable reviewPageable, @Qualifier("decided") Pageable decidedPageable) {
+
+
+        BackOfficeListsDTO applicationLists = service.applicationsForReview(
+                reviewPageable, decidedPageable);
 
         /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
         model.addAttribute("reviewApplications", applicationLists.reviewApplications());
