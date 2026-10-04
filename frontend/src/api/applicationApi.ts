@@ -159,7 +159,7 @@ export const getBackofficeApplicationById = async (id: number): Promise<Applicat
 }
 
 export const getBackofficeApplications = async (): Promise<BackofficeLists> => {
-  const response = await api.get<BackofficeLists>("/backoffice")
+  const response = await api.get<BackofficeLists>("/backoffice", { params: { review_size: 100, decided_size: 100 } }) // 100 is backend max, so search covers more cases
   return response.data
 }
 
