@@ -9,10 +9,14 @@ import Button from "../../components/Button/Button"
 import TextArea from "../../components/Textarea/Textarea"
 import Loading from "../../components/Loading/Loading"
 import s from "./CaseDetailsPage.module.css"
-import { useBackofficeApplication, useDecideApplication } from "../../hooks/useApplication"
-import type { Decision } from "../../api/applicationApi"
+import { useBackofficeApplication } from "../../hooks/useApplication"
 import { useParams } from "react-router-dom"
 import NotFoundPage from "../NotFound/NotFoundPage"
+
+// TODO: swap out EXTRA_INFO once backend sends the data they use for the calculations, they are convinced yearly company statements are gdpr and delete it =,)
+const EXTRA_INFO = {
+  currentAssets: 4200000, industry: "Bygg & Anläggning" 
+}
 
 type viewOptions = "overview" | "manageCase"
 
@@ -29,18 +33,7 @@ const CaseDetailsPage = () => {
   const { id } = useParams()
   const applicationId = Number(id)
 
-  const [rejectComment, setRejectComment] = useState("")
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
-  const decide = useDecideApplication()
-
-  const handleDecision = (decision: Decision, comment = "") => {
-    decide.mutate({ id: applicationId, decision, comment }, {
-      onSuccess: () => {
-        setActiveAction(null)
-        setRejectComment("")
-      },
-    })
-  }
 
   const handleActionToggle = (action: ActionType) => {
     if(action === activeAction) {
@@ -98,15 +91,10 @@ const CaseDetailsPage = () => {
 
           <Card>
             <h3>Ekonomi</h3>
-            {data.companyFinances ? (
-              <DataList>
-                <DataListItem label="Omsättning" value={formatCurrency(data.companyFinances.incomeStatement.revenue)} />
-                <DataListItem label="Rörelseresultat" value={formatCurrency(data.companyFinances.incomeStatement.operatingResult)} />
-                <DataListItem label="Eget kapital" value={formatCurrency(data.companyFinances.balanceSheet.equity)} />
-              </DataList>
-            ) : (
-              <p>Ingen årsredovisning hittades</p>
-            )}
+            <DataList>
+              <DataListItem label="Omsättning" value={formatCurrency(EXTRA_INFO.currentAssets)} />
+              <DataListItem label="Bransch" value={EXTRA_INFO.industry} />
+            </DataList>
           </Card>
         </section>
       }
@@ -142,6 +130,7 @@ const CaseDetailsPage = () => {
             </Button>
           </div>
 
+          {/* TODO: Connect submit buttons with backend */}
           {activeAction === "approve" && (
             <Card as="section">
               <div className={s.textContainer}>
@@ -149,7 +138,7 @@ const CaseDetailsPage = () => {
                 <p>Kontrollera att uppgifterna och eventuella kompletteringar är granskade. Ingen kommentar krävs.</p>
               </div>
               <CardFooter className={s.addingFooter}>
-                <Button onClick={() => handleDecision("APPROVED")} disabled={decide.isPending}>
+                <Button>
                   Godkänn ärendet
                 </Button>
                 <Button variant="secondary" onClick={() => setActiveAction(null)}>
@@ -177,15 +166,9 @@ const CaseDetailsPage = () => {
           {activeAction === "reject" && (
             <Card as="section">
               <h3 className={s.addingTitle}>Skriv en kommentar till varför ärendet avvisas</h3>
-              <TextArea
-                id="message"
-                label="message"
-                placeholder="Beskriv anledningen till avslaget..."
-                value={rejectComment}
-                onChange={(e) => setRejectComment(e.target.value)}
-              />
+              <TextArea id="message" label="message" placeholder="Beskriv anledningen till avslaget..." />
               <CardFooter className={s.addingFooter}>
-                <Button onClick={() => handleDecision("REJECTED", rejectComment)} disabled={decide.isPending || !rejectComment.trim()}>
+                <Button>
                   Avvisa ärendet
                 </Button>
                 <Button variant="secondary" onClick={() => setActiveAction(null)}>
@@ -194,8 +177,6 @@ const CaseDetailsPage = () => {
               </CardFooter>
             </Card>
           )}
-
-          {decide.isError && <p>{decide.error.message}</p>}
 
           {/* TODO: Add view for requests and corresponding attachments */}
         </section>
