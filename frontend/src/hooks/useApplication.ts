@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, getBackofficeApplications, type Application, type ApplicationStatus, type BackofficeLists, type CaseListItem, type NewApplicationPayload } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, getBackofficeApplications, postDecision, type Application, type ApplicationStatus, type BackofficeLists, type CaseListItem, type Decision, type NewApplicationPayload } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 
 export const useApplications = () => {
@@ -29,6 +29,18 @@ export const useSubmitApplication = () => {
   })
 }
 
+export const useDecideApplication = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, ApiErrorPayload, { id: number, decision: Decision, comment: string }>({
+    mutationFn: ({ id, decision, comment }) => postDecision(id, decision, comment),
+    meta: { preventGlobalToast: true },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["backofficeApplications"] }) // refreshes both the sidebar list and the open case
+    },
+  })
+}
+
 export const useBackofficeApplication = (id: number | undefined) => {
   return useQuery<Application, ApiErrorPayload>({
     queryKey: ["backofficeApplications", id],
@@ -43,18 +55,20 @@ export const useBackofficeApplications = () => {
     queryFn: getBackofficeApplications,
     // backend sends two lists without status, the sidebar wants one list with it
     select: (data) => [
-      ...data.reviewApplications.map((application) => ({
+      ...data.reviewApplications.content.map((application) => ({
         id: application.id,
         status: "UNDER_REVIEW" as const,
         companyName: application.companyName,
-        requestedAmount: application.requested_amount,
+        orgNumber: application.orgNumber,
+        requestedAmount: application.requestedAmount,
         createdAt: application.createdAt,
       })),
       // big problemo TODO: -----> backend only sends the 20 oldest decided cases, so newer decisions go missing after 20 <---------------------
-      ...data.decidedApplications.map((application) => ({
+      ...data.decidedApplications.content.map((application) => ({
         id: application.id,
-        status: application.decision as ApplicationStatus, 
+        status: application.decision as ApplicationStatus,
         companyName: application.companyName,
+        orgNumber: application.orgNumber,
         requestedAmount: application.requestedAmount,
         createdAt: application.createdAt,
       })),
