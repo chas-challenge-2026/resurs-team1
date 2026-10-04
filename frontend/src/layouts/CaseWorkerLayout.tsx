@@ -8,12 +8,21 @@ import Input from "../components/Input/Input"
 import SidebarCaseCard from "../components/SidebarCaseCard/SidebarCaseCard"
 import Button from "../components/Button/Button"
 import Loading from "../components/Loading/Loading"
+import { formatReferenceNumber } from "../utils/formatters"
 import s from "./CaseWorkerLayout.module.css"
 
 const CaseWorkerLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const outlet = useOutlet()
+  const [search, setSearch] = useState("")
   const { data: cases, isPending, isError, error } = useBackofficeApplications()
+
+  // ignore dashes so "5566778899" finds "556677-8899"
+  const query = search.trim().toLowerCase().replaceAll("-", "")
+  const filteredCases = cases?.filter((application) =>
+    formatReferenceNumber(application.id).toLowerCase().replaceAll("-", "").includes(query) ||
+    application.orgNumber.replaceAll("-", "").includes(query)
+  )
 
   const toggleCollapsed = () => {
     setIsCollapsed(!isCollapsed)
@@ -31,14 +40,16 @@ const CaseWorkerLayout = () => {
             size="sm"
             icon={<FiSearch />}
             placeholder="Sök på ärendenummer eller org.nr..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         }
       />
       <div className={s.content}>
         <aside className={`${s.sideBar} ${isCollapsed ? s.collapsed : ""}`}>
           <div className={s.sideBarHeader}>
-            {!isCollapsed && cases && (
-              <p className={s.casesLength}>{cases.length} ärenden</p>
+            {!isCollapsed && filteredCases && (
+              <p className={s.casesLength}>{filteredCases.length} ärenden</p>
             )}
 
             <Button
@@ -55,7 +66,8 @@ const CaseWorkerLayout = () => {
             <div className={s.casesWrapper}>
               {isPending && <Loading size="sm" label="Hämtar ärenden..." />}
               {isError && <p>{error.message}</p>}
-              {cases?.map((application) => (
+              {filteredCases?.length === 0 && <p>Inga ärenden matchar sökningen</p>}
+              {filteredCases?.map((application) => (
                 <SidebarCaseCard key={application.id} application={application} />
               ))}
             </div>
