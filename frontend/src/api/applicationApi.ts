@@ -6,6 +6,8 @@ export type ApplicationStatus =
   | "APPROVED"
   | "REJECTED"
 
+export type Decision = "APPROVED" | "REJECTED"
+
 export type PurposeValue =
   | "Expansion"
   | "workingCapital"
@@ -18,6 +20,26 @@ export interface ApplicationDocument {
   filename: string
   docType: string
   uploadedAt: string
+}
+
+// CompanyFinancialApiDTO.java
+export interface CompanyFinances {
+  incomeStatement: {
+    revenue: number
+    operatingResult: number
+    interestExpenses: number
+  }
+  balanceSheet: {
+    equity: number
+    currentAssets: number
+    totalAssets: number
+    shortTermLiabilities: number
+    longTermLiabilities: number
+  }
+  cashFlowStatement: {
+    operatingCashFlow: number
+    investmentCashFlow: number
+  }
 }
 
 export interface Application {
@@ -36,6 +58,7 @@ export interface Application {
   authorizedSignatory: string
   durationMonths: number
   documents?: ApplicationDocument[]
+  companyFinances?: CompanyFinances | null // only from backoffice, null when no annual report is found
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
     email: string;
@@ -82,10 +105,19 @@ export interface DecidedApplication {
   orgNumber: string
 }
 
+// PagedResult.java
+export interface PagedResult<T> {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
 // BackOfficeListsDTO.java
 export interface BackofficeLists {
-  reviewApplications: ReviewApplication[]
-  decidedApplications: DecidedApplication[]
+  reviewApplications: PagedResult<ReviewApplication>
+  decidedApplications: PagedResult<DecidedApplication>
 }
 
 // one row in the caseworker sidebar, built from both lists above
@@ -117,14 +149,19 @@ export const postApplication = async (application: NewApplicationPayload): Promi
 }
 
 export const getBackofficeApplicationById = async (id: number): Promise<Application> => {
-  const response = await api.get(`/backoffice/application/${id}`) 
+  const response = await api.get(`/backoffice/application/${id}`)
   return {
-    ...response.data.application,
-    documents: response.data.documents,
+    ...response.data.appDetails.application,
+    documents: response.data.appDetails.documents,
+    companyFinances: response.data.companyFinances,
   }
 }
 
 export const getBackofficeApplications = async (): Promise<BackofficeLists> => {
   const response = await api.get<BackofficeLists>("/backoffice")
   return response.data
+}
+
+export const postDecision = async (applicationId: number, decision: Decision, comment: string): Promise<void> => {
+  await api.post("/backoffice/decide", null, { params: { applicationId, decision, comment } })
 }
