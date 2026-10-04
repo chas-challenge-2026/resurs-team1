@@ -81,10 +81,10 @@ export interface NewApplicationPayload {
   durationMonths: number;
 }
 
-// same as ReviewInfo.java. uses "requested_amount" for some reason with snake case =)
+// same as ReviewInfo.java
 export interface ReviewApplication {
   id: number
-  requested_amount: number
+  requestedAmount: number
   purpose: string
   createdAt: string
   scoringResult: string | null
@@ -125,6 +125,7 @@ export interface CaseListItem {
   id: number
   status: ApplicationStatus
   companyName: string
+  orgNumber: string
   requestedAmount: number
   createdAt: string
 }

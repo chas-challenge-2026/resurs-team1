@@ -59,14 +59,16 @@ export const useBackofficeApplications = () => {
         id: application.id,
         status: "UNDER_REVIEW" as const,
         companyName: application.companyName,
-        requestedAmount: application.requested_amount,
+        orgNumber: application.orgNumber,
+        requestedAmount: application.requestedAmount,
         createdAt: application.createdAt,
       })),
       // big problemo TODO: -----> backend only sends the 20 oldest decided cases, so newer decisions go missing after 20 <---------------------
       ...data.decidedApplications.content.map((application) => ({
         id: application.id,
-        status: application.decision as ApplicationStatus, 
+        status: application.decision as ApplicationStatus,
         companyName: application.companyName,
+        orgNumber: application.orgNumber,
         requestedAmount: application.requestedAmount,
         createdAt: application.createdAt,
       })),
