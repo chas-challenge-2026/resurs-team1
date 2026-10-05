@@ -2,7 +2,7 @@ package se.comerit.resurs.dto.backoffice;
 
 import se.comerit.resurs.persistence.model.CreditApplication;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * ReviewInfo -> en rad i listan över ansökningar som väntar på granskning
@@ -19,7 +19,7 @@ public record ReviewInfo(
         long id,
         BigDecimal requestedAmount,
         String purpose,
-        LocalDateTime createdAt,
+        Instant createdAt,
         String scoringResult,
         String decisionReason,
         String companyName,
