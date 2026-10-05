@@ -32,7 +32,6 @@
 
 .button {
   height: 48px;
-  border-radius: var(--radius-sm);
 }
 
 .formError {

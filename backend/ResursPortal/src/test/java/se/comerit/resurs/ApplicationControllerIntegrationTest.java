@@ -25,6 +25,7 @@ import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,9 +71,13 @@ class ApplicationControllerIntegrationTest {
     @Test
     void submitApplication_withCorrectSession_returns201() {
 
+        String token = csrfToken();
+
         var loginResponse = restTestClient
                 .post()
                 .uri("/api/auth/login/company")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new CompanyLoginRequest(
                         "556000-1234",
@@ -85,19 +90,26 @@ class ApplicationControllerIntegrationTest {
 
         String sessionCookie = loginResponse
                 .getResponseHeaders()
-                .getFirst(HttpHeaders.SET_COOKIE);
+                .get(HttpHeaders.SET_COOKIE)
+                        .stream()
+                                .map(value -> value.split(";", 2)[0])
+                                .filter(value -> value.startsWith("JSESSIONID="))
+                                .findFirst()
+                                .orElseThrow();
+
 
         restTestClient
                 .post()
                 .uri("/api/application/apply")
-                .header(HttpHeaders.COOKIE, sessionCookie)
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, sessionCookie + "; XSRF-TOKEN=" + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new ApplicationSubmission(
                         "556000-1234",
                         BigDecimal.valueOf(250000),
                         "Expansion",
                         12,
-                        new ContactDetails("Test", "mail", "number")
+                        new ContactDetails("Test", "mail@live.se", "number")
                 ))
                 .exchange()
                 .expectStatus()
@@ -111,7 +123,7 @@ class ApplicationControllerIntegrationTest {
                     assertThat(application.purpose()).isEqualTo("Expansion");
                     assertThat(application.durationMonths()).isEqualTo(12);
                     assertThat(application.contactDetails().name()).isEqualTo("Test");
-                    assertThat(application.contactDetails().email()).isEqualTo("mail");
+                    assertThat(application.contactDetails().email()).isEqualTo("mail@live.se");
                     assertThat(application.contactDetails().phoneNumber()).isEqualTo("number");
                 });
     }
@@ -121,17 +133,31 @@ class ApplicationControllerIntegrationTest {
     @Test
     void submitApplication_withoutSession_returns401() {
 
+        String token = csrfToken();
+
         restTestClient
                 .post()
                 .uri("/api/application/apply")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new ApplicationSubmission(
-                        "556677-8899",
-                                BigDecimal.valueOf(250000),
-                                "Expansion",
-                        12,
-                        new ContactDetails("Test","mail","number")
-                                )
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, "XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(
+                        "orgNumber=556677-8899" +
+                                "&companyName=Test+Company" +
+                                "&authorizedSignatory=Test+Person" +
+                                "&egetKapital=500000" +
+                                "&totaltKapital=1000000" +
+                                "&omsattningstillgangar=400000" +
+                                "&kortfristigaSkulder=200000" +
+                                "&totalaSkulder=500000" +
+                                "&rorelseresultat=100000" +
+                                "&nettoomsattning=2000000" +
+                                "&requestedAmount=250000" +
+                                "&purpose=Expansion" +
+                                "&operativtKassaflode=150000" +
+                                "&investeringsKassaflode=-50000" +
+                                "&ranteKostnader=10000" +
+                                "&bransch=IT"
                 )
                 .exchange()
                 .expectStatus()
@@ -182,5 +208,21 @@ class ApplicationControllerIntegrationTest {
                 .expectStatus()
                 .isUnauthorized();
     }
-}
 
+    private String csrfToken() {
+        List<String> cookies = restTestClient
+                .post()
+                .uri("/api/auth/logout")
+                .exchange()
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE);
+
+        return cookies.stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("XSRF-TOKEN="))
+                .findFirst()
+                .orElseThrow()
+                .substring("XSRF-TOKEN=".length());
+    }
+}

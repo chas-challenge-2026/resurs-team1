@@ -2,6 +2,8 @@ package se.comerit.resurs.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,6 +24,17 @@ import java.util.Optional;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleOptimisticLockingFailure() {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "Update unsuccessful",
+                "Resource was modified by another instance. Please refresh and try again.",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiError> handleMissingRequestParam(Exception ex) {
@@ -121,6 +134,7 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
     @ExceptionHandler(CompanyRegistryUnavailableException.class)
     public ResponseEntity<ApiError> handleRegisterUnavailableException(
             CompanyRegistryUnavailableException ex
@@ -145,12 +159,23 @@ public class GlobalExceptionHandler {
         String message = switch (ex.reason()) {
             case COMPANY_NOT_FOUND -> "No company is registered with that organisation number";
             case NOT_AUTHORIZED_SIGNATORY -> "You are not a registered signatory for this company";
-            case REQUIRES_JOINT_SIGNATURE -> "This company must be signed for jointly and cannot be signed by one person alone";
+            case REQUIRES_JOINT_SIGNATURE ->
+                    "This company must be signed for jointly and cannot be signed by one person alone";
         };
 
         ApiError body = new ApiError(LocalDateTime.now(), ex.reason().name(), message, null);
         return new ResponseEntity<>(body, status);
     }
 
-
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(Exception ex) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "Forbidden",
+                Optional.ofNullable(ex.getMessage())
+                        .orElse("Access denied"),
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
 }

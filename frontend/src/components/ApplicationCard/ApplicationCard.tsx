@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
+import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../utils/formatters"
 import type { Application } from "../../api/applicationApi"
 import { Card, CardBody, CardFooter } from "../Card/Card"
 import StatusTag from "../StatusTag/StatusTag"
@@ -21,7 +21,7 @@ const ApplicationCard = ({application}: ApplicationCardProps) => {
             <StatusTag status={application.status} />
           </div>
 
-          <p className={s.purpose}>{application.purpose}</p>
+          <p className={s.purpose}>{getPurposeLabel(application.purpose)}</p>
           <p className={s.updatedAt}>Uppdaterad {formatDate(application.updatedAt)}</p>
         </div>
       </CardBody>

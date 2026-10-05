@@ -19,7 +19,6 @@ export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
   const status = error.response?.status
   const isLoginRequest = error.config?.url?.includes("/login")
   
-  const backendMessage = error.response?.data?.message
   let fallbackMessage = "Ett oväntat fel uppstod. Försök igen senare."
   
   if (!error.response) {
@@ -40,7 +39,7 @@ export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
   
   const normalizedError = {
     status,
-    message: backendMessage || fallbackMessage,
+    message: fallbackMessage,
     fieldErrors: error.response?.data?.fieldErrors,
     code: error.response?.data?.code,
     originalError: error,

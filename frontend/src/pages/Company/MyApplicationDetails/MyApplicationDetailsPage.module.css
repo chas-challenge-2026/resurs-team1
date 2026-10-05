@@ -16,26 +16,27 @@
   font-weight: 500;
 }
 
-/* Warning Card Header */
-.warningHeader {
+/* Info Card Header */
+.infoHeader {
   flex-direction: row;
   align-items: center;
 }
 
 .iconWrapper {
   display: none;
+  flex-shrink: 0;
 }
 
-.warningTitle {
+.infoTitle {
   font-weight: 500;
 }
 
-.warningSubtitle {
+.infoSubtitle {
   color: var(--color-text-muted);
 }
 
-/* Warning Card Body */
-.warningBody {
+/* Info Card Body */
+.infoBody {
   gap: var(--space-sm);
 }
 

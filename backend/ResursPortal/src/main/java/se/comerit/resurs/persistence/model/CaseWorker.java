@@ -10,13 +10,16 @@ public class CaseWorker {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Integer version;
+
     @Column(name = "name")
     private String name;
 
     @Column(name = "email", unique = true)
     private String email;
 
-    @Column(name = "password_md5")
+    @Column(name = "password_hash")
     private  String passwordHash;
 
     public CaseWorker() {
