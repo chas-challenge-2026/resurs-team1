@@ -61,3 +61,35 @@
   display: flex;
   gap: var(--space-sm);
 }
+
+/* Scoring styling */
+.metricRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badgeOk {
+  background-color: var(--color-primary-light);
+  color: #0E5D57;
+}
+
+.badgeFlagged {
+  background-color: #FBF1DF;
+  color: var(--color-warning-text);
+}
+
+.badgeReject {
+  background-color: #FAEAE9;
+  color: #8C1D19;
+}
