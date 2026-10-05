@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, getBackofficeApplications, postDecision, type Application, type ApplicationStatus, type BackofficeLists, type CaseListItem, type Decision, type NewApplicationPayload } from "../api/applicationApi"
+import { type QueryKey, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 
 export const useApplications = () => {
@@ -49,29 +49,26 @@ export const useBackofficeApplication = (id: number | undefined) => {
   })
 }
 
-export const useBackofficeApplications = () => {
-  return useQuery<BackofficeLists, ApiErrorPayload, CaseListItem[]>({
-    queryKey: ["backofficeApplications"],
-    queryFn: getBackofficeApplications,
-    // backend sends two lists without status, the sidebar wants one list with it
-    select: (data) => [
-      ...data.reviewApplications.content.map((application) => ({
-        id: application.id,
-        status: "UNDER_REVIEW" as const,
-        companyName: application.companyName,
-        orgNumber: application.orgNumber,
-        requestedAmount: application.requestedAmount,
-        createdAt: application.createdAt,
-      })),
-      // big problemo TODO: -----> backend only sends the 20 oldest decided cases, so newer decisions go missing after 20 <---------------------
-      ...data.decidedApplications.content.map((application) => ({
-        id: application.id,
-        status: application.decision as ApplicationStatus,
-        companyName: application.companyName,
-        orgNumber: application.orgNumber,
-        requestedAmount: application.requestedAmount,
-        createdAt: application.createdAt,
-      })),
-    ],
+export const useReviewApplications = () => {
+  return useInfiniteQuery<PagedResult<ReviewApplication>, ApiErrorPayload, CaseListItem[], QueryKey, number>({
+    queryKey: ["backofficeApplications", "review"],
+    queryFn: ({ pageParam }) => getReviewPage(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    select: (data) => data.pages.flatMap((page) => page.content.map((application) => ({
+      ...application, status: "UNDER_REVIEW" as const
+    })))
+  })
+}
+
+export const useDecidedApplications = () => {
+  return useInfiniteQuery<PagedResult<DecidedApplication>, ApiErrorPayload, CaseListItem[], QueryKey, number>({
+    queryKey: ["backofficeApplications", "decided"],
+    queryFn: ({ pageParam }) => getDecidedPage(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    select: (data) => data.pages.flatMap((page) => page.content.map((application) => ({
+      ...application, status: application.decision as ApplicationStatus
+    })))
   })
 }
