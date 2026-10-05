@@ -1,9 +1,12 @@
 package se.comerit.resurs.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public record ContactDetails(
-        String name,
-        String email,
-        String phoneNumber
+        @NotBlank String name,
+        @NotBlank @Email String email,
+        @NotBlank String phoneNumber
 
 ) {
 }

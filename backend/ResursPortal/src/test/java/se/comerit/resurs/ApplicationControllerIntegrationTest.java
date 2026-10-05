@@ -109,7 +109,7 @@ class ApplicationControllerIntegrationTest {
                         BigDecimal.valueOf(250000),
                         "Expansion",
                         12,
-                        new ContactDetails("Test", "mail", "number")
+                        new ContactDetails("Test", "mail@live.se", "number")
                 ))
                 .exchange()
                 .expectStatus()
@@ -123,7 +123,7 @@ class ApplicationControllerIntegrationTest {
                     assertThat(application.purpose()).isEqualTo("Expansion");
                     assertThat(application.durationMonths()).isEqualTo(12);
                     assertThat(application.contactDetails().name()).isEqualTo("Test");
-                    assertThat(application.contactDetails().email()).isEqualTo("mail");
+                    assertThat(application.contactDetails().email()).isEqualTo("mail@live.se");
                     assertThat(application.contactDetails().phoneNumber()).isEqualTo("number");
                 });
     }
