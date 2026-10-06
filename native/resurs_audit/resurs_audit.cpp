@@ -201,7 +201,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
     }
 
     for(size_t i = 0; i < entryCount; i++)
-{
+    {
         if (!std::equal(previousEntryCurrentHash.begin(), previousEntryCurrentHash.end(), entries[i].previousHash))
         {
             verifyChainResult.result_code = PREVIOUS_HASH_MISSMATCH;

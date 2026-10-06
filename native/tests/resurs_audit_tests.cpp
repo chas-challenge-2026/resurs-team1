@@ -4,6 +4,7 @@
 
 #include <openssl/evp.h>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstring>
@@ -52,6 +53,73 @@ get_public_key(
     EVP_PKEY_free(pkey);
 
     return publicKey;
+}
+
+
+// Reference - https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1
+// RFC 8032, section 7.1, Test 1 supplies the fixed Ed25519 seed and
+// corresponding public key. The hash and signature below form a deterministic
+// known-answer vector for this module's SHA-256-then-Ed25519 construction.
+constexpr std::array<uint8_t, 3> KNOWN_ANSWER_CANONICAL_DATA = {
+    'a', 'b', 'c'
+};
+
+constexpr std::array<uint8_t, resurs::audit::PKEY_BYTES>
+KNOWN_ANSWER_PRIVATE_KEY = {
+    0x9D, 0x61, 0xB1, 0x9D, 0xEF, 0xFD, 0x5A, 0x60,
+    0xBA, 0x84, 0x4A, 0xF4, 0x92, 0xEC, 0x2C, 0xC4,
+    0x44, 0x49, 0xC5, 0x69, 0x7B, 0x32, 0x69, 0x19,
+    0x70, 0x3B, 0xAC, 0x03, 0x1C, 0xAE, 0x7F, 0x60
+};
+
+constexpr std::array<uint8_t, resurs::audit::PKEY_BYTES>
+KNOWN_ANSWER_PUBLIC_KEY = {
+    0xD7, 0x5A, 0x98, 0x01, 0x82, 0xB1, 0x0A, 0xB7,
+    0xD5, 0x4B, 0xFE, 0xD3, 0xC9, 0x64, 0x07, 0x3A,
+    0x0E, 0xE1, 0x72, 0xF3, 0xDA, 0xA6, 0x23, 0x25,
+    0xAF, 0x02, 0x1A, 0x68, 0xF7, 0x07, 0x51, 0x1A
+};
+
+constexpr std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES>
+KNOWN_ANSWER_HASH = {
+    0xBA, 0x78, 0x16, 0xBF, 0x8F, 0x01, 0xCF, 0xEA,
+    0x41, 0x41, 0x40, 0xDE, 0x5D, 0xAE, 0x22, 0x23,
+    0xB0, 0x03, 0x61, 0xA3, 0x96, 0x17, 0x7A, 0x9C,
+    0xB4, 0x10, 0xFF, 0x61, 0xF2, 0x00, 0x15, 0xAD
+};
+
+constexpr std::array<uint8_t, resurs::audit::DIGITAL_SIGNATURE_BYTES>
+KNOWN_ANSWER_SIGNATURE = {
+    0x09, 0x6F, 0x55, 0x69, 0xD8, 0x07, 0xEE, 0x8A,
+    0xC7, 0xB1, 0x91, 0x3D, 0xA7, 0x0C, 0xF0, 0xAA,
+    0xB3, 0x35, 0xC2, 0x58, 0xF4, 0xB9, 0x4C, 0x8F,
+    0x21, 0x0D, 0xD1, 0x41, 0xE9, 0x74, 0x39, 0x27,
+    0xC8, 0xD1, 0xA6, 0xB3, 0x78, 0x87, 0x2A, 0x72,
+    0xC9, 0x44, 0x6C, 0x1F, 0x75, 0xE6, 0xDC, 0x7B,
+    0x2D, 0xEF, 0x98, 0xBD, 0x0C, 0x21, 0x4B, 0xE6,
+    0x70, 0x6D, 0x48, 0x79, 0x1F, 0x57, 0x68, 0x0A
+};
+
+AuditEntry make_known_answer_entry(const uint8_t* canonicalData)
+{
+    AuditEntry entry{};
+    entry.canonicalData = canonicalData;
+    entry.canonicalDataLength = KNOWN_ANSWER_CANONICAL_DATA.size();
+    entry.sequenceNumber = 1;
+
+    std::copy(
+        KNOWN_ANSWER_HASH.begin(),
+        KNOWN_ANSWER_HASH.end(),
+        entry.currentHash
+    );
+
+    std::copy(
+        KNOWN_ANSWER_SIGNATURE.begin(),
+        KNOWN_ANSWER_SIGNATURE.end(),
+        entry.signature
+    );
+
+    return entry;
 }
 
 
@@ -254,8 +322,7 @@ void test_signature_verification()
             publicKey.size()
         );
 
-    assert(result.result_code == ALL_OK);
-    assert(result.index == 0);
+    assert(result.result_code == VERIFY_CHAIN_ALL_OK);
 }
 
 
@@ -552,7 +619,7 @@ void test_valid_two_entry_chain()
             publicKey.size()
         );
 
-    assert(result.result_code == ALL_OK);
+    assert(result.result_code == VERIFY_CHAIN_ALL_OK);
 }
 
 
@@ -660,6 +727,140 @@ void test_modified_previous_hash_in_chain()
 
 
 // ============================================================
+// KNOWN-ANSWER TESTS
+// ============================================================
+
+void test_rfc_8032_public_key_derivation()
+{
+    auto privateKey = KNOWN_ANSWER_PRIVATE_KEY;
+    std::array<uint8_t, resurs::audit::PKEY_BYTES> publicKey{};
+
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            publicKey.data()
+        ) == 0
+    );
+
+    assert(publicKey == KNOWN_ANSWER_PUBLIC_KEY);
+}
+
+
+void test_known_answer_hash_and_signature()
+{
+    auto privateKey = KNOWN_ANSWER_PRIVATE_KEY;
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash{};
+    std::array<uint8_t, resurs::audit::DIGITAL_SIGNATURE_BYTES> signature{};
+
+    assert(
+        wrapper_hash_and_sign(
+            KNOWN_ANSWER_CANONICAL_DATA.data(),
+            KNOWN_ANSWER_CANONICAL_DATA.size(),
+            privateKey.data(),
+            privateKey.size(),
+            hash.data(),
+            signature.data()
+        ) == 0
+    );
+
+    assert(hash == KNOWN_ANSWER_HASH);
+    assert(signature == KNOWN_ANSWER_SIGNATURE);
+}
+
+
+void test_known_answer_entry_verifies()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == VERIFY_CHAIN_ALL_OK);
+}
+
+
+void test_known_answer_modified_data_is_detected()
+{
+    auto modifiedData = KNOWN_ANSWER_CANONICAL_DATA;
+    AuditEntry entry = make_known_answer_entry(modifiedData.data());
+    modifiedData[0] ^= 0x01;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == CURRENT_HASH_MISSMATCH);
+    assert(result.index == 0);
+}
+
+
+void test_known_answer_modified_hash_is_detected()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+    entry.currentHash[0] ^= 0x01;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == CURRENT_HASH_MISSMATCH);
+    assert(result.index == 0);
+}
+
+
+void test_known_answer_modified_signature_is_detected()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+    entry.signature[0] ^= 0x01;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == EVP_DIGEST_VERIFY_FAILED);
+    assert(result.index == 0);
+}
+
+
+void test_known_answer_modified_previous_hash_is_detected()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+    entry.previousHash[0] ^= 0x01;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == PREVIOUS_HASH_MISSMATCH);
+    assert(result.index == 0);
+}
+
+
+// ============================================================
 // TEST RUNNER
 // ============================================================
 
@@ -736,6 +937,41 @@ int main()
     run_test(
         "modified previous hash in chain",
         test_modified_previous_hash_in_chain
+    );
+
+    run_test(
+        "RFC 8032 public key derivation",
+        test_rfc_8032_public_key_derivation
+    );
+
+    run_test(
+        "known-answer hash and signature",
+        test_known_answer_hash_and_signature
+    );
+
+    run_test(
+        "known-answer entry verifies",
+        test_known_answer_entry_verifies
+    );
+
+    run_test(
+        "known-answer modified data is detected",
+        test_known_answer_modified_data_is_detected
+    );
+
+    run_test(
+        "known-answer modified hash is detected",
+        test_known_answer_modified_hash_is_detected
+    );
+
+    run_test(
+        "known-answer modified signature is detected",
+        test_known_answer_modified_signature_is_detected
+    );
+
+    run_test(
+        "known-answer modified previous hash is detected",
+        test_known_answer_modified_previous_hash_is_detected
     );
 
 
