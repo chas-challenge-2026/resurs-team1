@@ -1,0 +1,68 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.pageList {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  gap: var(--space-xs);
+}
+
+/* Page numbers */
+.pageButton {
+  font-weight: 400;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pageButton.active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pageButton:focus-visible,
+.arrowButton:focus-visible {
+  outline: 1px solid var(--color-primary);
+}
+
+/* Arrow buttons (< and >) */
+.arrowButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.25em;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.arrowButton:disabled,
+.pageButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Ellips (...) */
+.ellipsisItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ellipsis {
+  color: var(--color-text-muted);
+  user-select: none;
+  letter-spacing: 2px;
+}

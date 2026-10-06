@@ -158,11 +158,16 @@ export const getBackofficeApplicationById = async (id: number): Promise<Applicat
   }
 }
 
-export const getBackofficeApplications = async (): Promise<BackofficeLists> => {
-  const response = await api.get<BackofficeLists>("/backoffice", { params: { review_size: 100, decided_size: 100 } }) // 100 is backend max, so search covers more cases
-  return response.data
-}
-
 export const postDecision = async (applicationId: number, decision: Decision, comment: string): Promise<void> => {
   await api.post("/backoffice/decide", null, { params: { applicationId, decision, comment } })
+}
+
+export const getReviewPage = async (page: number): Promise<PagedResult<ReviewApplication>> => {
+  const response = await api.get<BackofficeLists>("/backoffice", { params: { review_page: page, review_size: 20 } })
+  return response.data.reviewApplications
+}
+
+export const getDecidedPage = async (page: number): Promise<PagedResult<DecidedApplication>> => {
+  const response = await api.get<BackofficeLists>("/backoffice", { params: { decided_page: page, decided_size: 20 } })
+  return response.data.decidedApplications
 }

@@ -1,5 +1,6 @@
 .wrapper {
   display: inline-flex;
+  width: 100%;
 }
 
 .segment {
@@ -52,7 +53,6 @@
 }
 
 .accent .active {
-  border-bottom: 3px solid var(--color-primary);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  border-bottom: 3px solid var(--color-text-main);
+  color: var(--color-text-main);
 }

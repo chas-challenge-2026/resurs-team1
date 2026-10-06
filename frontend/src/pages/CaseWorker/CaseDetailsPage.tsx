@@ -98,7 +98,7 @@ const CaseDetailsPage = () => {
               <p className={s.infoText}>Org.nr {data.orgNumber} · Inkommet {formatDate(data.createdAt)}</p>
             </div>
           </div>
-          <ApplicationSummary application={data} />
+          <ApplicationSummary application={data} amountBackground="neutral" durationColor="neutral" />
         </div>
 
         <ToggleSwitch variant="accent" name="view" options={options} selectedValue={view} onChange={(newView) => setView(newView)} />
