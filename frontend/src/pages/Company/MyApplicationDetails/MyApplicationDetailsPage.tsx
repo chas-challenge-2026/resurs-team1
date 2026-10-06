@@ -116,7 +116,7 @@ const MyApplicationDetailsPage = () => {
         </Card>
       }
 
-      {application.status === "PENDING_DOCS" &&
+      {application.status === "APPROVED" &&
         <Card as="section" variant="info">
           <CardHeader className={s.infoHeader}>
             <div className={s.iconWrapper}>
