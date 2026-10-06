@@ -102,10 +102,19 @@ const CaseWorkerLayout = () => {
             </>
           )}
 
-          {!isCollapsed && activeList.hasNextPage ? (
-            <Button variant="primary" color="var(--color-text-main)" className={s.showMoreButton} onClick={handleShowMore}>Visa fler</Button>
-          ) : (
-            <p className={s.endOfCases}>Slut på ärenden...</p>
+          {!isCollapsed && (
+            activeList.hasNextPage ? (
+              <Button
+                variant="primary"
+                color="var(--color-text-main)"
+                className={s.showMoreButton}
+                onClick={handleShowMore}
+              >
+                Visa fler
+              </Button>
+            ) : (
+              <p className={s.endOfCases}>Slut på ärenden...</p>
+            )
           )}
 
         </aside>

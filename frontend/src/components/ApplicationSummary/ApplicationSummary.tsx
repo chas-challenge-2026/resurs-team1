@@ -1,5 +1,5 @@
 import type { Application } from "../../api/applicationApi"
-import { formatCurrency } from "../../utils/formatters"
+import { formatCurrency, getPurposeLabel } from "../../utils/formatters"
 import { Card } from "../Card/Card"
 import s from "./ApplicationSummary.module.css"
 
@@ -40,7 +40,7 @@ const ApplicationSummary = ({ application, amountColor = "primary", durationColo
 
         <div className={`${s.item} ${s.purposeItem}`}>
           <dt className={s.label}>Ändamål</dt>
-          <dd className={s.value}>{application.purpose}</dd>
+          <dd className={s.value}>{getPurposeLabel(application.purpose)}</dd>
         </div>
       </dl>
     </Card>
