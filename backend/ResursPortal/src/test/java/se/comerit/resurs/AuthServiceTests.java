@@ -116,6 +116,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
         assertThat(response.role()).isEqualTo("company");
         assertThat(response.orgNumber()).isEqualTo(company.getOrg_number());
         assertThat(response.companyName()).isEqualTo("Fasen Elteknik AB");
+        assertThat(response.name()).isEqualTo("Anders Karlsson");
     }
 
     @Test
