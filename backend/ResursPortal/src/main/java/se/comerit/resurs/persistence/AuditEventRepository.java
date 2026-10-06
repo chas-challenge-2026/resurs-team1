@@ -7,8 +7,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.model.AuditEvent;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,5 +22,8 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<AuditEvent> findFirstByApplicationIdOrderBySequenceNumberDesc(
             Long applicationId);
+
+    List<AuditEvent> findByApplicationIdAndActionInOrderBySequenceNumberAsc(
+            Long applicationId, Collection<AuditAction> actions);
 
 }

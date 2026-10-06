@@ -9,10 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
-import se.comerit.resurs.dto.application.ApplicationShortDTO;
-import se.comerit.resurs.dto.application.ApplicationSubmission;
-import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
-import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.application.*;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
@@ -145,5 +142,14 @@ public class ApplicationController {
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,pageable);
 
         return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
+    }
+
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,
+                                                                    @AuthenticationPrincipal Object principal) {
+        CreditApplicationDTO app = appService.findApplicationByID(id);
+        accessPolicy.checkCanView(principal, app);
+        return ResponseEntity.ok(appService.findComments(id));
     }
 }

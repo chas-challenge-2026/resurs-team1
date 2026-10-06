@@ -30,8 +30,8 @@ CREATE TABLE applications (
     contact_number TEXT,
     contact_email TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-
+    updated_at TIMESTAMP DEFAULT NOW(),
+    comment TEXT
 );
 
 CREATE TABLE documents (
