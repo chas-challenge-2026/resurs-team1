@@ -1,5 +1,6 @@
 package se.comerit.resurs.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,7 +54,8 @@ public class ApplicationController {
     @PreAuthorize("hasRole('COMPANY')")
     @PostMapping("/apply")
     public ResponseEntity<CreditApplicationDTO> submitApplication(
-            @RequestBody ApplicationSubmission submission,
+
+           @Valid @RequestBody ApplicationSubmission submission,
             @AuthenticationPrincipal CompanyPrincipal principal) {
 
         accessPolicy.checkCanSubmitFor(principal, submission.orgNumber());

@@ -10,6 +10,8 @@ export default defineConfig({
     globals: true,
   },
   server: {
+    // "localhost" resolves to ::1 only, live share tunnels to 127.0.0.1
+    host: "127.0.0.1",
     // /api is a dev-only prefix so requests stay same-origin and skip CORS.
     // backend routes have no prefix, so strip it before forwarding.
     proxy: {

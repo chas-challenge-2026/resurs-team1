@@ -3,6 +3,7 @@ package se.comerit.resurs.persistence.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.DynamicInsert;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -46,11 +47,11 @@ public class Document {
         this.docType = doc_type;
     }
 
-    public LocalDateTime getUploadedAt() {
+    public Instant getUploadedAt() {
         return uploadedAt;
     }
 
-    public void setUploadedAt(LocalDateTime uploadedAt) {
+    public void setUploadedAt(Instant uploadedAt) {
         this.uploadedAt = uploadedAt;
     }
 
@@ -65,6 +66,5 @@ public class Document {
     private String docType;
 
     @Column(name = "uploaded_at")
-    private LocalDateTime uploadedAt;
-
+    private Instant uploadedAt;
 }

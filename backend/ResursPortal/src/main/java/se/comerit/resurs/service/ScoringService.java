@@ -9,7 +9,6 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.BranchRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.Branch;
-import se.comerit.resurs.persistence.model.Company;
 
 import java.math.BigDecimal;
 import java.util.Optional;

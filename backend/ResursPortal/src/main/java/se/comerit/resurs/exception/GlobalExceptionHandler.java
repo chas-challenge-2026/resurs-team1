@@ -10,12 +10,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
-import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -28,7 +25,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiError> handleOptimisticLockingFailure() {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Update unsuccessful",
                 "Resource was modified by another instance. Please refresh and try again.",
                 null
@@ -39,7 +36,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiError> handleMissingRequestParam(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Missing Parameter",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("Missing Parameter"),
@@ -51,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DocumentStorageException.class)
     public ResponseEntity<ApiError> handleDocumentUpload(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Upload Failed",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("Failed to upload file"),
@@ -64,7 +61,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(LoginFailedException.class)
     public ResponseEntity<ApiError> handleBadCredentials(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Login Failed",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("Bad Credentials"),
@@ -76,7 +73,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Illegal Argument",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("Illegal arguments were passed"),
@@ -89,7 +86,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiError> handleNoSuchElement(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "No element with that ID",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("An Unexpected Error Occured"),
@@ -115,7 +112,7 @@ public class GlobalExceptionHandler {
         );
 
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Validation Error",
                 "Request Validation Failed",
                 fieldErrors);
@@ -126,7 +123,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Internal Server Error",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("An Unexpected Error Occured"),
@@ -140,7 +137,7 @@ public class GlobalExceptionHandler {
             CompanyRegistryUnavailableException ex
     ) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "COMPANY_REGISTRY_UNAVAILABLE",
                 "The company registry is temporarily unavailable. Please try again shortly.",
                 null
@@ -163,14 +160,14 @@ public class GlobalExceptionHandler {
                     "This company must be signed for jointly and cannot be signed by one person alone";
         };
 
-        ApiError body = new ApiError(LocalDateTime.now(), ex.reason().name(), message, null);
+        ApiError body = new ApiError(Instant.now(), ex.reason().name(), message, null);
         return new ResponseEntity<>(body, status);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(Exception ex) {
         ApiError body = new ApiError(
-                LocalDateTime.now(),
+                Instant.now(),
                 "Forbidden",
                 Optional.ofNullable(ex.getMessage())
                         .orElse("Access denied"),

@@ -4,7 +4,7 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CreditApplicationDTO(
         Long id,
@@ -15,8 +15,8 @@ public record CreditApplicationDTO(
         String decisionReason,
         String scoringResult,
         Integer durationMonths,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
+        Instant createdAt,
+        Instant updatedAt,
         String companyName,
         String orgNumber,
         String authorizedSignatory,

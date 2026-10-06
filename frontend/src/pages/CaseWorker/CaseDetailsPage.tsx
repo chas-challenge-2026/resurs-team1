@@ -1,5 +1,10 @@
 import { useState } from "react"
+import { useParams } from "react-router-dom"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
+import { getMetric } from "../../utils/scoringConverter"
+import { useBackofficeApplication, useDecideApplication } from "../../hooks/useApplication"
+import type { Decision } from "../../api/applicationApi"
+import type { ScoringStatus, BadgeConfig } from "../../types/scoring"
 import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
 import { Card, CardFooter } from "../../components/Card/Card"
 import { DataList, DataListItem } from "../../components/DataList/DataList"
@@ -8,17 +13,30 @@ import StatusTag from "../../components/StatusTag/StatusTag"
 import Button from "../../components/Button/Button"
 import TextArea from "../../components/Textarea/Textarea"
 import Loading from "../../components/Loading/Loading"
-import s from "./CaseDetailsPage.module.css"
-import { useBackofficeApplication, useDecideApplication } from "../../hooks/useApplication"
-import type { Decision } from "../../api/applicationApi"
-import { useParams } from "react-router-dom"
 import NotFoundPage from "../NotFound/NotFoundPage"
+import s from "./CaseDetailsPage.module.css"
 
 type viewOptions = "overview" | "manageCase"
 
 const options: SwitchOption<viewOptions>[] = [
   { label: "Översikt", value: "overview" },
   { label: "Hantera ärende", value: "manageCase" },
+]
+
+const STATUS_BADGE: Record<ScoringStatus, BadgeConfig> = {
+  REJECT: { label: "Avvisad", className: s.badgeReject},
+  FLAGGED: { label: "Flaggad", className: s.badgeFlagged},
+  OK: { label: "Normal", className: s.badgeOk},
+  GOOD: { label: "God", className: s.badgeOk}
+}
+
+// keys must match the backend scoring log exactly
+const SCORING_METRICS = [
+  { key: "kreditPoäng", label: "Kreditpoäng" },
+  { key: "soliditet", label: "Soliditet" },
+  { key: "likviditetsgrad", label: "Likviditetsgrad" },
+  { key: "skuldsättningsgrad", label: "Skuldsättningsgrad" },
+  { key: "ränteTäckning", label: "Räntetäckningsgrad" },
 ]
 
 type ActionType = "approve" | "requestDocs" | "reject" | null
@@ -31,6 +49,7 @@ const CaseDetailsPage = () => {
 
   const [rejectComment, setRejectComment] = useState("")
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
+  console.log(data)
   const decide = useDecideApplication()
 
   const handleDecision = (decision: Decision, comment = "") => {
@@ -88,21 +107,48 @@ const CaseDetailsPage = () => {
       {view === "overview" &&
         <section className={s.contentWrapper}>
           <Card>
-            <h3>Kontakt</h3>
+            <h3 className="subtitle">Kontakt</h3>
             <DataList>
               <DataListItem label="Namn" value={data.contactDetails.name} />
               <DataListItem label="E-postadress" value={data.contactDetails.email} />
               <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
             </DataList>
           </Card>
+          
+          {data.scoringResult && (
+            <Card>
+              <h3 className="subtitle">Scoringresultat</h3>
+              <DataList>
+                {SCORING_METRICS.map(({key, label}) => {
+                  const metric = getMetric(data.scoringResult ?? "", key)
+                  return(
+                    <DataListItem
+                      key={key}
+                      label={label}
+                      value={
+                        <div className={s.metricRow}>
+                          <span>{metric.value}</span>
+                          {metric.scoringStatus && (
+                            <span className={`${s.badge} ${STATUS_BADGE[metric.scoringStatus].className}`}>{STATUS_BADGE[metric.scoringStatus].label}</span>
+                          )}
+                        </div>
+                      }
+                    />
+                  )
+                })}
+              </DataList>
+            </Card>
+          )}
 
           <Card>
-            <h3>Ekonomi</h3>
+            <h3 className="subtitle">Ekonomi</h3>
             {data.companyFinances ? (
               <DataList>
                 <DataListItem label="Omsättning" value={formatCurrency(data.companyFinances.incomeStatement.revenue)} />
                 <DataListItem label="Rörelseresultat" value={formatCurrency(data.companyFinances.incomeStatement.operatingResult)} />
                 <DataListItem label="Eget kapital" value={formatCurrency(data.companyFinances.balanceSheet.equity)} />
+                <DataListItem label="Totalt kassaflöde" value={formatCurrency(data.companyFinances.cashFlowStatement.operatingCashFlow)} />
+                <DataListItem label="Kortfristiga skulder" value={formatCurrency(data.companyFinances.balanceSheet.shortTermLiabilities)} />
               </DataList>
             ) : (
               <p>Ingen årsredovisning hittades</p>
@@ -124,7 +170,7 @@ const CaseDetailsPage = () => {
             </Button>
             <Button 
               variant="secondary"
-              color="var(--color-warning-strong)"
+              color="var(--color-warning)"
               className={s.actionButton}
               active={activeAction === "requestDocs"}
               onClick={() => handleActionToggle("requestDocs")}

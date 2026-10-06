@@ -1,9 +1,8 @@
 package se.comerit.resurs.exception;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.http.HttpStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 
@@ -15,7 +14,7 @@ import java.util.Map;
 
 @Schema(description = "Standard error response")
 public record ApiError(
-        LocalDateTime timestamp,
+        Instant timestamp,
         String error,
         String message,
         Map<String,String> details
