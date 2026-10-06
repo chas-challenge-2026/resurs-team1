@@ -20,6 +20,15 @@ export const formatCurrency = (value: number, unit: string = "kr"): string => {
   return unit ? `${formatted} ${unit}`.trim() : formatted;
 }
 
+export const formatNumberWithSpaces = (val: string) => {
+  // Remove non-numbers
+  const cleanValue = val.replace(/\D/g, "")
+
+  if (!cleanValue) return ""
+
+  return new Intl.NumberFormat("sv-SE").format(Number(cleanValue))
+}
+
 export const formatDate = (isoString: string) => {
   if (!isoString) return "-"
   const date = new Date(isoString)

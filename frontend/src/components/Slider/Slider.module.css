@@ -4,22 +4,25 @@
   gap: var(--space-xs);
 }
 
+.inputWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+
 .numberInput {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  border: none;
-  border-bottom: 2px solid var(--color-primary);
-  padding-right: var(--space-xs);
-  outline: none;
-  width: auto;
-  field-sizing: content;
-  min-width: 2ch;
-  max-width: 12ch;
+  height: 48px;
 }
 
 .unitSuffix {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
+  position: absolute;
+  right: var(--space-sm);
+  pointer-events: none;
 }
 
 .valueDisplayButton {
@@ -83,4 +86,15 @@
   display: flex;
   justify-content: space-between;
   color: var(--color-text-muted);
+}
+
+@media (min-width: 768px) {
+  .numberInput {
+    font-size: 1.5rem;
+    height: 60px;
+  }
+
+  .unitSuffix {
+    font-size: 1.5rem;
+  }
 }
