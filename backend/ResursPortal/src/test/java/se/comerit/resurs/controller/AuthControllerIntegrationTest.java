@@ -76,6 +76,7 @@ class AuthControllerIntegrationTest {
         assertThat(response.getBody().orgNumber()).isEqualTo(ORG_NUMBER);
         assertThat(response.getBody().role()).isEqualTo("company");
         assertThat(response.getBody().companyName()).isEqualTo(COMPANY_NAME);
+        assertThat(response.getBody().name()).isEqualTo("Anders Karlsson");
     }
 
     @Test
