@@ -2,6 +2,7 @@
 #include "resurs_audit.h"
 #include "audit_types.h"
 
+// ----------- Internal function  -----------
 int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
 {
     DigitalSign digSign;
@@ -24,8 +25,6 @@ int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *in
 {
     DigitalSign digSign;
 
-    // std::vector<uint8_t> cData(canonicalData, canonicalData + canonicalDateLength);
-
     DigitalSignResultCode result = digSign.sign(privateKey, privateKeyLength, input_buffer, output_buffer);
 
     if (result != SIGN_ALL_OK)
@@ -33,10 +32,11 @@ int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *in
         return -1;
     }
 
-    // std::copy(result.begin(), result.end(), output_buffer);
-
     return 0;
 }
+
+
+// ----------- Exposed functions -----------
 
 int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, uint8_t *output_signature_buffer)
 {
@@ -61,17 +61,13 @@ int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLeng
 
 VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength)
 {
-    // Läsa igenom entries
-
     DigitalSign digSign;
-
-    // AuditEntryChain chain;
-    // chain.entries.resize(entryCount);
 
     VerifyChainResult result = digSign.verify_chain(entries, entryCount, publicKey, PublicKeyLength);
 
     return result;
 }
+
 
 void generate_private_key(unsigned char *output_buffer)
 {
