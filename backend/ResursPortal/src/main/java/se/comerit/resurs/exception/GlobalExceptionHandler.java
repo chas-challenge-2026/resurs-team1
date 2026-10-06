@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
+<<<<<<< Updated upstream
+=======
+import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
+import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
+>>>>>>> Stashed changes
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -174,5 +179,16 @@ public class GlobalExceptionHandler {
                 null
         );
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InvalidRegistryResponseException.class)
+    public ResponseEntity<ApiError>handleInvalidRegistryResponse(InvalidRegistryResponseException ex) {
+        ApiError body = new ApiError(
+                LocalDateTime.now(),
+                "INVALID_REGISTRY_RESPONSE",
+                "The company registry returned incomplete data. Please try again later.",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY);
     }
 }
