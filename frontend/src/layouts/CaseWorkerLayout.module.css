@@ -11,7 +11,16 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
+.sticky {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
 .sideBar {
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-secondary);
   width: 100%;
   overflow-y: auto;
@@ -42,6 +51,17 @@
   align-items: center;
   border-radius: var(--radius-pill);
   padding: var(--space-xs);
+}
+
+.showMoreButton {
+  margin: var(--space-base) var(--space-xs);
+  margin-left: auto;
+}
+
+.endOfCases {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-base) var(--space-xs);
 }
 
 /* Main container */
