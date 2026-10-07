@@ -25,8 +25,18 @@ dist-ssr
 
 # CMake
 native/build/
+/build/
 
 # Environment variables
 .env
 .env.*
 !.env.example
+
+# vcpkg dependencies
+native/vcpkg_installed/
+
+# Local Windows build
+build/windows/
+
+# Local native development build
+native/build-devcontainer/
