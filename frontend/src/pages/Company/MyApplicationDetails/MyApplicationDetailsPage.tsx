@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useParams } from "react-router-dom"
-import { RiChat3Line, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
+import { RiChat3Line, RiCheckLine, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
 import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
 import { useApplication, useDetailedApplication } from "../../../hooks/useApplication"
@@ -106,6 +106,22 @@ const MyApplicationDetailsPage = () => {
         </div>
         <p className={s.description}>{getPurposeLabel(application.purpose)} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
       </div>
+
+      {application.status === "APPROVED" &&
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
+            <div className={s.iconWrapper}>
+              <RiCheckLine />
+            </div>
+            <div className={s.headerText}>
+              <h3 className={s.infoTitle}>Din ansökan har beviljats!</h3>
+              <p className={s.infoSubtitle}>
+                Ett bekräftelsemail har skickats till din registrerade e-postadress. Utbetalning sker normalt till företagets bankgiro/konto inom 1-2 bankdagar.
+              </p>
+            </div>
+          </CardHeader>
+        </Card>
+      }
 
       {/* TODO: Add text from caseworker if caseworker rejected the case */}
       {application.status === "REJECTED" &&
