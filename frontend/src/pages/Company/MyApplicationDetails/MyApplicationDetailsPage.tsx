@@ -1,9 +1,9 @@
 import { useRef, useState } from "react"
 import { useParams } from "react-router-dom"
-import { RiChat3Line, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
+import { RiChat3Line, RiCheckLine, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
 import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
-import { useApplication } from "../../../hooks/useApplication"
+import { useApplication, useDetailedApplication } from "../../../hooks/useApplication"
 import { Card, CardBody, CardFooter, CardHeader } from "../../../components/Card/Card"
 import { DataList, DataListItem } from "../../../components/DataList/DataList"
 import InputError from "../../../components/InputError/InputError"
@@ -13,6 +13,7 @@ import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
 import s from "./MyApplicationDetailsPage.module.css"
 import NotFoundPage from "../../NotFound/NotFoundPage"
+import { getCustomerRejectionsSummary } from "../../../utils/scoringConverter"
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
 
@@ -23,11 +24,17 @@ const MyApplicationDetailsPage = () => {
   const { data: application, isPending, isError, error } = useApplication(applicationId)
   const { data: documents } = useDocuments(applicationId)
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
+  const detailedApplication = useDetailedApplication(applicationId)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  let reasons: string[] = []
+  if(detailedApplication.data?.app.decisionReason) {
+    reasons = getCustomerRejectionsSummary(detailedApplication.data?.app.decisionReason)
+  }
 
   if(isPending) return <Loading size="lg" label="Hämtar ansökan..." centerOnPage delay />
   
@@ -100,6 +107,44 @@ const MyApplicationDetailsPage = () => {
         <p className={s.description}>{getPurposeLabel(application.purpose)} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
       </div>
 
+      {application.status === "APPROVED" &&
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
+            <div className={s.iconWrapper}>
+              <RiCheckLine />
+            </div>
+            <div className={s.headerText}>
+              <h3 className={s.infoTitle}>Din ansökan har beviljats!</h3>
+              <p className={s.infoSubtitle}>
+                Ett bekräftelsemail har skickats till din registrerade e-postadress. Utbetalning sker normalt till företagets bankgiro/konto inom 1-2 bankdagar.
+              </p>
+            </div>
+          </CardHeader>
+        </Card>
+      }
+
+      {/* TODO: Add text from caseworker if caseworker rejected the case */}
+      {application.status === "REJECTED" && reasons.length > 0 &&
+        <Card as="section" variant="info">
+          <CardHeader className={s.infoHeader}>
+            <div className={s.headerText}>
+              <h3 className={s.infoTitle}>Din ansökan har blivit avslagen</h3>
+              <p className={s.infoSubtitle}>
+                Din ansökan kunde tyvärr inte beviljas automatiskt på grund av följande faktorer:
+              </p>
+              <ul className={s.reasonList}>
+                {reasons.map((reason, index) => (
+                  <li key={index} className={s.reasonItem}>
+                    <span className={s.bulletIcon}>-</span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardHeader>
+        </Card>
+      }
+
       {application.status === "UNDER_REVIEW" &&
         <Card as="section" variant="info">
           <CardHeader className={s.infoHeader}>
@@ -109,7 +154,7 @@ const MyApplicationDetailsPage = () => {
             <div className={s.headerText}>
               <h3 className={s.infoTitle}>Din ansökan behandlas</h3>
               <p className={s.infoSubtitle}>
-                En handläggare granskar just nu dina uppgifter. Normal handläggningstid är 1–2 bankdagar. Vi hör av oss om vi behöver kompletterande information.
+                En handläggare granskar just nu dina uppgifter. Normal handläggningstid är 1-2 bankdagar. Vi hör av oss om vi behöver kompletterande information.
               </p>
             </div>
           </CardHeader>

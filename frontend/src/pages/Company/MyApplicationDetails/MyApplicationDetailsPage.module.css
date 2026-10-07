@@ -93,6 +93,17 @@
   gap: var(--space-sm);
 }
 
+/* Rejected list */
+.reasonList {
+  list-style: none;
+  padding-top: var(--space-xs);
+}
+
+.reasonItem {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 @media (min-width: 768px) {
   .iconWrapper {
     display: block;
