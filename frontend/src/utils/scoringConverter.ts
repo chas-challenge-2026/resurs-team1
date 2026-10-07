@@ -59,35 +59,7 @@ export const parseDecisionReasons = (rawString: string): DecisionDetail[] => {
   })
 }
 
-export const getCustomerFriendlyRejections = (rawString: string): string[] => {
-  const parsed = parseDecisionReasons(rawString);
-
-  // Filter on rejected strings
-  return parsed
-    .filter((item) => item.type === 'REJECTION')
-    .map((item) => {
-
-      if (item.title.includes('Soliditet för låg')) {
-        return 'Företagets soliditet uppfyller inte minimikravet för kreditgodkännande.'
-      }
-      if (item.title.includes('Skuldsättningsgrad för hög')) {
-        return 'Företagets nuvarande skuldsättning är för hög i förhållande till eget kapital.'
-      }
-      if (item.title.includes('Negativt operativt kassaflöde')) {
-        return 'Företagets operativa kassaflöde är för närvarande negativt.'
-      }
-      if (item.title.includes('Räntetäckningsgrad under')) {
-        return 'Rörelseresultatet täcker inte företagets nuvarande räntekostnader.'
-      }
-      if (item.title.includes('Kombinationsrisk — likviditetsgrad')) {
-        return 'Låg likviditet i kombination med negativt rörelseresultat.'
-      }
-
-      // Fallback: Remove raw characters like (0.08 < 0.20 gräns)
-      return item.title.replace(/\(.*?\)/g, '').trim();
-    })
-}
-
+// TODO: Check if it includes all possible variants from backend
 export const getCustomerRejectionsSummary = (rawString: string): string[] => {
   if (!rawString) return []
 

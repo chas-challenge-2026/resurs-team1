@@ -124,7 +124,7 @@ const MyApplicationDetailsPage = () => {
       }
 
       {/* TODO: Add text from caseworker if caseworker rejected the case */}
-      {application.status === "REJECTED" &&
+      {application.status === "REJECTED" && reasons.length > 0 &&
         <Card as="section" variant="info">
           <CardHeader className={s.infoHeader}>
             <div className={s.headerText}>

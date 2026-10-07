@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   background-color: #f4f6f8;
-  border-color: #f4f6f8;
+  border-color: #f4f6f8 !important;
 }
 
 .preFilled p {
