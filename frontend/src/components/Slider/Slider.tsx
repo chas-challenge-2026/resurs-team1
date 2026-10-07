@@ -98,7 +98,6 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          autoFocus
           size={inputValue.length > 1 ? inputValue.length - 1 : 1}
           className={`input-base ${s.numberInput}`}
         />
