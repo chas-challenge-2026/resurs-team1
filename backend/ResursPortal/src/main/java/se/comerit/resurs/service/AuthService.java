@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
+import se.comerit.resurs.dto.bankid.BankIdVerificationResult;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
@@ -42,14 +43,15 @@ public class AuthService {
     // BankID mock — hardcoded org numbers, real BankID integration skipped -> old comment
     // TODO: replace with real BankID integration -> old comment
     public CompanyLoginResponse loginCompany(String orgNumber, String personalNumber) {
-         bankIdService.verify(personalNumber);
+         BankIdVerificationResult verified = bankIdService.verify(personalNumber);
          CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
          validationService.validateSignatory(company, personalNumber);
 
         return new CompanyLoginResponse(
                 orgNumber,
                 "company",
-                company.companyName()
+                company.companyName(),
+                verified.name()
         );
     }
     // TODO: Ersätt med CompanyValidationService.validateSignatory() när feature/company-validation är mergad

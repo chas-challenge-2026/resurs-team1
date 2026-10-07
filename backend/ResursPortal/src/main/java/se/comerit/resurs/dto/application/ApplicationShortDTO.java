@@ -5,7 +5,7 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ApplicationShortDTO (
         Long id,
@@ -13,7 +13,7 @@ public record ApplicationShortDTO (
         String purpose,
         ApplicationStatus status,
         String decision,
-        LocalDateTime createdAt
+        Instant createdAt
 ){
     public ApplicationShortDTO(CreditApplication app) {
         this(app.getId(), app.getRequestedAmount(), app.getPurpose(), app.getStatus(), app.getDecision(),app.getCreatedAt());

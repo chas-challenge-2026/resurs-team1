@@ -29,8 +29,8 @@ CREATE TABLE applications (
     contact_name TEXT,
     contact_number TEXT,
     contact_email TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 
 );
 
@@ -39,7 +39,7 @@ CREATE TABLE documents (
     application_id INT REFERENCES applications(id),
     filename VARCHAR(255),
     doc_type VARCHAR(50),
-    uploaded_at TIMESTAMP DEFAULT NOW()
+    uploaded_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE branches (

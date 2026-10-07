@@ -46,6 +46,30 @@ On Linux this produces `libresurs_crypto.so`. On Windows it produces
 `resurs_crypto.dll`. Internal C++ symbols are hidden on platforms that support
 symbol visibility; the two C ABI functions are explicitly exported.
 
+### Docker builds for Linux
+
+From the repository root, build and test with the native team's default Ubuntu
+24.04 image:
+
+```bash
+docker build --build-arg UBUNTU_VERSION=24.04 -t resurs-crypto-ubuntu-24 ./native
+```
+
+Build and test against Ubuntu 22.04/Jammy with:
+
+```bash
+docker build --build-arg UBUNTU_VERSION=22.04 -t resurs-crypto-jammy ./native
+```
+
+Both builds run the crypto behavior tests and the exported-symbol test. See
+`native/DOCKER.md` for demo, test, and operating-system verification commands.
+
+Distribute the `.so` built for the same Ubuntu release as the consuming
+application's runtime, or for an older compatible release. A library built on
+a newer Linux release may require glibc or libstdc++ symbols that do not exist
+in an older runtime. The produced file is located at
+`/resurs-build/libresurs_crypto.so` inside the image.
+
 Build and run the example with:
 
 ```bash
