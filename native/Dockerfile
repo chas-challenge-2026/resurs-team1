@@ -11,21 +11,13 @@ RUN cmake -S . -B /resurs-build \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_TESTING=ON \
         -DRESURS_BUILD_CRYPTO_DEMO=ON \
+        -DRESURS_BUILD_AUDIT_DEMO=ON \
     && cmake --build /resurs-build \
         --target resurs_crypto_demo \
                  resurs_crypto_tests \
-                 resurs_audit \
+                 resurs_audit_demo \
                  resurs_audit_tests \
         --parallel \
     && ctest --test-dir /resurs-build --output-on-failure
-
-RUN c++ -std=c++17 -Wall -Wextra -Wpedantic \
-        -I resurs_audit \
-        resurs_audit/Main.cpp \
-        -L/resurs-build \
-        -Wl,-rpath,/resurs-build \
-        -lresurs_audit \
-        -lcrypto \
-        -o /resurs-build/resurs_audit_demo
 
 CMD ["/resurs-build/resurs_audit_demo"]

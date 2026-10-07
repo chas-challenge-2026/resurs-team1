@@ -39,7 +39,20 @@ endif()
 add_resurs_module(resurs_audit
     resurs_audit/resurs_audit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
-    target_sources(resurs_audit PRIVATE resurs_audit/wrapper.cpp)
+target_sources(resurs_audit PRIVATE resurs_audit/wrapper.cpp)
+target_link_libraries(resurs_audit PRIVATE OpenSSL::Crypto)
+
+option(RESURS_BUILD_AUDIT_DEMO
+    "Build the resurs_audit demo executable"
+    OFF)
+
+if(RESURS_BUILD_AUDIT_DEMO)
+    add_executable(resurs_audit_demo
+        resurs_audit/Main.cpp)
+    target_link_libraries(resurs_audit_demo PRIVATE resurs_audit)
+    target_include_directories(resurs_audit_demo PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+endif()
 
 include(GNUInstallDirs)
 install(TARGETS resurs_crypto resurs_audit
