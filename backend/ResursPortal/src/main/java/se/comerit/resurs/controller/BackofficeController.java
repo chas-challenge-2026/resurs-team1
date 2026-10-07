@@ -16,6 +16,7 @@ import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
+import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.BackofficeService;
 import se.comerit.resurs.service.CompanyFinancialService;
 
@@ -28,6 +29,7 @@ import java.util.Optional;
  *
  * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut och se detaljer,
  * samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ * Controllern kan också köra om scoring på ett ärende.
  *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern
@@ -42,11 +44,15 @@ public class BackofficeController {
 
     private final BackofficeService service;
     private final CompanyFinancialService financeService;
+    // ApplicationService behövs för att kunna köra om scoring
+    private final ApplicationService appService;
 
     @Autowired
-    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService,
+                                ApplicationService appService) {
         this.service = service;
         this.financeService = financeService;
+        this.appService = appService;
     }
 
     @GetMapping
@@ -109,5 +115,12 @@ public class BackofficeController {
         */
 
         return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
+    }
+
+    // Kör om scoring på ett ärende, bara handläggare ska komma åt denna eftersom hela klassen har @PreAuthorize
+    // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
+    @PostMapping("/application/{id}/rescore")
+    public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(appService.rescoreApplication(id));
     }
 }

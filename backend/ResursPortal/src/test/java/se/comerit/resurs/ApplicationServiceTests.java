@@ -15,17 +15,22 @@ import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.model.AuditEvent;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.service.ApplicationService;
+import se.comerit.resurs.service.BackofficeService;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -64,6 +69,9 @@ class ApplicationServiceTests {
     private CreditApplicationRepository applicationRepository;
 
     private Company testCompany;
+
+    @Autowired
+    private BackofficeService backofficeService;
 
     @BeforeEach
     void setUp() {
@@ -435,7 +443,13 @@ class ApplicationServiceTests {
         return application;
     }
 
-
+    //Sparar bolag + ärende i databasen, sätter durationMonths=12
+    private CreditApplication saveApplicationFor(String orgNumber, ApplicationStatus status) {
+        Company company = saveCompany(orgNumber);
+        CreditApplication application = createApplicationFor(company, status);
+        application.setDurationMonths(12);
+        return applicationRepository.save(application);
+    }
 
 
     // ============================================================
@@ -466,6 +480,111 @@ class ApplicationServiceTests {
                 "Test Person",                // authorized_signatory
                 3                            // flagCount
         );
+    }
+
+    // ============================================================
+    // rescoreApplication()
+    // ============================================================
+
+    @Test
+    void rescoreApplication_shouldUpdateSameApplication() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+
+        CreditApplicationDTO result = applicationService.rescoreApplication(application.getId());
+
+        assertThat(result.id()).isEqualTo(application.getId());
+        assertThat(result.scoringResult()).isNotBlank();
+        assertThat(applicationRepository.findAll()).hasSize(1);
+
+        //Kollar också att ändringen faktiskt sparades i databasen
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getScoringResult()).isNotBlank();
+        assertThat(fromDb.getDecision()).isNotBlank();
+    }
+
+    // Ett ärende som inte finns ska ge NoSuchElementException (blir 404 i controllern)
+    @Test
+    void rescoreApplication_shouldThrowWhenApplicationDoesNotExist() {
+        assertThatThrownBy(() -> applicationService.rescoreApplication(999999L))
+                .isInstanceOf(NoSuchElementException.class);
+    }
+
+    //Har en handläggare redan fattat ett beslut får scoring inte skriva över det
+    // beslutet skapas via BackofficeService (som är @Transactional och loggar MANUAL_DECISION), alltså samma väg som
+    // en handläggare använder.
+    @Test
+    void rescoreApplication_shouldThrowWhenManualDecisionExists() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+        backofficeService.application_decision(application.getId(), ApplicationStatus.APPROVED,
+                "handlaggare@test.se", "Test Handläggare", "ok");
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("manual decision");
+
+        // Ärendet ska vara orört alltså handläggarens beslut ska vara kvar och ingen score ska ha skrivits
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(fromDb.getScoringResult()).isNull();
+    }
+
+    //Ett automatiskt beslut (REJECTED från scoring, inget manuellt beslut) ska gå att köra om
+    @Test
+    void rescoreApplication_shouldAllowRescoreOfAutomaticDecision() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.REJECTED);
+        CreditApplicationDTO result = applicationService.rescoreApplication(application.getId());
+        assertThat(result.scoringResult()).isNotBlank();
+    }
+
+    // Omkörningen ska loggas som en SCORING_RUN i auditloggen
+    @Test
+    void rescoreApplication_shouldWriteScoringRunEvent() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+        applicationService.rescoreApplication(application.getId());
+        List<AuditEvent> events = auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(application.getId());
+        assertThat(events).extracting(AuditEvent::getAction)
+                .containsExactly(AuditAction.SCORING_RUN);
+    }
+
+    //Om det inte finns någon årsredovisning för bolaget ska omkörningen misslyckas (NoSuchElementException)
+    @Test
+    void rescoreApplication_shouldThrowWhenFinancialsMissing() {
+        CreditApplication application = saveApplicationFor("556000-0000", ApplicationStatus.UNDER_REVIEW);
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(NoSuchElementException.class);
+    }
+
+    // Om registret ligger nere (556000-5555 simulerar det) ska felet kastas vidare och ärendet ska vara oförändrat
+    // t.ex när kreditupplysningen inte fungerar just nu
+    @Test
+    void rescoreApplication_shouldLeaveApplicationUnchangedWhenRegistryIsDown() {
+        CreditApplication application = saveApplicationFor("556000-5555", ApplicationStatus.UNDER_REVIEW);
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(CompanyRegistryUnavailableException.class);
+
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+        assertThat(fromDb.getScoringResult()).isNull();
+
+        assertThat(auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(application.getId()))
+                .isEmpty();
+    }
+
+    //Ett ärende som väntar på dokument från kunden ska inte kunna köras om, då skulle statusen flyttas bort från PENDING_DOCS
+    @Test
+    void rescoreApplication_shouldThrowWhenWaitingForDocument() {
+        CreditApplication application = saveApplicationFor("556000-7777",
+                ApplicationStatus.PENDING_DOCS);
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("waiting for documents");
+
+        //Ärendet ska vara orört
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(fromDb.getScoringResult()).isNull();
     }
 }
 
