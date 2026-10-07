@@ -74,6 +74,11 @@ public class AuditService {
                 .stream().map(AuditEventDTO::new ).toList();
     }
 
+    // Svarar ja/nej på om en handläggare har fattat ett beslut på ärendet
+    public boolean hasManualDecision(Long applicationId) {
+        return auditEventRepository.existsByApplicationIdAndAction(applicationId, AuditAction.MANUAL_DECISION);
+    }
+
 
 
 }
