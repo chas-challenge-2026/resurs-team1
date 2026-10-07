@@ -39,8 +39,8 @@ const LoginPage = () => {
   const companyLogin = useCompanyLogin()
   const caseWorkerLogin = useCaseWorkerLogin()
 
-  const companyFieldsEmpty = !formData.orgNumber.trim() || !formData.personalNumber.trim()
-  const caseWorkerFieldsEmpty = !formData.email.trim() || !formData.password.trim()
+  const companyFieldsTooShort = formData.orgNumber.trim().length < 11 || formData.personalNumber.trim().length < 11
+  const caseWorkerFieldsTooShort = !formData.email.trim() || formData.password.trim().length < 8
 
   const activeLogin = role === "company" ? companyLogin : caseWorkerLogin
 
@@ -63,31 +63,36 @@ const LoginPage = () => {
   const handleCompanySubmit = (e: React.SubmitEvent) => {
     e.preventDefault()
 
-    const rawOrg = formData.orgNumber.replace(/\D/g, "")
-    const rawPersonal = formData.personalNumber.replace(/\D/g, "")
-    
-    // insta reject wrong format, wait for BankID on correct numbers
-    const newErrors = {
-      orgNumber: rawOrg.length !== ID_NUMBER_DIGITS ? "Organisationsnumret måste innehålla 10 siffror" : "",
-      personalNumber: rawPersonal.length !== ID_NUMBER_DIGITS ? "Personnumret måste innehålla 10 siffror" : "",
-    }
-
-    setErrors((prev) => ({ ...prev, ...newErrors }))
-
-    if (newErrors.orgNumber || newErrors.personalNumber) return
-
     companyLogin.mutate({ 
       orgNumber: formData.orgNumber, 
       personalNumber: formData.personalNumber
     })
   }
 
-  // show error after leaving input field
-  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const email = e.target.value.trim()
-    const errorMsg = !email || EMAIL_PATTERN.test(email) ? "" : "Ange en giltig e-postadress"
+  // show errors after leaving input field
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    const rawValue = value.replace(/\D/g, "").trim()
 
-    setErrors((prev) => ({...prev, email: errorMsg}))
+    let errorMsg = ""
+
+    if (id === "orgNumber" && value.trim() && rawValue.length < ID_NUMBER_DIGITS) {
+      errorMsg = "Organisationsnumret måste innehålla 10 siffror"
+    }
+
+    if (id === "personalNumber" && value.trim() && rawValue.length < ID_NUMBER_DIGITS) {
+      errorMsg = "Personnumret måste innehålla 10 siffror"
+    }
+
+    if (id === "email" && value.trim() && !EMAIL_PATTERN.test(value)) {
+      errorMsg = "Ange en giltig e-postadress"
+    }
+
+    if (id === "password" && value.trim() && value.trim().length < 8) {
+      errorMsg = "Lösenordet måste vara minst 8 tecken"
+    }
+
+    setErrors((prev) => ({ ...prev, [id]: errorMsg }))
   }
 
   const handleCaseWorkerSubmit = (e: React.SubmitEvent) => {
@@ -134,6 +139,7 @@ const LoginPage = () => {
                 error={errors.orgNumber}
                 value={formData.orgNumber}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 disabled={companyLogin.isPending}
               />
 
@@ -146,6 +152,7 @@ const LoginPage = () => {
                 error={errors.personalNumber}
                 value={formData.personalNumber}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 disabled={companyLogin.isPending}
               />
 
@@ -178,7 +185,7 @@ const LoginPage = () => {
                   <Button
                     type="submit"
                     className={s.button}
-                    disabled={companyFieldsEmpty || companyLogin.isPending}
+                    disabled={companyFieldsTooShort || companyLogin.isPending}
                   >
                     Logga in med BankID
                   </Button>
@@ -197,16 +204,18 @@ const LoginPage = () => {
                 error={errors.email}
                 value={formData.email}
                 onChange={handleChange}
-                onBlur={handleEmailBlur}
+                onBlur={handleBlur}
               />
               <Input 
                 type="password" 
                 id="password" 
                 label="Lösenord *" 
-                placeholder="••••••••••" 
+                placeholder="••••••••••"
+                information="Lösenordet måste vara minst 8 tecken."
                 error={errors.password}
                 value={formData.password} 
-                onChange={handleChange} 
+                onChange={handleChange}
+                onBlur={handleBlur}
               />
               <div className={s.divider} />
 
@@ -217,7 +226,7 @@ const LoginPage = () => {
               <Button
                 type="submit"
                 className={s.button}
-                disabled={caseWorkerFieldsEmpty || caseWorkerLogin.isPending}
+                disabled={caseWorkerFieldsTooShort || caseWorkerLogin.isPending}
               >
                 {caseWorkerLogin.isPending ? "Loggar in..." : "Logga in"}
               </Button>

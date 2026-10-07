@@ -7,7 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import se.comerit.resurs.enums.ApplicationStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "applications")
@@ -17,6 +17,9 @@ public class CreditApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Using Internal postgres sequence, not letting JPA control it
     private Long id;
+
+    @Version
+    private Integer version;
 
     @ManyToOne
     @JoinColumn(name = "company_id")
@@ -46,11 +49,11 @@ public class CreditApplication {
 
     @CreationTimestamp
     @Column(name = "createdAt")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column
     private String contactName;
@@ -163,19 +166,19 @@ public class CreditApplication {
 
 
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

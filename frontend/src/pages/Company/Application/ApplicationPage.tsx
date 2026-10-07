@@ -82,8 +82,10 @@ const ApplicationFormPage = () => {
   return (
     <div className={s.wizard}>
       <div className={s.header}>
-        <p className="subtitle">Steg {step} av {TOTAL_STEPS}</p>
-        <h2 className="title">{STEP_TITLES[step - 1]}</h2>
+        <div className={s.textWrapper}>
+          <p className="subtitle">Steg {step} av {TOTAL_STEPS}</p>
+          <h2 className="title">{STEP_TITLES[step - 1]}</h2>
+        </div>
         <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
 

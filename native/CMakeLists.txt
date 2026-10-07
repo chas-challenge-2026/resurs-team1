@@ -21,7 +21,9 @@ add_resurs_module(resurs_crypto
     resurs_crypto/resurs_crypto.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resurs_crypto)
 target_sources(resurs_crypto PRIVATE resurs_crypto/wrapper.cpp)
-target_link_libraries(resurs_crypto PRIVATE OpenSSL::Crypto)
+# resurs_crypto.h exposes OpenSSL EVP types, so consumers of that public
+# header also need OpenSSL's include directories and link requirements.
+target_link_libraries(resurs_crypto PUBLIC OpenSSL::Crypto)
 target_compile_definitions(resurs_crypto PRIVATE RESURS_CRYPTO_BUILDING_DLL)
 set_target_properties(resurs_crypto PROPERTIES
     CXX_VISIBILITY_PRESET hidden

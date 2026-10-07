@@ -11,20 +11,33 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
+.sticky {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
 .sideBar {
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-secondary);
   width: 100%;
   overflow-y: auto;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s ease-in-out;
 }
 
 .collapsed.sideBar {
-  min-width: 0;
-  width: fit-content;
+  min-width: 54px;
+  width: 54px;
   border-right: 1px solid var(--border);
   overflow-y: hidden;
 }
 
 .collapsed .sideBarHeader {
+  justify-content: center;
   padding: var(--space-xs) 2px;
 }
 
@@ -38,6 +51,17 @@
   align-items: center;
   border-radius: var(--radius-pill);
   padding: var(--space-xs);
+}
+
+.showMoreButton {
+  margin: var(--space-base) var(--space-xs);
+  margin-left: auto;
+}
+
+.endOfCases {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-base) var(--space-xs);
 }
 
 /* Main container */

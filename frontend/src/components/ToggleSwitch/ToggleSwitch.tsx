@@ -20,7 +20,7 @@ interface ToggleSwitchProps<T extends string> {
   /** Callback fired when a new option is selected */
   onChange: (value: T) => void
   /** Style variants, default neutral */
-  variant?: "neutral" | "accent"
+  variant?: "neutral" | "accent" | "buttons"
 }
 
 /**

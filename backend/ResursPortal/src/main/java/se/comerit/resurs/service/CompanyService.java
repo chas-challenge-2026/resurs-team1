@@ -15,8 +15,12 @@ public class CompanyService {
         this.companyRepository = companyRepository;
     }
 
-    public CompanyDTO createCompany(String companyName, String org_number, String authorizedSignatory){
-        return new CompanyDTO(companyRepository.save(new Company(org_number,companyName,authorizedSignatory)));
+    //Largely unused as we propagate the company entity from application, Could still be useful to keep.
+    public Company createCompany(String companyName, String org_number, String authorizedSignatory){
+        // INSERT company — PII in plaintext, no encryption
+        // TODO: encrypt PII before go-live
+
+        return companyRepository.save(new Company(org_number,companyName,authorizedSignatory));
     }
 
     public CompanyDTO getCompanyFromOrgNumber(String orgNumber){

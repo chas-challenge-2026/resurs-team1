@@ -55,7 +55,7 @@
 }
 
 .PENDING_DOCS {
-  --st-base: var(--color-warning-strong);
+  --st-base: var(--color-warning);
   --st-bg: #FBF1DF;
   --st-fg: var(--color-warning-text);
 }

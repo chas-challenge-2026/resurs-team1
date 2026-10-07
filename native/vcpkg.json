@@ -1,0 +1,8 @@
+{
+  "name": "resurs-native",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "openssl"
+  ],
+  "builtin-baseline": "434307da09bc05b2c86996dccc8b2351fc0d5d37"
+}

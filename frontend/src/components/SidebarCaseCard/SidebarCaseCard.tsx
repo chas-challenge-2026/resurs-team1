@@ -1,11 +1,11 @@
 import { NavLink } from "react-router-dom"
-import type { Application } from "../../api/applicationApi"
+import type { CaseListItem } from "../../api/applicationApi"
 import { ICONS, STATUS_LABELS } from "../../constants/constants"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
 import s from "./SidebarCaseCard.module.css"
 
 interface SidebarCaseCardProps {
-  application: Application
+  application: CaseListItem
 }
 
 const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {

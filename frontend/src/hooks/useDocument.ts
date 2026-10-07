@@ -1,17 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getDocument, getDocuments, postDocument, type DocumentUploadPayload } from "../api/documentApi"
 import type { ApplicationDocument } from "../api/applicationApi"
+import type { ApiErrorPayload } from "../api/client"
 
 export const useDownloadDocument = () => {
   return useMutation({
-    mutationFn: async({id, fileName}: {id: number, fileName: string}) => {
+    mutationFn: async({id, filename}: {id: number, filename: string}) => {
       const blob = await getDocument(id)
 
       //Create temporary link and trigger download in browser
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = fileName
+      a.download = filename
       document.body.appendChild(a)
       a.click()
 
@@ -23,14 +24,13 @@ export const useDownloadDocument = () => {
 }
 
 export const useDocuments = (applicationId: number) => {
-  return useQuery<ApplicationDocument[], Error>({
+  return useQuery<ApplicationDocument[], ApiErrorPayload>({
     queryKey: ["documents", applicationId],
     queryFn: () => getDocuments(applicationId),
     enabled: Boolean(applicationId),
   })
 }
 
-// TODO: Does not work, have to check with backend
 export const useUploadDocument = () => {
   const queryClient = useQueryClient()
 

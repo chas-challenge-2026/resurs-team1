@@ -20,7 +20,7 @@
   min-width: 0; 
 }
 
-.fileName {
+.filename {
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;

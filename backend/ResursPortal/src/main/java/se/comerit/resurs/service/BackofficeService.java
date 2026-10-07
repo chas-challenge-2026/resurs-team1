@@ -2,23 +2,34 @@ package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
+import se.comerit.resurs.dto.PagedResult;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
-import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
-
 import java.util.List;
-import java.util.NoSuchElementException;
+
+/**
+ * BackofficeService -> allt en handläggare behöver för att granska ansökningar
+ *
+ * Ansvarar för: hämta ansökningar som väntar på granskning och de som redan är avgjorda,
+ * en sida i taget så det inte blir för mycket data på en gång, samt spara ett beslut
+ * (godkänd/avslag) och se till att det loggas.
+ *
+ * Inte ansvarig för: att kolla om användaren är inloggad eller hur datan visas på skärmen ->
+ * det sköts av BackofficeController respektive frontend.
+ *
+ */
 
 @Service
 public class BackofficeService {
@@ -27,6 +38,7 @@ public class BackofficeService {
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
 
+
     @Autowired
     public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
         this.auditService = auditService;
@@ -34,24 +46,24 @@ public class BackofficeService {
         this.documentRepo = documentRepo;
     }
 
+    //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
+    //Further requires indexation, and sorting options
+    public BackOfficeListsDTO applicationsForReview(
+            @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-    //Fetch all applications marked UNDER_REVIEW
-    //Further requires indexation,  further work includes pagination and sorting options
-    public BackOfficeListsDTO applicationsForReview(){
 
-        List<ReviewInfo> underReviewList;
-        List<HistoricalReviewInfo> decidedReviewList;
+        PagedResult<ReviewInfo> underReview = PagedResult.from(
+                creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW, reviewPageable)
+                        .map(ReviewInfo::new));
 
-        underReviewList = creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW).stream()
-                .map(ReviewInfo::new).toList();
+        PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
+                creditRepo.findByStatusInOrderByCreatedAtAsc(
+                        List.of(ApplicationStatus.APPROVED, ApplicationStatus.REJECTED),
+                        decidedPageable)
+                        .map(HistoricalReviewInfo::new));
 
-        decidedReviewList = creditRepo.findByStatusInOrderByCreatedAtAsc(
-                List.of(ApplicationStatus.APPROVED,ApplicationStatus.REJECTED),
-                PageRequest.of(0, 20
-                )
-        ).stream().map(HistoricalReviewInfo::new).toList();
 
-        return new BackOfficeListsDTO(decidedReviewList,underReviewList);
+        return new BackOfficeListsDTO(decidedReview,underReview);
     }
 
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)

@@ -4,6 +4,7 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record ApplicationStatusDetails(
@@ -14,8 +15,8 @@ public record ApplicationStatusDetails(
         String decision,
         String decisionReason,
         String scoringResult,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
+        Instant createdAt,
+        Instant updatedAt,
         String companyName,
         String orgNumber
 

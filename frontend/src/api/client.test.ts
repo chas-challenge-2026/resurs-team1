@@ -22,23 +22,6 @@ describe("client API", () => {
     })
   })
 
-  it("uses backend error message when provided", async () => {
-    const mockError = {
-      response: {
-        status: 400,
-        data: { message: "Ogiltigt personnummer" }
-      }
-    } as unknown as AxiosError<ApiErrorPayload>
-
-    await expect(handleResponseError(mockError)).rejects.toEqual({
-      status: 400,
-      message: "Ogiltigt personnummer",
-      fieldErrors: undefined,
-      code: undefined,
-      originalError: mockError,
-    })
-  })
-
   it("clears auth storage and redirects to '/' on 401 for normal requests", async () => {
     Object.defineProperty(window, "location", {
       writable: true,

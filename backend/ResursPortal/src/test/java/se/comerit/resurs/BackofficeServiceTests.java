@@ -5,12 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
-import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -28,8 +28,7 @@ import se.comerit.resurs.service.BackofficeService;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -171,11 +170,12 @@ class BackofficeServiceTests {
         creditRepo.save(createApplication(ApplicationStatus.REJECTED));
         creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
-        BackOfficeListsDTO result = backofficeService.applicationsForReview();
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                PageRequest.of(0,20),PageRequest.of(0,20));
 
         assertThat(result).isNotNull();
-        assertThat(result.reviewApplications()).hasSize(2);
-        assertThat(result.decidedApplications()).hasSize(2);
+        assertThat(result.reviewApplications().content()).hasSize(2);
+        assertThat(result.decidedApplications().content()).hasSize(2);
     }
 
     @Test
@@ -187,7 +187,7 @@ class BackofficeServiceTests {
         document.setApplication(saved);
         document.setFilename("income.pdf");
         document.setDoc_type("INCOME_STATEMENT");
-        document.setUploadedAt(LocalDateTime.now());
+        document.setUploadedAt(Instant.now());
 
         documentRepo.save(document);
 
@@ -240,4 +240,6 @@ class BackofficeServiceTests {
 
         return application;
     }
+
+
 }

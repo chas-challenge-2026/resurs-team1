@@ -9,15 +9,19 @@
 .group {
   display: flex;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .button {
   padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-pill);
   transition: all 0.2s;
   border: 1px solid var(--border);
+  color: var(--color-text-main);
+  font-weight: 500;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .button:hover {
@@ -31,9 +35,9 @@
 }
 
 .isSelected {
-  background-color: var(--color-primary-light);
+  background-color: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--bg-main);
 }
 
 .hiddenInput {

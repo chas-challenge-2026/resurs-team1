@@ -27,6 +27,8 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -86,8 +88,7 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void listDocuments_validApplicationWithoutDocument_returnsEmptyList() throws Exception {
-        mockMvc.perform(get("/api/documents/application/{id}", pendingDocsApplicationId).sessionAttr("userId",
-                        1L))
+        mockMvc.perform(get("/api/documents/application/{id}", pendingDocsApplicationId).sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
@@ -95,7 +96,7 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void showDocumentsPage_unknownApplication_returns404() throws Exception {
-        mockMvc.perform(get("/api/documents/application/{id}", 999_999L).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/application/{id}", 999_999L).sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
@@ -107,7 +108,8 @@ class DocumentControllerIntegrationTest {
         mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
-                        .param("docType", "balansrakning"))
+                        .param("docType", "balansrakning")
+                        .with(csrf()))
                 .andExpect(status().isUnauthorized());
 
         assertThat(documentRepository.findByApplicationId(pendingDocsApplicationId)).isEmpty();
@@ -122,7 +124,7 @@ class DocumentControllerIntegrationTest {
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isCreated());
 
         List<Document> saved = documentRepository.findByApplicationId(pendingDocsApplicationId);
@@ -144,7 +146,7 @@ class DocumentControllerIntegrationTest {
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isBadRequest());
 
         assertThat(documentRepository.findByApplicationId(pendingDocsApplicationId)).isEmpty();
@@ -159,7 +161,7 @@ class DocumentControllerIntegrationTest {
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "arsredovisning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isCreated());
 
         CreditApplication application = creditApplicationRepository.findById(pendingDocsApplicationId).orElseThrow();
@@ -175,7 +177,7 @@ class DocumentControllerIntegrationTest {
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isCreated());
 
         CreditApplication application = creditApplicationRepository.findById(pendingDocsApplicationId).orElseThrow();
@@ -190,7 +192,7 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void downloadDocument_unknownId_returns404() throws Exception {
-        mockMvc.perform(get("/api/documents/{id}", 999_999L).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/{id}", 999_999L).sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isNotFound());
     }
 
@@ -202,12 +204,12 @@ class DocumentControllerIntegrationTest {
                 .file(upload)
                 .param("applicationId", String.valueOf(pendingDocsApplicationId))
                 .param("docType", "balansrakning")
-                .sessionAttr("userId", 1L));
+                .sessionAttr("userId", 1L).with(user("test")).with(csrf()));
 
         Long documentId = documentRepository.findByApplicationId(pendingDocsApplicationId)
                 .get(0).getId();
 
-        mockMvc.perform(get("/api/documents/{id}", documentId).sessionAttr("userId", 1L))
+        mockMvc.perform(get("/api/documents/{id}", documentId).sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
                         "attachment; filename=\"" + pendingDocsApplicationId + "_balansrakning.pdf\""))
@@ -227,7 +229,7 @@ class DocumentControllerIntegrationTest {
                         .file(file)
                         .param("applicationId", String.valueOf(pendingDocsApplicationId))
                         .param("docType", "balansrakning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -243,7 +245,7 @@ class DocumentControllerIntegrationTest {
         mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("docType", "balansrakning")
-                        .sessionAttr("userId", 1L))
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 

@@ -1,15 +1,15 @@
 import { FiAlertCircle, FiClock, FiCheckCircle, FiXCircle } from "react-icons/fi"
-import type { ApplicationStatus } from "../api/applicationApi"
+import type { ApplicationStatus, PurposeValue } from "../api/applicationApi"
 import type { IconType } from "react-icons"
 import type { DropdownOption } from "../components/Dropdown/Dropdown"
 import type { ButtonGroupOption } from "../components/ButtonGroup/ButtonGroup"
 
-export const PURPOSE_OPTIONS: DropdownOption[] = [
+export const PURPOSE_OPTIONS: DropdownOption<PurposeValue>[] = [
   { value: "Expansion", label: "Expansion" },
   { value: "workingCapital", label: "Rörelsekapital" },
   { value: "Investment", label: "Investering" },
   { value: "Other", label: "Annat" },
-]
+] as const
 
 export const ICONS: Record<ApplicationStatus, IconType> = {
   PENDING_DOCS: FiAlertCircle,

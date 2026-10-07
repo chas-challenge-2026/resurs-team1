@@ -12,8 +12,7 @@ import se.comerit.resurs.persistence.model.Document;
 import se.comerit.resurs.persistence.DocumentRepository;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -94,7 +93,7 @@ public class DocumentService {
             document.setApplication(application);
             document.setFilename(storedFilename);
             document.setDoc_type(docType);
-            document.setUploadedAt(LocalDateTime.now());
+            document.setUploadedAt(Instant.now());
             documentRepository.save(document);
 
 
@@ -142,7 +141,6 @@ public class DocumentService {
     private void markUnderReview(CreditApplication application) {
         if (application.getStatus() == ApplicationStatus.PENDING_DOCS) {
             application.setStatus(ApplicationStatus.UNDER_REVIEW);
-            application.setUpdatedAt(LocalDateTime.now());
             creditApplicationRepository.save(application);
         }
     }

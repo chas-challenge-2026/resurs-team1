@@ -74,7 +74,7 @@
 
 /* same colours as the bar in StatusTag */
 .PENDING_DOCS {
-  color: var(--color-warning-strong);
+  color: var(--color-warning);
 }
 
 .UNDER_REVIEW {

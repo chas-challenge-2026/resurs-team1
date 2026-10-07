@@ -1,6 +1,7 @@
 package se.comerit.resurs.service;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.caseworker.CaseWorkerResponse;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
@@ -8,17 +9,17 @@ import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
 import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.security.PasswordHasher;
 
 @Service
 public class CaseWorkerService {
 
     private final CaseWorkerRepository caseWorkerRepository;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
 
-    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordHasher passwordHasher) {
+
+    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder) {
         this.caseWorkerRepository = caseWorkerRepository;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public CaseWorkerResponse create(CreateCaseWorkerRequest request) {
@@ -29,7 +30,7 @@ public class CaseWorkerService {
         CaseWorker caseWorker = new CaseWorker();
         caseWorker.setName(request.name());
         caseWorker.setEmail(request.email());
-        caseWorker.setPasswordHash(passwordHasher.md5Hash(request.password()));
+        caseWorker.setPasswordHash(passwordEncoder.encode(request.password()));
 
         CaseWorker saved = caseWorkerRepository.save(caseWorker);
         return new CaseWorkerResponse(saved);
@@ -40,6 +41,7 @@ public class CaseWorkerService {
         return new CaseWorkerResponse(caseWorker);
     }
 
+    //No transactional dirtychecking here in order to handle the exceptions on the save()
     public CaseWorkerResponse update(Long id, UpdateCaseWorkerRequest request) {
         CaseWorker caseWorker = caseWorkerRepository.findById(id).orElseThrow();
 

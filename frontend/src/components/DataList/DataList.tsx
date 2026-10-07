@@ -7,7 +7,7 @@ interface DataListItemProps {
   /** label describing the data. ex: "Organization number" */
   label: string;
   /** value associated with label ex: "5566000-0000"). */
-  value: string;
+  value: React.ReactNode;
 }
 
 /**

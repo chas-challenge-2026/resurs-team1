@@ -1,15 +1,19 @@
 package se.comerit.resurs.dto.application;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import se.comerit.resurs.dto.ContactDetails;
 
 import java.math.BigDecimal;
 
 public record ApplicationSubmission(
-        String orgNumber,
-        BigDecimal requestedAmount,
-        String purpose,
-        Integer durationMonths,
-        ContactDetails contactDetails
+        @NotBlank String orgNumber,
+        @NotNull @Positive BigDecimal requestedAmount,
+        @NotBlank String purpose,
+        @NotNull @Positive Integer durationMonths,
+        @NotNull @Valid ContactDetails contactDetails
 
 ) {
 }

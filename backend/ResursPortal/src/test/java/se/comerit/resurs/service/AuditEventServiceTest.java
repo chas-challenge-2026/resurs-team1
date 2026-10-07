@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
+@Transactional
 class AuditEventServiceTest {
 
     private static final String ORG_NUMBER_PREFIX = "TEST-";
