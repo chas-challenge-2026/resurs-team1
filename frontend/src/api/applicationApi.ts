@@ -130,8 +130,11 @@ export interface CaseListItem {
   createdAt: string
 }
 
-export const getApplications = async (): Promise<Application[]> => {
-  const response = await api.get<Application[]>("/application")
+// so they don't scroll too much + page stays fast
+export const APPLICATIONS_PAGE_SIZE = 5
+
+export const getApplications = async (page: number): Promise<Application[]> => {
+  const response = await api.get<Application[]>("/application", { params: { page, size: APPLICATIONS_PAGE_SIZE } })
   return response.data
 }
 
