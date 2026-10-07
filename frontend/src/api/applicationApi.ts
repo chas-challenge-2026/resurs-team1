@@ -42,21 +42,28 @@ export interface CompanyFinances {
   }
 }
 
+export interface ApplicationStep {
+  name: string,
+  eta: string,
+  status: string,
+  description: string
+}
+
 export interface Application {
   id: number
   requestedAmount: number
   purpose: PurposeValue
   status: ApplicationStatus
-  decision?: string | null
-  decisionReason?: string | null
-  scoringResult?: string | null
+  decision: string
+  decisionReason: string
+  scoringResult: string
   auditLog?: string | null
   createdAt: string
   updatedAt: string
   companyName: string
   orgNumber: string
-  authorizedSignatory: string
-  durationMonths: number
+  authorizedSignatory?: string
+  durationMonths?: number
   documents?: ApplicationDocument[]
   companyFinances?: CompanyFinances | null // only from backoffice, null when no annual report is found
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
@@ -130,6 +137,13 @@ export interface CaseListItem {
   createdAt: string
 }
 
+export interface DetailedApplication {
+  app: Application,
+  steps: ApplicationStep[],
+  currentStatus: ApplicationStatus,
+  documents: ApplicationDocument[]
+}
+
 export const getApplications = async (): Promise<Application[]> => {
   const response = await api.get<Application[]>("/application")
   return response.data
@@ -170,4 +184,9 @@ export const getReviewPage = async (page: number): Promise<PagedResult<ReviewApp
 export const getDecidedPage = async (page: number): Promise<PagedResult<DecidedApplication>> => {
   const response = await api.get<BackofficeLists>("/backoffice", { params: { decided_page: page, decided_size: 20 } })
   return response.data.decidedApplications
+}
+
+export const getApplicationDetails = async (id: number): Promise<DetailedApplication> => {
+  const response = await api.get<DetailedApplication>(`/status/${id}`)
+  return response.data
 }

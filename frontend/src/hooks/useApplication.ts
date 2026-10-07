@@ -1,5 +1,5 @@
 import { type QueryKey, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 
 export const useApplications = () => {
@@ -70,5 +70,13 @@ export const useDecidedApplications = () => {
     select: (data) => data.pages.flatMap((page) => page.content.map((application) => ({
       ...application, status: application.decision as ApplicationStatus
     })))
+  })
+}
+
+export const useDetailedApplication = (id: number) => {
+  return useQuery<DetailedApplication, ApiErrorPayload>({
+    queryKey: ["detailedapplication", id],
+    queryFn: () => getApplicationDetails(id),
+    enabled: typeof id === "number" && !isNaN(id),
   })
 }
