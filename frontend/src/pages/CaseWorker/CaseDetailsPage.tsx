@@ -10,6 +10,7 @@ import { Card, CardFooter } from "../../components/Card/Card"
 import { DataList, DataListItem } from "../../components/DataList/DataList"
 import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
 import StatusTag from "../../components/StatusTag/StatusTag"
+import AttachedFile from "../../components/AttachedFile/AttachedFile"
 import Button from "../../components/Button/Button"
 import TextArea from "../../components/Textarea/Textarea"
 import Loading from "../../components/Loading/Loading"
@@ -114,7 +115,18 @@ const CaseDetailsPage = () => {
               <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
             </DataList>
           </Card>
-          
+
+          <Card>
+            <h3 className="subtitle">Dokument</h3>
+            {data.documents && data.documents.length > 0 ? (
+              data.documents.map((document) => (
+                <AttachedFile key={document.id} document={document} />
+              ))
+            ) : (
+              <p>Inga uppladdade dokument</p>
+            )}
+          </Card>
+
           {data.scoringResult && (
             <Card>
               <h3 className="subtitle">Scoringresultat</h3>
