@@ -5,6 +5,8 @@ import NotFoundPage from "../../NotFound/NotFoundPage"
 import ApplicationCard from "../../../components/ApplicationCard/ApplicationCard"
 import Loading from "../../../components/Loading/Loading"
 import s from "./MyApplicationsPage.module.css"
+import { Link } from "react-router-dom"
+import { RiArrowLeftLine } from "react-icons/ri"
 
 const MyApplicationsPage = () => {
   // backend sends open and closed in one list with no status filter, so we can't split
@@ -43,7 +45,13 @@ const MyApplicationsPage = () => {
 
   return (
     <div className={s.wrapper}>
-      <h2 className="title">Mina Ansökningar</h2>
+      <div>
+        <Link to="/oversikt" className={s.backButton}>
+          <RiArrowLeftLine />
+          <span>Till översikten</span>
+        </Link>
+        <h2 className="title">Mina Ansökningar</h2>
+      </div>
 
       <div className={s.applicationsContainer}>
         {applications.map((a) => (

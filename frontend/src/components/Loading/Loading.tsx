@@ -1,4 +1,5 @@
-import styles from "./Loading.module.css";
+import { Card } from "../Card/Card";
+import s from "./Loading.module.css";
 
 type LoadingSize = "sm" | "md" | "lg";
 
@@ -30,26 +31,36 @@ function Loading({
 }: LoadingProps) {
   const content = (
     <span
-    className={`${styles.wrapper} ${delay && styles.delayed} ${centerOnPage && styles.centerWrapper}`}
+    className={`${s.wrapper} ${delay && s.delayed} ${centerOnPage && s.centerWrapper}`}
     role="status"
     >
       <svg
-        className={styles.arc}
+        className={s.arc}
         style={{ width: SIZES[size], height: SIZES[size] }}
         viewBox="0 0 50 50"
         aria-hidden="true"
         >
-        <circle className={styles.arcTrack} cx="25" cy="25" r="20" /> 
-        <circle className={styles.arcPath} cx="25" cy="25" r="20" />
+        <circle className={s.arcTrack} cx="25" cy="25" r="20" /> 
+        <circle className={s.arcPath} cx="25" cy="25" r="20" />
       </svg>
-      <span className={styles.label}>{label}</span>
+      {!fullscreen && <span className={s.label}>{label}</span>}
     </span>
   );
   
   if (!fullscreen) return content;
   
   // the fullscreen styling
-  return <div className={styles.overlay}>{content}</div>;
+  return (
+    <div className={s.overlay}>
+      <Card className={s.fullscreen}>
+        {content}
+        <div>
+          <p className={s.title}>{label}</p>
+          <p className={s.subtitle}>Det tar bara en liten stund. Stäng inte fönstret.</p>
+        </div>
+      </Card>
+    </div>
+  )
 }
 
 export default Loading;
