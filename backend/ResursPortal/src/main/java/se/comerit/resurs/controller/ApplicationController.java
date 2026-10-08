@@ -73,9 +73,9 @@ public class ApplicationController {
 
         String personalNumber = principal.personalNumber();
         NewApplicationDTO newApplication;
-        try {
             CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
             CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
+        try {
             CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
                     .orElseThrow();
 
@@ -84,7 +84,7 @@ public class ApplicationController {
         } catch (CompanyRegistryUnavailableException e){
             newApplication = new NewApplicationDTO(submission.requestedAmount(), submission.purpose(), submission.durationMonths(),
                     ApplicationStatus.PENDING_SCORING, null, null, null,
-                    principal.companyName(), submission.orgNumber(), principal.authorized_signatory(), 0);
+                   company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
         CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails());
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
