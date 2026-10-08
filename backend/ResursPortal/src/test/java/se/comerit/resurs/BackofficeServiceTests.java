@@ -13,6 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
+import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
@@ -176,6 +177,22 @@ class BackofficeServiceTests {
         assertThat(result).isNotNull();
         assertThat(result.reviewApplications().content()).hasSize(2);
         assertThat(result.decidedApplications().content()).hasSize(2);
+    }
+
+    // Ansökningar som väntar på scoring ska synas i granskningslistan så att handläggaren kan köra om scoringen
+    @Test
+    void applicationsForReview_shouldIncludePendingScoringInReviewList() {
+        creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+        creditRepo.save(createApplication(ApplicationStatus.PENDING_SCORING));
+        creditRepo.save(createApplication(ApplicationStatus.APPROVED));
+
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                PageRequest.of(0,20),PageRequest.of(0,20));
+
+        assertThat(result.reviewApplications().content())
+                .extracting(ReviewInfo::status)
+                .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING);
+        assertThat(result.decidedApplications().content()).hasSize(1);
     }
 
     @Test
