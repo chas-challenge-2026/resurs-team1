@@ -75,7 +75,7 @@ const ApplicationFormPage = () => {
         <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
 
-      <ApplicationWizard step={step} values={values} onChange={handleChange} />
+      <ApplicationWizard step={step} values={values} onChange={handleChange} isSubmitError={submitApplication.isError} />
 
       <div className={s.actions}>
         {step > 1 && (
@@ -95,9 +95,6 @@ const ApplicationFormPage = () => {
           {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
         </Button>
       </div>
-        {submitApplication.isError &&
-          <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen</p>
-        }
     </div>
   )
 }
