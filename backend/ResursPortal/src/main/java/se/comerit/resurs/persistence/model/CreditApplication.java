@@ -64,6 +64,9 @@ public class CreditApplication {
     @Column
     private String contactEmail;
 
+    @Column(name = "comment")
+    private String comment;
+
 
     public Integer getDurationMonths() {
         return durationMonths;
@@ -180,5 +183,13 @@ public class CreditApplication {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }
