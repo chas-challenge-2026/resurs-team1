@@ -64,6 +64,10 @@ body {
   text-rendering: optimizeSpeed;
 }
 
+body:has([class*="overlay"]) {
+  overflow: hidden;
+}
+
 /* Fix responsive media layout breaking */
 img, picture, video, canvas, svg {
   max-width: 100%;

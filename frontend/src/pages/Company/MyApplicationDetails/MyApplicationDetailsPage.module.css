@@ -10,6 +10,21 @@
   align-items: center;
 }
 
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.backButton:hover {
+  color: var(--color-text-main);
+}
 
 .description {
   color: var(--color-text-muted);

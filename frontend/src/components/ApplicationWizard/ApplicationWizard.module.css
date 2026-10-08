@@ -30,3 +30,10 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
+
+/* borrowed from .formError in login */
+.submitError {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  text-align: end;
+}
