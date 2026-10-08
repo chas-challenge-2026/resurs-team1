@@ -16,6 +16,8 @@ import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
 import se.comerit.resurs.service.*;
@@ -59,7 +61,7 @@ public class ApplicationController {
     public ResponseEntity<CreditApplicationDTO> submitApplication(
 
            @Valid @RequestBody ApplicationSubmission submission,
-            @AuthenticationPrincipal CompanyPrincipal principal) {
+           @AuthenticationPrincipal CompanyPrincipal principal) {
 
         accessPolicy.checkCanSubmitFor(principal, submission.orgNumber());
 
@@ -68,17 +70,23 @@ public class ApplicationController {
         // No validation or sanitization of inputs
 
         //hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
+
         String personalNumber = principal.personalNumber();
-        CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
-        CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
+        NewApplicationDTO newApplication;
+        try {
+            CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
+            CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
+            CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
+                    .orElseThrow();
 
-        CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
-                .orElseThrow();
-
-        //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
-        NewApplicationDTO scoredApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
-
-        CreditApplicationDTO application = appService.saveApplication(scoredApplication, submission.contactDetails());
+            //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
+            newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
+        } catch (CompanyRegistryUnavailableException e){
+            newApplication = new NewApplicationDTO(submission.requestedAmount(), submission.purpose(), submission.durationMonths(),
+                    ApplicationStatus.PENDING_SCORING, null, null, null,
+                    principal.companyName(), submission.orgNumber(), principal.authorized_signatory(), 0);
+        }
+        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails());
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================

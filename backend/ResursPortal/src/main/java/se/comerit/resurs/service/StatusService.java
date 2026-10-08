@@ -61,7 +61,7 @@ public class StatusService {
 
         //Step 3 Kreditbedömning
         StepStatus stepThreeStatus;
-        if (application.getStatus().equals(ApplicationStatus.UNDER_REVIEW)) {
+        if (application.getStatus().equals(ApplicationStatus.UNDER_REVIEW) || application.getStatus().equals(ApplicationStatus.PENDING_SCORING)) {
             stepThreeStatus = StepStatus.CURRENT;
         } else if (application.getStatus().equals(ApplicationStatus.PENDING_DOCS)) {
             stepThreeStatus = StepStatus.PENDING;
@@ -107,7 +107,7 @@ public class StatusService {
     private int calculateTotalEtaDays(ApplicationStatus currentStatus){
         return switch (currentStatus) {
             case PENDING_DOCS -> 6; // 2+3+1 — hardcoded
-            case UNDER_REVIEW -> 4; // 3+1 — hardcoded
+            case UNDER_REVIEW, PENDING_SCORING -> 4; // 3+1 — hardcoded
             default -> 1; // "1 dag" — hardcoded
         };
 

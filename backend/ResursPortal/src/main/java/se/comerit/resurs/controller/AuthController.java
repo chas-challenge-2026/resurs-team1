@@ -53,7 +53,7 @@ public class AuthController {
                 @Valid @RequestBody CompanyLoginRequest request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse
                 ){
             CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.personalNumber());
-            CompanyPrincipal principal = new CompanyPrincipal(response.orgNumber(), response.companyName(), request.personalNumber());
+            CompanyPrincipal principal = new CompanyPrincipal(response.orgNumber(), response.companyName(), request.personalNumber(), response.name());
             sessionAuthenticator.authenticate(principal, SessionAuthenticator.COMPANY, httpServletRequest, httpServletResponse );
             return ResponseEntity.ok(response);
         }

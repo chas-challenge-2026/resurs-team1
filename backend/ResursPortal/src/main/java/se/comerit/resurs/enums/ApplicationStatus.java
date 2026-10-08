@@ -4,6 +4,7 @@ public enum ApplicationStatus {
     PENDING_DOCS,
     UNDER_REVIEW,
     APPROVED,
-    REJECTED
+    REJECTED,
+    PENDING_SCORING
 
 }
