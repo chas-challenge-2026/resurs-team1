@@ -1,7 +1,7 @@
 package se.comerit.resurs.service;
 
 import org.junit.jupiter.api.Test;
-import se.comerit.resurs.client.MockBankIdClient;
+import se.comerit.resurs.client.bankId.MockBankIdClient;
 import se.comerit.resurs.dto.bankid.BankIdVerificationResult;
 
 import java.util.Optional;

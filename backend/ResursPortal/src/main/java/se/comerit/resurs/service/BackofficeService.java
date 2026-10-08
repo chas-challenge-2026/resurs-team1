@@ -53,7 +53,9 @@ public class BackofficeService {
 
 
         PagedResult<ReviewInfo> underReview = PagedResult.from(
-                creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW, reviewPageable)
+                creditRepo.findByStatusInOrderByCreatedAtAsc(
+                        List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING),
+                        reviewPageable)
                         .map(ReviewInfo::new));
 
         PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
