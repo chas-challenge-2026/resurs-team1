@@ -1,7 +1,7 @@
 package se.comerit.resurs.service;
 
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.client.BankIdClient;
+import se.comerit.resurs.client.bankId.BankIdClient;
 import se.comerit.resurs.dto.bankid.BankIdVerificationResult;
 import se.comerit.resurs.exception.bankid.BankIdVerificationFailedException;
 

@@ -9,9 +9,7 @@ import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableE
 
 import java.util.Optional;
 
-import static se.comerit.resurs.client.companyvalidation.MockCompanyData.ANNUAL_REPORTS;
-import static se.comerit.resurs.client.companyvalidation.MockCompanyData.REGISTRY;
-import static se.comerit.resurs.client.companyvalidation.MockCompanyData.UNAVAILABLE_ORG_NUMBER;
+import static se.comerit.resurs.client.companyvalidation.MockCompanyData.*;
 
 @Component
 @ConditionalOnProperty(prefix = "company-validation", name = "client", havingValue = "mock")
@@ -26,6 +24,10 @@ class MockCompanyValidationClient implements CompanyValidationClient {
     @Override
     public Optional<CompanyFinancialApiDTO> fetchLatestAnnualReport(String orgNumber) {
         throwIfUnavailable(orgNumber);
+        if (ANNUAL_REPORT_UNAVAILABLE_ORG_NUMBER.equals(orgNumber)) {
+            throw new CompanyRegistryUnavailableException("company-registry", orgNumber,
+                    new ResourceAccessException("Simulated annual report timeout"));
+        }
         return Optional.ofNullable(ANNUAL_REPORTS.get(orgNumber));
     }
 
