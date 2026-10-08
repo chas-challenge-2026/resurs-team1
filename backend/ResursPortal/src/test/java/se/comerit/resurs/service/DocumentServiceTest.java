@@ -148,14 +148,26 @@ class DocumentServiceTest {
     }
 
     @Test
-    void uploadDocument_otherDocType_doesNotAffectStatus() throws IOException {
+    void uploadDocument_otherDocType_movesStatusToUnderReview() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
         CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
         documentService.uploadDocument(application.getId(), "balansrakning", file);
         CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
-        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+    }
+
+    //Ett dokument på ett ärende som inte väntar på dokument ska inte ändra statusen
+    @Test
+    void uploadDocument_whenNotWaitingForDocuments_doesNotChangeStatus() throws IOException {
+        MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
+                "application/pdf", "innehall".getBytes());
+        CreditApplication application = createApplication(ApplicationStatus.APPROVED);
+
+        documentService.uploadDocument(application.getId(), "pdf", file);
+        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
     }
 
     @Test

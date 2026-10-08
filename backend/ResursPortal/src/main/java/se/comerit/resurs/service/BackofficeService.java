@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.PagedResult;
@@ -51,9 +52,10 @@ public class BackofficeService {
     public BackOfficeListsDTO applicationsForReview(
             @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-
         PagedResult<ReviewInfo> underReview = PagedResult.from(
-                creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW, reviewPageable)
+                creditRepo.findByStatusInOrderByCreatedAtAsc(
+                        List.of(ApplicationStatus.UNDER_REVIEW,
+                                ApplicationStatus.PENDING_DOCS), reviewPageable)
                         .map(ReviewInfo::new));
 
         PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
@@ -99,6 +101,32 @@ public class BackofficeService {
         application.setComment(comment);
 
         auditService.commentAdded(application, workerEmail, workerName, comment);
+    }
+
+    //Hämtar hela auditloggen för ett ärende, äldsta händelsen först
+    // Kollar först att ärendet finns, annars hade ett okänt id gett en tom lista istället för 404
+    public List<AuditEventDTO> application_audit_log(Long applicationId) {
+        creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+        return auditService.findAuditEventsByApplicationID(applicationId);
+    }
+
+    //Handläggaren ber kunden komplettera: ärendet får status PENDING_DOCS och texten sparas som senaste kommentar,
+    // så att kunden kan se vad som saknas
+    @Transactional
+    public void application_request_documents(Long applicationId, String comment, String workerEmail, String workerName) {
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+        ApplicationStatus previousStatus = application.getStatus();
+
+        //Ett avgjort ärende kan inte kompletteras
+        if (previousStatus == ApplicationStatus.APPROVED || previousStatus == ApplicationStatus.REJECTED) {
+            throw new IllegalArgumentException("Application " + applicationId + " " +
+                    "already has a decision and can not be completed");
+        }
+
+        application.setStatus(ApplicationStatus.PENDING_DOCS);
+        application.setComment(comment);
+
+        auditService.documentsRequested(application, workerEmail, workerName, previousStatus, comment);
     }
 
 

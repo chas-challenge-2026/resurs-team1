@@ -11,6 +11,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -24,11 +25,13 @@ import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
 import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.dto.backoffice.ReviewInfo;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tester för BackofficeService.
- *
+ * <p>
  * Verifierar handläggarflödet: beslut, listor och detaljvy. Att en audit-post
  * skrivs kontrolleras här, men postens innehåll testas i AuditEventServiceTest.
  */
@@ -171,7 +174,7 @@ class BackofficeServiceTests {
         creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
         BackOfficeListsDTO result = backofficeService.applicationsForReview(
-                PageRequest.of(0,20),PageRequest.of(0,20));
+                PageRequest.of(0, 20), PageRequest.of(0, 20));
 
         assertThat(result).isNotNull();
         assertThat(result.reviewApplications().content()).hasSize(2);
@@ -293,5 +296,139 @@ class BackofficeServiceTests {
                 999999L, "Hej", WORKER_EMAIL, WORKER_NAME))
                 .isInstanceOf(java.util.NoSuchElementException.class);
     }
+
+    //Ska kontrollera att hela auditloggen för ett ärende hämtas, äldsta händelsen först
+    //Händelserna skapas via riktiga metoder (som @Transactional) alltså samma väg som en handläggare använder
+    @Test
+    void applicationAuditLog_shouldReturnEventsInOrder() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+        backofficeService.application_comment(saved.getId(), "Första", WORKER_EMAIL, WORKER_NAME);
+        backofficeService.application_decision(saved.getId(), ApplicationStatus.APPROVED,
+                WORKER_EMAIL, WORKER_NAME, "Andra");
+
+        List<AuditEventDTO> log = backofficeService.application_audit_log(saved.getId());
+
+        assertThat(log).extracting(AuditEventDTO::action)
+                .containsExactly(AuditAction.COMMENT_ADDED, AuditAction.MANUAL_DECISION);
+        assertThat(log).extracting(AuditEventDTO::sequenceNumber)
+                .containsExactly(1L, 2L);
+    }
+
+    //Ett ärende som inte har några händelser ska ge en tom lista (inte ett fel)
+    @Test
+    void applicationAuditLog_shouldReturnEmptyListWhenNoEvents() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        assertThat(backofficeService.application_audit_log(saved.getId())).isEmpty();
+    }
+
+    //Auditloggen ska bara innehålla händelserna för ärendet man frågar efter, inte andra ärenden
+    @Test
+    void applicationAuditLog_shouldOnlyReturnEventsForThatApplication() {
+        CreditApplication first = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+        CreditApplication second = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+        backofficeService.application_comment(first.getId(), "Hej", WORKER_EMAIL, WORKER_NAME);
+
+        assertThat(backofficeService.application_audit_log(first.getId())).hasSize(1);
+        assertThat(backofficeService.application_audit_log(second.getId())).isEmpty();
+    }
+
+    //Ett ärende som inte finns ska ge NoSuchElementException (404), inte en tom lista
+    @Test
+    void applicationAuditLog_shouldThrowWhenApplicationDoesNotExist() {
+        assertThatThrownBy(() -> backofficeService.application_audit_log(999999L))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    //---------------
+    //Kontrollerar att en begäran om komplettering sätter status PENDING_DOCS och sparar texten på ärendet
+    @Test
+    void requestDocuments_shouldSetPendingDocsAndSaveComment() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_request_documents(saved.getId(),
+                "Skicka kontoutdrag", WORKER_EMAIL, WORKER_NAME);
+
+        CreditApplication updated = creditRepo.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(updated.getComment()).isEqualTo("Skicka kontoutdrag");
+    }
+
+    // Kontrollerar att en DOCUMENTS_REQUESTED-händelse skrivs i auditloggen
+    @Test
+    void requestDocuments_shouldWriteAuditEvent() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_request_documents(saved.getId(),
+                "Skicka kontoutdrag", WORKER_EMAIL, WORKER_NAME);
+
+        assertThat(auditEventRepo.findByApplicationIdOrderBySequenceNumberAsc(saved.getId()))
+                .extracting(AuditEvent::getAction)
+                .containsExactly(AuditAction.DOCUMENTS_REQUESTED);
+    }
+
+    // Ett godkänt ärende kan inte kompletteras, och ska vara orört
+    @Test
+    void requestDocuments_shouldThrowWhenApplicationIsApproved() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.APPROVED));
+
+        assertThatThrownBy(() -> backofficeService.application_request_documents(
+                saved.getId(), "Skicka kontoutdrag", WORKER_EMAIL, WORKER_NAME))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already has a decision");
+
+        assertThat(creditRepo.findById(saved.getId()).orElseThrow().getStatus())
+                .isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(auditEventRepo.findByApplicationIdOrderBySequenceNumberAsc(saved.getId())).isEmpty();
+    }
+
+    // Samma för ett avslaget ärende
+    @Test
+    void requestDocuments_shouldThrowWhenApplicationIsRejected() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.REJECTED));
+
+        assertThatThrownBy(() -> backofficeService.application_request_documents(
+                saved.getId(), "Skicka kontoutdrag", WORKER_EMAIL, WORKER_NAME))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(creditRepo.findById(saved.getId()).orElseThrow().getStatus())
+                .isEqualTo(ApplicationStatus.REJECTED);
+    }
+
+    // Ett ärende som inte finns ska ge NoSuchElementException (404)
+    @Test
+    void requestDocuments_shouldThrowWhenApplicationDoesNotExist() {
+        assertThatThrownBy(() -> backofficeService.application_request_documents(
+                999999L, "Skicka kontoutdrag", WORKER_EMAIL, WORKER_NAME))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    // En ny begäran på ett ärende som redan väntar på dokument är tillåten och ersätter texten
+    @Test
+    void requestDocuments_shouldAllowNewRequestWhenAlreadyPendingDocs() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.PENDING_DOCS));
+
+        backofficeService.application_request_documents(saved.getId(), "Även kontoutdrag", WORKER_EMAIL, WORKER_NAME);
+
+        CreditApplication updated = creditRepo.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(updated.getComment()).isEqualTo("Även kontoutdrag");
+    }
+
+    // Granskningslistan ska visa både ärenden under granskning och de som väntar på dokument, men inte avgjorda
+    @Test
+    void applicationsForReview_shouldIncludePendingDocs() {
+        creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+        creditRepo.save(createApplication(ApplicationStatus.PENDING_DOCS));
+        creditRepo.save(createApplication(ApplicationStatus.APPROVED));
+
+        BackOfficeListsDTO result = backofficeService.applicationsForReview(
+                PageRequest.of(0, 20), PageRequest.of(0, 20));
+
+        assertThat(result.reviewApplications().content())
+                .extracting(ReviewInfo::status)
+                .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_DOCS);
+    }
+    //---------------
 
 }
