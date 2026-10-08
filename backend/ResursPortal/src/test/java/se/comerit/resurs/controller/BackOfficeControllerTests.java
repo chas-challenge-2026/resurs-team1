@@ -1,36 +1,25 @@
 package se.comerit.resurs.controller;
 
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
-import se.comerit.resurs.dto.ContactDetails;
-import se.comerit.resurs.dto.CreditApplicationDTO;
-import se.comerit.resurs.dto.application.ApplicationSubmission;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginRequest;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginRequest;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
-import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.dto.backoffice.ApplicationCommentRequest;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -153,6 +142,180 @@ public class BackOfficeControllerTests {
                 .findFirst()
                 .orElseThrow()
                 .substring("XSRF-TOKEN=".length());
+    }
+
+    // Loggar in som handläggare (Karin från seed.sql) och returnerar sessions-id:t.
+    private String loginAsCaseWorker(String token) {
+        return restTestClient
+                .post()
+                .uri("/api/auth/login/caseworker")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CaseWorkerLoginRequest("karin@resurs.se", "password123"))
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(CaseWorkerLoginResponse.class)
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE)
+                .stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("JSESSIONID="))
+                .map(value -> value.substring("JSESSIONID=".length()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    // Loggar in som företag (556000-1234, firmatecknare från mockdatan) och returnerar sessions-id:t.
+    private String loginAsCompany(String token) {
+        return restTestClient
+                .post()
+                .uri("/api/auth/login/company")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CompanyLoginRequest("556000-1234", "750312-1234"))
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(CompanyLoginResponse.class)
+                .getResponseHeaders()
+                .get(HttpHeaders.SET_COOKIE)
+                .stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("JSESSIONID="))
+                .map(value -> value.substring("JSESSIONID=".length()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    // ============================================================
+    // GET /api/backoffice/application/{id}/audit
+    // ============================================================
+
+    //En handläggare ska kunna hämta auditloggen: 200 (ärende 1 från seed.sql har inga händelser än, så listan är tom)
+    @Test
+    void auditLog_asCaseWorker_returnsOk() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .get()
+                .uri("/api/backoffice/application/1/audit")
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    //Ett företag ska inte få hämta auditloggen (403)
+    @Test
+    void auditLog_asCompany_returnsForbidden() {
+        String token = csrfToken();
+        String sessionId = loginAsCompany(token);
+
+        restTestClient
+                .get()
+                .uri("/api/backoffice/application/1/audit")
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    //Utan inloggning ska man få 401
+    @Test
+    void auditLog_withoutSession_returnsUnauthorized() {
+        restTestClient
+                .get()
+                .uri("/api/backoffice/application/1/audit")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    //Ett ärende som INTE finns ska ge 404
+    @Test
+    void auditLog_unknownApplication_returnsNotFound() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .get()
+                .uri("/api/backoffice/application/999999/audit")
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    // ============================================================
+    // POST /api/backoffice/application/{id}/requested-documents
+    // ============================================================
+
+    // Ett företag får inte begära komplettering, bara handläggare (403)
+    @Test
+    void requestDocuments_asCompany_returnsForbidden() {
+        String token = csrfToken();
+        String sessionId = loginAsCompany(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/request-documents")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationCommentRequest("Skicka kontoutdrag"))
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    // Utan inloggning ska man få 401
+    @Test
+    void requestDocuments_withoutSession_returnsUnauthorized() {
+        String token = csrfToken();
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/request-documents")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationCommentRequest("Skicka kontoutdrag"))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    // Ett ärende som inte finns ska ge 404
+    @Test
+    void requestDocuments_unknownApplication_returnsNotFound() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/999999/request-documents")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationCommentRequest("Skicka kontoutdrag"))
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    // En tom kommentar ska ge 400 (valideringen stoppar den innan något ändras)
+    @Test
+    void requestDocuments_blankComment_returnsBadRequest() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/request-documents")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationCommentRequest("   "))
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
 
