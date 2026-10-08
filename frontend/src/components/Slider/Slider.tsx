@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCurrency } from "../../utils/formatters";
+import { formatCurrency, formatNumberWithSpaces } from "../../utils/formatters";
 import InputError from "../InputError/InputError";
 import s from "./Slider.module.css";
 
@@ -38,8 +38,13 @@ export interface SliderProps {
  * ```
  */
 const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "kr", error}: SliderProps) => {
-  const [isEditing, setIsEditing] = useState(false)
-  const [inputValue, setInputValue] = useState(String(value))
+  const [inputValue, setInputValue] = useState(formatNumberWithSpaces(String(value)))
+  const [prevValue, setPrevValue] = useState(value)
+
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setInputValue(formatNumberWithSpaces(String(value)));
+  }
 
   // Calculate percentage filled for the dynamic CSS gradient track (clamped between 0 and 100%)
   const percentage = Math.min(
@@ -60,19 +65,20 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
   // Handles direct text input changes, removing any non-digit characters.
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value.replace(/\D/g, "")
-    setInputValue(rawVal)
+    const formattedValue = formatNumberWithSpaces(rawVal)
+    setInputValue(formattedValue)
   }
 
 
   // Clamps the input value to the min/max range when the text input loses focus.
   const handleBlur = () => {
-    setIsEditing(false)
-    let clampedVal = Number(inputValue)
+    const rawVal = inputValue.replace(/\D/g, "")
+    let clampedVal = Number(rawVal)
     if (isNaN(clampedVal) || clampedVal < min) clampedVal = min
     if (clampedVal > max) clampedVal = max
-    
+
     onChange(clampedVal);
-    setInputValue(String(clampedVal))
+    setInputValue(formatNumberWithSpaces(String(clampedVal)))
   }
 
   return (
@@ -84,33 +90,19 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
       )}
 
       {/* Interactive value display: toggles between a button and a text input */}
-      {isEditing ? (
-        <div className={s.inputWrapper}>
-          <input
-            id={textInputId}
-            type="text"
-            inputMode="numeric" /* Opens numeric keypad on mobile devices */
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            autoFocus
-            className={s.numberInput}
-          />
-          <span className={s.unitSuffix}>{unit}</span>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={s.valueDisplayButton}
-          onClick={() => {
-            setInputValue(String(value));
-            setIsEditing(true);
-          }}
-          title="Klicka för att skriva belopp"
-        >
-          {formatCurrency(value, unit)}
-        </button>
-      )}
+      <div className={s.inputWrapper}>
+        <input
+          id={textInputId}
+          type="text"
+          inputMode="numeric" /* Opens numeric keypad on mobile devices */
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          size={inputValue.length > 1 ? inputValue.length - 1 : 1}
+          className={`input-base ${s.numberInput}`}
+        />
+        <span className={s.unitSuffix}>{unit}</span>
+      </div>
 
       <input
         id={inputId}

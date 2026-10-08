@@ -20,7 +20,7 @@ export const ICONS: Record<ApplicationStatus, IconType> = {
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   PENDING_DOCS: "Väntar på dokument",
-  UNDER_REVIEW: "Under behandling",
+  UNDER_REVIEW: "Manuell granskning",
   APPROVED: "Godkänd",
   REJECTED: "Avvisad"
 }

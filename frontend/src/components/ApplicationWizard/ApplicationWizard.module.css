@@ -1,0 +1,32 @@
+.preFilled {
+  display: flex;
+  align-items: center;
+  background-color: #f4f6f8;
+  border-color: #f4f6f8 !important;
+}
+
+.preFilled p {
+  font-weight: 500;
+}
+
+.informationText {
+  padding-bottom: var(--space-xs);
+}
+
+.infoBox {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background-color: #f4f6f8;
+  border-radius: var(--radius-sm);
+}
+
+.infoBoxTitle {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+}
+
+.infoBox p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

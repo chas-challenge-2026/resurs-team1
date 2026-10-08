@@ -17,7 +17,18 @@
 }
 
 .fileInformation {
-  min-width: 0; 
+  min-width: 0;
+  flex: 1;
+}
+
+.fileInformation.clickable {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+}
+
+.fileInformation.clickable:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
 
 .filename {
@@ -31,7 +42,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
