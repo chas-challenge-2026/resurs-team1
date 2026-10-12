@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginRequest;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginRequest;
@@ -139,7 +140,7 @@ public class BackOfficeControllerTests {
 
         restTestClient
                 .post()
-                .uri("/api/backoffice/application/1/rescore")
+                .uri("/api/application/rescore/1")
                 .header("X-XSRF-TOKEN", token)
                 .cookie("XSRF-TOKEN", token)
                 .cookie("JSESSIONID", sessionId)
@@ -160,7 +161,7 @@ public class BackOfficeControllerTests {
 
         restTestClient
                 .post()
-                .uri("/api/backoffice/application/1/rescore")
+                .uri("/api/application/rescore/1")
                 .header("X-XSRF-TOKEN", token)
                 .cookie("XSRF-TOKEN", token)
                 .cookie("JSESSIONID", sessionId)
@@ -175,7 +176,7 @@ public class BackOfficeControllerTests {
 
         restTestClient
                 .post()
-                .uri("/api/backoffice/application/1/rescore")
+                .uri("/api/application/rescore/1")
                 .header("X-XSRF-TOKEN", token)
                 .cookie("XSRF-TOKEN", token)
                 .exchange()
@@ -190,7 +191,7 @@ public class BackOfficeControllerTests {
 
         restTestClient
                 .post()
-                .uri("/api/backoffice/application/999999/rescore")
+                .uri("/api/application/rescore/99999")
                 .header("X-XSRF-TOKEN", token)
                 .cookie("XSRF-TOKEN", token)
                 .cookie("JSESSIONID", sessionId)
