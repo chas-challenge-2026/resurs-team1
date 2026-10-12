@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.UpdateTimestamp;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -56,12 +57,15 @@ public class CreditApplication {
     private Instant updatedAt;
 
     @Column
+    @Convert(converter = PiiAttributeConverter.class)
     private String contactName;
 
     @Column
+    @Convert(converter = PiiAttributeConverter.class)
     private String contactNumber;
 
     @Column
+    @Convert(converter = PiiAttributeConverter.class)
     private String contactEmail;
 
 

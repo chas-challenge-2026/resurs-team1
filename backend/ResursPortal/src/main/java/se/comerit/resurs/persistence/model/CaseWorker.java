@@ -1,6 +1,7 @@
 package se.comerit.resurs.persistence.model;
 
 import jakarta.persistence.*;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
 
 @Entity
 @Table(name = "case_workers")
@@ -14,13 +15,15 @@ public class CaseWorker {
     private Integer version;
 
     @Column(name = "name")
+    @Convert(converter = PiiAttributeConverter.class)
     private String name;
 
     @Column(name = "email", unique = true)
+    @Convert(converter = PiiAttributeConverter.class)
     private String email;
 
     @Column(name = "password_hash")
-    private  String passwordHash;
+    private String passwordHash;
 
     public CaseWorker() {
 

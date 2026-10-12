@@ -1,16 +1,17 @@
 CREATE TABLE companies (
     id SERIAL PRIMARY KEY,
     version INT,
-    org_number VARCHAR(20) UNIQUE,
-    company_name VARCHAR(200),
-    authorized_signatory VARCHAR(100)
+    org_number bytea UNIQUE,
+    company_name bytea,
+    authorized_signatory bytea,
+    search_key_org_number bytea UNIQUE
 );
 
 CREATE TABLE case_workers (
     id SERIAL PRIMARY KEY,
     version INT,
-    name VARCHAR(100),
-    email VARCHAR(100) UNIQUE,
+    name bytea,
+    email bytea UNIQUE,
     password_hash VARCHAR(60)
 );
 
@@ -24,11 +25,10 @@ CREATE TABLE applications (
     decision VARCHAR(20),
     decision_reason TEXT,
     scoring_result TEXT,
-    audit_log TEXT DEFAULT '[]',  -- JSON blob, no separate table
     duration_months INT,
-    contact_name TEXT,
-    contact_number TEXT,
-    contact_email TEXT,
+    contact_name bytea,
+    contact_number bytea,
+    contact_email bytea,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 

@@ -1,6 +1,7 @@
 package se.comerit.resurs.persistence.model;
 
 import jakarta.persistence.*;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
 
 @Entity
 @Table(name = "companies")
@@ -14,13 +15,16 @@ public class Company {
     private Integer version;
 
     @Column(unique = true,name = "org_number" )
+    @Convert(converter = PiiAttributeConverter.class)
     private String orgNumber;
 
     @Column(name = "companyName")
+    @Convert(converter = PiiAttributeConverter.class)
     private String companyName;
 
 
     @Column(name = "authorized_signatory")
+    @Convert(converter = PiiAttributeConverter.class)
     private String authorizedSignatory;
 
     public Company() {
