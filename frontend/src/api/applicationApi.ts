@@ -179,6 +179,10 @@ export const postDecision = async (applicationId: number, decision: Decision, co
   await api.post("/backoffice/decide", null, { params: { applicationId, decision, comment } })
 }
 
+export const postRequest = async (id: number, comment: string): Promise<void> => {
+  await api.post(`/backoffice/application/${id}/request-documents`, {comment})
+}
+
 export const getReviewPage = async (page: number): Promise<PagedResult<ReviewApplication>> => {
   const response = await api.get<BackofficeLists>("/backoffice", { params: { review_page: page, review_size: 20 } })
   return response.data.reviewApplications

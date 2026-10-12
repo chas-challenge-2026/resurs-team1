@@ -1,5 +1,5 @@
 import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 
 export const useApplications = (page: number) => {
@@ -38,6 +38,17 @@ export const useDecideApplication = () => {
     meta: { preventGlobalToast: true },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["backofficeApplications"] }) // refreshes both the sidebar list and the open case
+    },
+  })
+}
+
+export const useRequestInformation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, ApiErrorPayload, { id: number, comment: string }>({
+    mutationFn: ({ id, comment }) => postRequest(id, comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["backofficeApplications"] })
     },
   })
 }

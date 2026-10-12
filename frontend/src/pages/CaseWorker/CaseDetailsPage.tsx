@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
 import { getMetric } from "../../utils/scoringConverter"
-import { useBackofficeApplication, useDecideApplication } from "../../hooks/useApplication"
+import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
 import type { Decision } from "../../api/applicationApi"
 import type { ScoringStatus, BadgeConfig } from "../../types/scoring"
 import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
@@ -16,6 +16,8 @@ import TextArea from "../../components/Textarea/Textarea"
 import Loading from "../../components/Loading/Loading"
 import NotFoundPage from "../NotFound/NotFoundPage"
 import s from "./CaseDetailsPage.module.css"
+import InputError from "../../components/InputError/InputError"
+import { toast } from "sonner"
 
 type viewOptions = "overview" | "manageCase"
 
@@ -48,26 +50,43 @@ const CaseDetailsPage = () => {
   const { id } = useParams()
   const applicationId = Number(id)
 
-  const [rejectComment, setRejectComment] = useState("")
+  const [comment, setComment] = useState("")
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
-  console.log(data)
   const decide = useDecideApplication()
+  const request = useRequestInformation()
 
   const handleDecision = (decision: Decision, comment = "") => {
     decide.mutate({ id: applicationId, decision, comment }, {
       onSuccess: () => {
         setActiveAction(null)
-        setRejectComment("")
+        setComment("")
+        if(decision === "APPROVED") {
+          toast("Ärendet har godkänts")
+        } else if (decision === "REJECTED") {
+          toast("Ärendet har avvisats")
+        }
       },
+    })
+  }
+  
+  const handleRequest = (comment: string) => {
+    request.mutate({id: applicationId, comment}, {
+      onSuccess: () => {
+        setActiveAction(null)
+        setComment("")
+        toast("Förfrågan om komplettering har skickats till kunden")
+      }
     })
   }
 
   const handleActionToggle = (action: ActionType) => {
     if(action === activeAction) {
       setActiveAction(null)
+      setComment("")
       return
     }
     setActiveAction(action)
+    setComment("")
   }
 
   if (isPending) return <Loading size="lg" label="Hämtar ärende..." centerOnPage delay />
@@ -171,90 +190,106 @@ const CaseDetailsPage = () => {
 
       {view === "manageCase" &&
         <section className={s.contentWrapper}>
-          <div className={s.actionsWrapper}>
-            <Button
-              variant="secondary" 
-              className={s.actionButton}
-              active={activeAction === "approve"}
-              onClick={() => handleActionToggle("approve")}
-            >
-              Godkänn
-            </Button>
-            <Button 
-              variant="secondary"
-              color="var(--color-warning)"
-              className={s.actionButton}
-              active={activeAction === "requestDocs"}
-              onClick={() => handleActionToggle("requestDocs")}
-            >
-              Komplettera
-            </Button>
-            <Button
-              variant="secondary" 
-              color="var(--color-error)"
-              className={s.actionButton}
-              active={activeAction === "reject"}
-              onClick={() => handleActionToggle("reject")}
-            >
-              Avvisa
-            </Button>
-          </div>
-
-          {activeAction === "approve" && (
-            <Card as="section">
-              <div className={s.textContainer}>
-                <h3 className={s.addingTitle}>Vill du godkänna ärendet?</h3>
-                <p>Kontrollera att uppgifterna och eventuella kompletteringar är granskade. Ingen kommentar krävs.</p>
-              </div>
-              <CardFooter className={s.addingFooter}>
-                <Button onClick={() => handleDecision("APPROVED")} disabled={decide.isPending}>
-                  Godkänn ärendet
-                </Button>
-                <Button variant="secondary" onClick={() => setActiveAction(null)}>
-                  Avbryt
-                </Button>
-              </CardFooter>
+          {data.status === "APPROVED" || data.status === "REJECTED" ? (
+            <Card>
+              <p className={s.infoText}>
+                Det här ärendet är redan beslutat och kan inte längre ändras.
+              </p>
             </Card>
+          ) : (
+            <>
+            <div className={s.actionsWrapper}>
+              <Button
+                variant="secondary" 
+                className={s.actionButton}
+                active={activeAction === "approve"}
+                onClick={() => handleActionToggle("approve")}
+              >
+                Godkänn
+              </Button>
+              <Button 
+                variant="secondary"
+                color="var(--color-warning)"
+                className={s.actionButton}
+                active={activeAction === "requestDocs"}
+                onClick={() => handleActionToggle("requestDocs")}
+              >
+                Komplettera
+              </Button>
+              <Button
+                variant="secondary" 
+                color="var(--color-error)"
+                className={s.actionButton}
+                active={activeAction === "reject"}
+                onClick={() => handleActionToggle("reject")}
+              >
+                Avvisa
+              </Button>
+            </div>
+
+            {activeAction === "approve" && (
+              <Card as="section">
+                <div className={s.textContainer}>
+                  <h3 className={s.addingTitle}>Vill du godkänna ärendet?</h3>
+                  <p>Kontrollera att uppgifterna och eventuella kompletteringar är granskade. Ingen kommentar krävs.</p>
+                </div>
+                {decide.isError && <InputError errorMsg={decide.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleDecision("APPROVED")} disabled={decide.isPending}>
+                    Godkänn ärendet
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {activeAction === "requestDocs" && (
+              <Card as="section">
+                <h3 className={s.addingTitle}>Beskriv vilket dokument du behöver från kunden</h3>
+                <TextArea 
+                  id="message"
+                  label="message"
+                  placeholder="T.ex. årsredovisning, kontoutdrag, offert..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                {request.isError && <InputError errorMsg={request.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleRequest(comment)} disabled={request.isPending || !comment.trim()}>
+                    Skicka förfrågan
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {activeAction === "reject" && (
+              <Card as="section">
+                <h3 className={s.addingTitle}>Skriv en kommentar till varför ärendet avvisas</h3>
+                <TextArea
+                  id="message"
+                  label="message"
+                  placeholder="Beskriv anledningen till avslaget..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                {decide.isError && <InputError errorMsg={decide.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleDecision("REJECTED", comment)} disabled={decide.isPending || !comment.trim()}>
+                    Avvisa ärendet
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+            </>
           )}
-
-          {activeAction === "requestDocs" && (
-            <Card as="section">
-              <h3 className={s.addingTitle}>Beskriv vilket dokument du behöver från kunden</h3>
-              <TextArea id="message" label="message" placeholder="T.ex. årsredovisning, kontoutdrag, offert..." />
-              <CardFooter className={s.addingFooter}>
-                <Button>
-                  Skicka förfrågan
-                </Button>
-                <Button variant="secondary" onClick={() => setActiveAction(null)}>
-                  Avbryt
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {activeAction === "reject" && (
-            <Card as="section">
-              <h3 className={s.addingTitle}>Skriv en kommentar till varför ärendet avvisas</h3>
-              <TextArea
-                id="message"
-                label="message"
-                placeholder="Beskriv anledningen till avslaget..."
-                value={rejectComment}
-                onChange={(e) => setRejectComment(e.target.value)}
-              />
-              <CardFooter className={s.addingFooter}>
-                <Button onClick={() => handleDecision("REJECTED", rejectComment)} disabled={decide.isPending || !rejectComment.trim()}>
-                  Avvisa ärendet
-                </Button>
-                <Button variant="secondary" onClick={() => setActiveAction(null)}>
-                  Avbryt
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {decide.isError && <p>{decide.error.message}</p>}
-
           {/* TODO: Add view for requests and corresponding attachments */}
         </section>
       }
