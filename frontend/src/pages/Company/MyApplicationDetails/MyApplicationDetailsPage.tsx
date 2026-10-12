@@ -177,7 +177,7 @@ const MyApplicationDetailsPage = () => {
             </div>
           </CardHeader>
           <CardBody className={s.infoBody}>
-            <p>{application.decision}</p>
+            <p>{application.comment}</p>
 
             <Button
               variant="ghost"

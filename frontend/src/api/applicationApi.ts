@@ -65,6 +65,7 @@ export interface Application {
   authorizedSignatory?: string
   durationMonths?: number
   documents?: ApplicationDocument[]
+  comment?: string
   companyFinances?: CompanyFinances | null // only from backoffice, null when no annual report is found
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
