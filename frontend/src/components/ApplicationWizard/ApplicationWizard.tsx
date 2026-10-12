@@ -8,6 +8,9 @@ import { Card, CardBody } from "../Card/Card";
 import { DataList, DataListItem } from "../DataList/DataList";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
+import s from "./ApplicationWizard.module.css"
+import { getUser } from "../../utils/auth";
+import type { CompanyUser } from "../../types/user";
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -34,6 +37,8 @@ interface ApplicationWizardProps {
   values: ApplicationFormData;
   /** Report a change upwards. Partial, so a field can be sent on its own. */
   onChange: (patch: Partial<ApplicationFormData>) => void;
+  /** if form submit has an error or not, use to show error message */
+  isSubmitError: boolean;
 }
 
 /**
@@ -58,7 +63,9 @@ interface ApplicationWizardProps {
  * // → values becomes { ...everything else, loanAmount: 2000000 }
  * ```
  */
-const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) => {
+const ApplicationWizard = ({ step, values, onChange, isSubmitError }: ApplicationWizardProps) => {
+  const user = getUser() as CompanyUser
+
   switch (step) {
     case 1:
       return (
@@ -105,6 +112,11 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
       return (
         <Card>
           <CardBody>
+            <div className={`input-base ${s.preFilled}`}>
+              <span>Org.nr</span>
+              <p>{user.orgNumber}</p>
+            </div>
+
             <Input
               id="contactName"
               label="Kontaktperson"
@@ -126,6 +138,7 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
               label="Telefonnummer"
               type="tel"
               placeholder="070-123 45 67"
+              information="Vi ringer er om vi behöver kompletterande uppgifter"
               value={values.phoneNumber}
               error={phoneError}
               onChange={(e) => onChange({ phoneNumber: e.target.value })}
@@ -141,8 +154,8 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
       return (
         <Card>
           <CardBody>
-            <p className="information-text">
-              Vi hämtar företagets bokslutsuppgifter via organisationsnumret.
+            <p className={`information-text ${s.informationText}`}>
+              Kontrollera att uppgifterna nedan stämmer innan du går vidare.
             </p>
             <DataList>
               <DataListItem label="Organisationsnummer" value={values.orgNumber} />
@@ -157,26 +170,22 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
                 value={values.durationMonths ? `${values.durationMonths} mån` : "Ej valt"}
               />
             </DataList>
-            <p className="information-text">
-              Kontrollera uppgifterna innan du skickar in ansökan.
-            </p>
+            
+            <div className={s.infoBox}>
+              <span className={s.infoBoxTitle}>Automatisk datahämtning</span>
+              <p>
+                När du skickar in ansökan hämtar vi automatiskt företagets senast registrerade årsredovisning och bokslutsuppgifter via organisationsnumret.
+              </p>
+            </div>
+
+            {isSubmitError &&
+              <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen senare.</p>
+            }
+
           </CardBody>
         </Card>
       )
     }
-
-    case 4:
-      return (
-        <Card>
-          <CardBody>
-            <h2>Tack, vi har tagit emot din ansökan</h2>
-            <p>
-              Vi återkommer med besked till {values.email}. Handläggningen tar
-              normalt några arbetsdagar.
-            </p>
-          </CardBody>
-        </Card>
-      )
 
     default:
       return null

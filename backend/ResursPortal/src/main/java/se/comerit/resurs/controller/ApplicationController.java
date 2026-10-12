@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
-import se.comerit.resurs.dto.application.ApplicationShortDTO;
-import se.comerit.resurs.dto.application.ApplicationSubmission;
-import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
-import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.application.*;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -155,5 +152,24 @@ public class ApplicationController {
         List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,pageable);
 
         return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
+    }
+
+
+    // Kör om scoring på ett ärende, bara handläggare(och i framtiden systemet själv) ska komma åt denna
+    // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
+    @PostMapping("rescore/{id}")
+    @PreAuthorize("hasRole('CASE_WORKER')")
+    public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(appService.rescoreApplication(id));
+    }
+
+
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @GetMapping("/{id}/comments")
+    public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,
+                                                                    @AuthenticationPrincipal Object principal) {
+        CreditApplicationDTO app = appService.findApplicationByID(id);
+        accessPolicy.checkCanView(principal, app);
+        return ResponseEntity.ok(appService.findComments(id));
     }
 }
