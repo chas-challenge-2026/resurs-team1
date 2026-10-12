@@ -1,21 +1,20 @@
-package se.comerit.resurs.service;
+package se.comerit.resurs.jna;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import se.comerit.resurs.exception.jna.EncryptionException;
-import se.comerit.resurs.jna.EncryptionKey;
-import se.comerit.resurs.jna.NativeCryptographerInterface;
+import se.comerit.resurs.persistence.converter.PiiEncryptionInterface;
 
 import java.nio.ByteBuffer;
 
-@Service
-public class EncryptionService {
+@Component
+public class JNAEncryptionComponent implements PiiEncryptionInterface {
     private final NativeCryptographerInterface cryptoLibrary;
     private final EncryptionKey aesKey;
 
     private int ivLength = 12;
     private int tagLength = 16;
 
-    public EncryptionService(NativeCryptographerInterface cryptoLibrary, EncryptionKey aesKey) {
+    public JNAEncryptionComponent(NativeCryptographerInterface cryptoLibrary, EncryptionKey aesKey) {
         this.cryptoLibrary = cryptoLibrary;
         this.aesKey = aesKey;
     }
