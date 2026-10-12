@@ -92,6 +92,11 @@ public class AuditService {
                 .stream().map(AuditEventDTO::new ).toList();
     }
 
+    // Svarar ja/nej på om en handläggare har fattat ett beslut på ärendet
+    public boolean hasManualDecision(Long applicationId) {
+        return auditEventRepository.existsByApplicationIdAndAction(applicationId, AuditAction.MANUAL_DECISION);
+    }
+
     public void commentAdded(CreditApplication application, String workerEmail, String workerName, String comment) {
         saveEvent(application, AuditAction.COMMENT_ADDED, workerEmail,
                 new AuditDataFormat.CommentAdded("CASE_WORKER", workerName, comment));

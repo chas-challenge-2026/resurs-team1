@@ -19,6 +19,7 @@ import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
+import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.BackofficeService;
 import se.comerit.resurs.service.CompanyFinancialService;
 
@@ -31,6 +32,7 @@ import java.util.Optional;
  *
  * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut, se detaljer,
  * och kommentera ett ärende samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ * Controllern kan också köra om scoring på ett ärende.
  *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern

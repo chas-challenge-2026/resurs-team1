@@ -146,6 +146,16 @@ public class ApplicationController {
         return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
     }
 
+
+    // Kör om scoring på ett ärende, bara handläggare(och i framtiden systemet själv) ska komma åt denna
+    // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
+    @PostMapping("rescore/{id}")
+    @PreAuthorize("hasRole('CASE_WORKER')")
+    public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(appService.rescoreApplication(id));
+    }
+
+
     @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,

@@ -126,6 +126,78 @@ public class BackOfficeControllerTests {
 
     }
 
+    // ============================================================
+    // POST /api/backoffice/application/{id}/rescore
+    // ============================================================
+
+    // En handläggare ska kunna köra om scoring: 200 och samma ärende tillbaka.
+    // Ärende 1 kommer från seed.sql och har inget manuellt beslut.
+    @Test
+    void rescore_asCaseWorker_returnsOk() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/rescore")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(CreditApplicationDTO.class)
+                .value(application -> {
+                    assertThat(application.id()).isEqualTo(1L);
+                    assertThat(application.scoringResult()).isNotBlank();
+                });
+    }
+
+    // Ett företag får inte köra om scoring, bara handläggare (403).
+    @Test
+    void rescore_asCompany_returnsForbidden() {
+        String token = csrfToken();
+        String sessionId = loginAsCompany(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/rescore")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    // Utan inloggning ska man få 401.
+    @Test
+    void rescore_withoutSession_returnsUnauthorized() {
+        String token = csrfToken();
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/1/rescore")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    // Ett ärende som inte finns ska ge 404.
+    @Test
+    void rescore_unknownApplication_returnsNotFound() {
+        String token = csrfToken();
+        String sessionId = loginAsCaseWorker(token);
+
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/999999/rescore")
+                .header("X-XSRF-TOKEN", token)
+                .cookie("XSRF-TOKEN", token)
+                .cookie("JSESSIONID", sessionId)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
 
     private String csrfToken() {
         List<String> cookies = restTestClient
