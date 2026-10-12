@@ -12,7 +12,8 @@ CREATE TABLE case_workers (
     version INT,
     name bytea,
     email bytea UNIQUE,
-    password_hash VARCHAR(60)
+    password_hash VARCHAR(60),
+    search_key_email bytea UNIQUE
 );
 
 CREATE TABLE applications (
@@ -69,19 +70,6 @@ CREATE TABLE audit_events (
 
 CREATE INDEX idx_audit_application_id ON audit_events(application_id);
 CREATE INDEX idx_audit_action ON audit_events(action);
-
--- Seed: two companies (matching BankID mock org numbers)
-INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
-('556000-1234', 'Fasen Elteknik AB', 'Anders Karlsson'),
-('556000-5678', 'Britt Maries Ögonfransar AB', 'Maria Svensson');
-
--- Case worker (password = "password123")
-INSERT INTO case_workers (name, email, password_hash) VALUES
-('Karin Handläggare', 'karin@resurs.se', '$2a$10$mIgdY8b1wHXrzawxupEmruSMcn3kA5Aeci8J2cEyGS6yk2ErUJ62C');
-
--- Pre-existing application in REVIEW
-INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log,contact_name,contact_number,contact_email, duration_months, version) VALUES
-(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]','Anders Karlsson','0702222222','Anka@gmail.bygg',12,1);
 
 -- Branch Specific medians for use
 INSERT INTO branches (
