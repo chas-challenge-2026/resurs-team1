@@ -241,5 +241,57 @@ class BackofficeServiceTests {
         return application;
     }
 
+    // Kontrollerar att handläggarens kommentar sparas på ärendet när ett beslut fattas
+    @Test
+    void applicationDecision_shouldSaveCommentOnApplication() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_decision(saved.getId(),
+                ApplicationStatus.REJECTED, WORKER_EMAIL, WORKER_NAME, "Soliditeten är för låg");
+        CreditApplication updated = creditRepo.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getComment()).isEqualTo("Soliditeten är för låg");
+    }
+
+    // Kontrollerar att en tom kommentar (mellanslag här) sparas som null istället för tom text
+    @Test
+    void applicationDecision_shouldStoreNullWhenCommentIsBlank() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_decision(saved.getId(),
+                ApplicationStatus.APPROVED, WORKER_EMAIL, WORKER_NAME, "   ");
+        assertThat(creditRepo.findById(saved.getId()).orElseThrow().getComment()).isNull();
+    }
+
+    // Kontroller att en kommentar sparas på ärendet och att statusen inte ändras
+    @Test
+    void applicationComment_shouldSaveCommentAndKeepStatus() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_comment(saved.getId(), "Du saknar underlag", WORKER_EMAIL, WORKER_NAME);
+
+        CreditApplication updated = creditRepo.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getComment()).isEqualTo("Du saknar underlag");
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+    }
+
+    // Kontrollerar atte n COMMENT_ADDED händelse skrivs i auditloggen när en kommentar läggs till
+    @Test
+    void applicationComment_shouldWriteAuditEvent() {
+        CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
+
+        backofficeService.application_comment(saved.getId(), "Hej", WORKER_EMAIL, WORKER_NAME);
+
+        assertThat(auditEventRepo.findByApplicationIdOrderBySequenceNumberAsc(saved.getId()))
+                .extracting(AuditEvent::getAction)
+                .containsExactly(AuditAction.COMMENT_ADDED);
+    }
+
+    // Kontrollerar att ett ärende som inte finns ger NoSuchElementException
+    @Test
+    void applicationComment_shouldThrowWhenApplicationDoesNotExist() {
+        assertThatThrownBy(() -> backofficeService.application_comment(
+                999999L, "Hej", WORKER_EMAIL, WORKER_NAME))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
 
 }

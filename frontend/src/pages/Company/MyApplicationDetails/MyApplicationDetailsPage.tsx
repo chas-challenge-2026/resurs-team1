@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
-import { useParams } from "react-router-dom"
-import { RiChat3Line, RiCheckLine, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
+import { Link, useParams } from "react-router-dom"
+import { RiArrowLeftLine, RiChat3Line, RiCheckLine, RiTimeLine, RiUploadCloud2Line } from "react-icons/ri"
 import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../../utils/formatters"
 import { useDocuments, useUploadDocument } from "../../../hooks/useDocument"
 import { useApplication, useDetailedApplication } from "../../../hooks/useApplication"
@@ -100,6 +100,10 @@ const MyApplicationDetailsPage = () => {
   return(
     <div className={s.wrapper}>
       <div>
+        <Link to="/mina-ansokningar" className={s.backButton}>
+          <RiArrowLeftLine />
+          <span>Till mina ansökningar</span>
+        </Link>
         <div className={s.titleGroup}>
           <h2 className="title">{formatReferenceNumber(application.id)}</h2>
           <StatusTag status={application.status} />

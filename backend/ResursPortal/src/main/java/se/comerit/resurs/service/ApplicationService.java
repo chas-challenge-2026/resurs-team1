@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.persistence.CompanyRepository;
@@ -165,6 +166,10 @@ public class ApplicationService {
     }
     public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pagable){
         return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID,pagable).stream().map(CreditApplicationDTO::new).toList();
+    }
+
+    public List<ApplicationCommentDTO> findComments(Long applicationId) {
+        return auditService.findComments(applicationId);
     }
 
 

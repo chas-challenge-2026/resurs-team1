@@ -37,6 +37,8 @@ interface ApplicationWizardProps {
   values: ApplicationFormData;
   /** Report a change upwards. Partial, so a field can be sent on its own. */
   onChange: (patch: Partial<ApplicationFormData>) => void;
+  /** if form submit has an error or not, use to show error message */
+  isSubmitError: boolean;
 }
 
 /**
@@ -61,7 +63,7 @@ interface ApplicationWizardProps {
  * // → values becomes { ...everything else, loanAmount: 2000000 }
  * ```
  */
-const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) => {
+const ApplicationWizard = ({ step, values, onChange, isSubmitError }: ApplicationWizardProps) => {
   const user = getUser() as CompanyUser
 
   switch (step) {
@@ -175,23 +177,15 @@ const ApplicationWizard = ({ step, values, onChange }: ApplicationWizardProps) =
                 När du skickar in ansökan hämtar vi automatiskt företagets senast registrerade årsredovisning och bokslutsuppgifter via organisationsnumret.
               </p>
             </div>
+
+            {isSubmitError &&
+              <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen senare.</p>
+            }
+
           </CardBody>
         </Card>
       )
     }
-
-    case 4:
-      return (
-        <Card>
-          <CardBody>
-            <h2>Tack, vi har tagit emot din ansökan</h2>
-            <p>
-              Vi återkommer med besked till {values.email}. Handläggningen tar
-              normalt några arbetsdagar.
-            </p>
-          </CardBody>
-        </Card>
-      )
 
     default:
       return null

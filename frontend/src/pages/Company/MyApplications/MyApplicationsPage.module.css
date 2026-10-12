@@ -9,3 +9,19 @@
   flex-direction: column;
   gap: var(--space-sm);
 }
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+  width: fit-content;
+}
+
+.backButton:hover {
+  color: var(--color-text-main);
+}

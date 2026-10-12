@@ -24,7 +24,7 @@ import java.util.List;
  *
  * Ansvarar för: hämta ansökningar som väntar på granskning och de som redan är avgjorda,
  * en sida i taget så det inte blir för mycket data på en gång, samt spara ett beslut
- * (godkänd/avslag) och se till att det loggas.
+ * (godkänd/avslag) och en kommentar på ärendet och se till att det loggas.
  *
  * Inte ansvarig för: att kolla om användaren är inloggad eller hur datan visas på skärmen ->
  * det sköts av BackofficeController respektive frontend.
@@ -75,6 +75,7 @@ public class BackofficeService {
 
         application.setStatus(decision);
         application.setDecision(decision.toString());
+        application.setComment(comment == null || comment.isBlank() ? null : comment);
 
       auditService.manualDecision(application, workerEmail, workerName, previousStatus, comment);
 
@@ -92,6 +93,13 @@ public class BackofficeService {
         return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
     }
 
+    @Transactional
+    public void application_comment(Long applicationId, String comment, String workerEmail, String workerName) {
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+        application.setComment(comment);
+
+        auditService.commentAdded(application, workerEmail, workerName, comment);
+    }
 
 
 
