@@ -9,8 +9,8 @@ import { useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
 import Loading from "../../../components/Loading/Loading"
 
-const TOTAL_STEPS = 3
-const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
+const TOTAL_STEPS = 4
+const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
 
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
@@ -28,6 +28,7 @@ const ApplicationFormPage = () => {
     requestedAmount: 3000000,
     durationMonths: undefined,
   })
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false)
 
   // old answers first, then the patch overwrites only what changed
   const handleChange = (patch: Partial<ApplicationFormData>) =>
@@ -75,7 +76,7 @@ const ApplicationFormPage = () => {
         <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
 
-      <ApplicationWizard step={step} values={values} onChange={handleChange} isSubmitError={submitApplication.isError} />
+      <ApplicationWizard step={step} values={values} onChange={handleChange} isSubmitError={submitApplication.isError} isTermsAccepted={isTermsAccepted} onTermsChange={setIsTermsAccepted} />
 
       <div className={s.actions}>
         {step > 1 && (
@@ -89,7 +90,7 @@ const ApplicationFormPage = () => {
         <Button
           className={s.submit}
           // pending stops a double click from sending two applications
-          disabled={!stepIsComplete || submitApplication.isPending}
+          disabled={!stepIsComplete || step === TOTAL_STEPS && !isTermsAccepted || submitApplication.isPending}
           onClick={step === TOTAL_STEPS ? handleSubmit : () => setStep(step + 1)}
         >
           {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
