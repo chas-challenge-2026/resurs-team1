@@ -21,21 +21,21 @@ public record ReviewInfo(
         BigDecimal requestedAmount,
         String purpose,
         Instant createdAt,
+        ApplicationStatus status,
         String scoringResult,
         String decisionReason,
         String companyName,
-        String orgNumber,
-        ApplicationStatus status
+        String orgNumber
 ) {
     public ReviewInfo(CreditApplication application) {
         this(application.getId(),
                 application.getRequestedAmount(),
                 application.getPurpose(),
                 application.getCreatedAt(),
+                application.getStatus(),
                 application.getScoringResult(),
                 application.getDecisionReason(),
                 application.getCompany().getCompany_name(),
-                application.getCompany().getOrg_number(),
-                application.getStatus());
+                application.getCompany().getOrg_number());
     }
 }

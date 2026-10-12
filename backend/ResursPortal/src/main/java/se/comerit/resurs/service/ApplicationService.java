@@ -8,12 +8,16 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.enums.ApplicationStatus;
 
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.NoSuchElementException;
@@ -80,10 +84,12 @@ public class ApplicationService {
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);
+
         //loggar efter att application finns sparad i databas.
         auditService.applicationCreated(saved);
-        auditService.scoringRun(saved, newApplication.flagCount());
-
+        if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
+            auditService.scoringRun(saved, newApplication.flagCount());
+        }
         return new CreditApplicationDTO(saved);
     }
 
