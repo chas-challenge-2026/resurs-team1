@@ -1,6 +1,7 @@
 package se.comerit.resurs.jna;
 
 import org.springframework.stereotype.Component;
+import se.comerit.resurs.config.EncryptionKey;
 import se.comerit.resurs.exception.jna.EncryptionException;
 import se.comerit.resurs.persistence.converter.PiiEncryptionInterface;
 
@@ -42,8 +43,8 @@ public class JNAEncryptionComponent implements PiiEncryptionInterface {
         statusCode = cryptoLibrary.aes_256_gcm_encrypt(
                 plainText,
                 plainText.length,
-                aesKey.keyBytes(),
-                aesKey.keyBytes().length,
+                aesKey.cipherKeyBytes(),
+                aesKey.cipherKeyBytes().length,
                 initVector,
                 initVector.length,
                 cipherText,
@@ -91,8 +92,8 @@ public class JNAEncryptionComponent implements PiiEncryptionInterface {
         statusCode = cryptoLibrary.aes_256_gcm_decrypt(
                 cipherText,
                 cipherText.length,
-                aesKey.keyBytes(),
-                aesKey.keyBytes().length,
+                aesKey.cipherKeyBytes(),
+                aesKey.cipherKeyBytes().length,
                 initVector,
                 initVector.length,
                 plainText,
