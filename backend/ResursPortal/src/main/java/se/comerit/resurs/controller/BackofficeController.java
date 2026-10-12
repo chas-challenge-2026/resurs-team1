@@ -44,15 +44,11 @@ public class BackofficeController {
 
     private final BackofficeService service;
     private final CompanyFinancialService financeService;
-    // ApplicationService behövs för att kunna köra om scoring
-    private final ApplicationService appService;
 
     @Autowired
-    public BackofficeController(BackofficeService service, CompanyFinancialService financeService,
-                                ApplicationService appService) {
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
         this.service = service;
         this.financeService = financeService;
-        this.appService = appService;
     }
 
     @GetMapping
@@ -115,12 +111,5 @@ public class BackofficeController {
         */
 
         return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
-    }
-
-    // Kör om scoring på ett ärende, bara handläggare ska komma åt denna eftersom hela klassen har @PreAuthorize
-    // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
-    @PostMapping("/application/{id}/rescore")
-    public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(appService.rescoreApplication(id));
     }
 }
