@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tester för AuditService — den enda vägen in i audit_events.
- *
+ * <p>
  * Anropar servicen direkt i stället för via de services som utlöser händelserna,
  * så att postens innehåll testas på ett ställe oavsett vem som skriver den.
  */
@@ -386,6 +386,42 @@ class AuditEventServiceTest {
         assertThat(auditService.findComments(application.getId()))
                 .extracting(ApplicationCommentDTO::text)
                 .containsExactly("Första", "Andra");
+    }
+
+    //------------
+
+    // Kontrollerar att documentsRequested sparar texten, handläggarens namn och föregående status i auditloggen
+    @Test
+    void documentsRequested_recordsCommentWorkerNameAndPreviousStatus() {
+        CreditApplication application = savedApplication(ApplicationStatus.PENDING_DOCS);
+
+        auditService.documentsRequested(application, WORKER_EMAIL, WORKER_NAME,
+                ApplicationStatus.UNDER_REVIEW, "Skicka kontoutdrag");
+
+        AuditEvent event = onlyEventFor(application);
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.DOCUMENTS_REQUESTED);
+        assertThat(event.getActor()).isEqualTo(WORKER_EMAIL);
+        assertThat(dataOf(event))
+                .containsEntry("actorType", "CASE_WORKER")
+                .containsEntry("workerName", WORKER_NAME)
+                .containsEntry("previousStatus", "UNDER_REVIEW")
+                .containsEntry("comment", "Skicka kontoutdrag");
+    }
+
+    // Kontrollerar att texten från en begäran om komplettering syns i kommentarshistoriken, i rätt ordning
+    @Test
+    void findComments_includesDocumentsRequested() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+
+        auditService.commentAdded(application, WORKER_EMAIL, WORKER_NAME, "Första");
+        application.setStatus(ApplicationStatus.PENDING_DOCS);
+        auditService.documentsRequested(application, WORKER_EMAIL, WORKER_NAME,
+                ApplicationStatus.UNDER_REVIEW, "Skicka kontoutdrag");
+
+        assertThat(auditService.findComments(application.getId()))
+                .extracting(ApplicationCommentDTO::text)
+                .containsExactly("Första", "Skicka kontoutdrag");
     }
 
 }

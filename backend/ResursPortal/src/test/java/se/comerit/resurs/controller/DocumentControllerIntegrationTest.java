@@ -169,7 +169,7 @@ class DocumentControllerIntegrationTest {
     }
 
     @Test
-    void uploadDocument_otherDoctype_doesNotAffectStatus() throws Exception {
+    void uploadDocument_otherDoctype_movesStatusToUnderReview() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "dummy".getBytes());
 
@@ -181,7 +181,7 @@ class DocumentControllerIntegrationTest {
                 .andExpect(status().isCreated());
 
         CreditApplication application = creditApplicationRepository.findById(pendingDocsApplicationId).orElseThrow();
-        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
     }
 
     @Test
