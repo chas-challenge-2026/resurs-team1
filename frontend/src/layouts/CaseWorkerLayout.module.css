@@ -11,6 +11,19 @@
   padding: var(--space-xs) var(--space-sm);
 }
 
+.searchHeaderInfo {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-sm);
+  align-items: center;
+}
+
+.clearSearchButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
 .sticky {
   position: sticky;
   top: 0;
