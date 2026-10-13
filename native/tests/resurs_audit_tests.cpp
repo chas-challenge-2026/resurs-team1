@@ -251,7 +251,7 @@ void test_hash_and_sign()
 
     assert(!hashIsZero);
 
-    // Kontrollera att signature inte är tom.
+    // Controll that the signature is not empty
     bool signatureIsZero = true;
 
     for (uint8_t byte : signature)
