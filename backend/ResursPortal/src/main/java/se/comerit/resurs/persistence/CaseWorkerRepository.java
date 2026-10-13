@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface CaseWorkerRepository extends JpaRepository<CaseWorker, Long> {
-    Optional<CaseWorker> findByEmail(String email);
+    Optional<CaseWorker> findBySearchKeyEmail(byte[] emailHash);
 }
