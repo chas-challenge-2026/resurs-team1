@@ -26,7 +26,7 @@ describe("PublicOnlyRoute", () => {
   })
 
   it("redirect away company user from / to /oversikt", () => {
-    vi.spyOn(authUtils, "getUser").mockReturnValue({ userId: 1, role: "company", orgNumber: "556600-1234", companyName: "Malmö Fastigheter AB"})
+    vi.spyOn(authUtils, "getUser").mockReturnValue({ userId: 1, role: "company", orgNumber: "556600-1234", companyName: "Malmö Fastigheter AB", name: "Anders Karlsson"})
 
     render(
       <MemoryRouter initialEntries={["/"]}>
