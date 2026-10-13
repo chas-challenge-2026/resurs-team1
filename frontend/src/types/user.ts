@@ -6,6 +6,7 @@ export interface CompanyUser {
   role: "company";
   orgNumber: string;
   companyName: string;
+  name: string;
 }
 
 export interface CaseWorkerUser {

@@ -5,7 +5,7 @@ import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"
-import { useSubmitApplication } from "../../../hooks/useApplication"
+import { useApplications, useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
 import Loading from "../../../components/Loading/Loading"
 
@@ -17,11 +17,16 @@ const ApplicationFormPage = () => {
   const user = getUser()
   const submitApplication = useSubmitApplication()
 
+  //grab recent application to get a name for autofill
+  const recentApplications = useApplications(0)
+  const recentContactDetails = recentApplications.data?.[0]?.contactDetails
+  console.log(`result:`, recentContactDetails)
+
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
     orgNumber: user?.role === "company" ? user.orgNumber : "",
     companyName: user?.role === "company" ? user.companyName : "",
-    contactName: "",
+    contactName:  user?.name || "",
     email: "",
     phoneNumber: "",
     purpose: "",
@@ -34,6 +39,17 @@ const ApplicationFormPage = () => {
   const handleChange = (patch: Partial<ApplicationFormData>) =>
     setValues((prev) => ({ ...prev, ...patch }))
 
+  // the fetch comes after the first render, so fill once when it comes
+  const [hasAutofilled, setHasAutofilled] = useState(false)
+  if (!hasAutofilled && recentApplications.isSuccess) {
+    setHasAutofilled(true)
+    handleChange({
+      contactName: recentContactDetails?.name || user?.name || "",
+      email: recentContactDetails?.email || "",
+      phoneNumber: recentContactDetails?.phoneNumber || "",
+    })
+  }
+
   // same rules the wizard shows errors for, so Fortsätt can't walk past a bad field
   const stepIsComplete =
     step === 1
@@ -45,7 +61,7 @@ const ApplicationFormPage = () => {
         : true
 
   const handleSubmit = () => {
-    //data being sent differs from the form data + back-end wants contact info nested :)
+    //data being sent differs from the form data
     submitApplication.mutate(
       { 
         contactDetails: {

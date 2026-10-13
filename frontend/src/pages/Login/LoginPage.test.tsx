@@ -129,6 +129,7 @@ describe("LoginPage", () => {
       role: "company",
       orgNumber: ORG_NUMBER,
       companyName: "Fasen Elteknik AB",
+      name: "Anders Karlsson",
     })
 
     const { orgNumberField, personalNumberField, button } = renderPage()
@@ -151,6 +152,7 @@ describe("LoginPage", () => {
       role: "company",
       orgNumber: ORG_NUMBER,
       companyName: "Fasen Elteknik AB",
+      name: "Anders Karlsson",
     })
 
     const { orgNumberField, personalNumberField, button } = renderPage()
