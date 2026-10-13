@@ -860,6 +860,51 @@ void test_known_answer_modified_previous_hash_is_detected()
 }
 
 
+void test_sequence_number_must_start_at_one()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+    entry.sequenceNumber = 2;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        &entry,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == SEQUENCE_NUMBER_MISSMATCH);
+    assert(result.index == 0);
+}
+
+
+void test_sequence_number_gap_is_detected()
+{
+    AuditEntry entries[2] = {
+        make_known_answer_entry(KNOWN_ANSWER_CANONICAL_DATA.data()),
+        make_known_answer_entry(KNOWN_ANSWER_CANONICAL_DATA.data())
+    };
+
+    std::copy(
+        KNOWN_ANSWER_HASH.begin(),
+        KNOWN_ANSWER_HASH.end(),
+        entries[1].previousHash
+    );
+    entries[1].sequenceNumber = 3;
+
+    VerifyChainResult result = wrapper_verify_chain(
+        entries,
+        2,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+
+    assert(result.result_code == SEQUENCE_NUMBER_MISSMATCH);
+    assert(result.index == 1);
+}
+
+
 // ============================================================
 // TEST RUNNER
 // ============================================================
@@ -972,6 +1017,16 @@ int main()
     run_test(
         "known-answer modified previous hash is detected",
         test_known_answer_modified_previous_hash_is_detected
+    );
+
+    run_test(
+        "sequence number must start at one",
+        test_sequence_number_must_start_at_one
+    );
+
+    run_test(
+        "sequence number gap is detected",
+        test_sequence_number_gap_is_detected
     );
 
 

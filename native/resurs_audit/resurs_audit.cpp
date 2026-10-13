@@ -210,6 +210,14 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             return verifyChainResult;
         }
 
+        // if sequence number does not match the corresponding entry number.
+        if (entries[i].sequenceNumber != i + 1)
+        {
+            verifyChainResult.result_code = SEQUENCE_NUMBER_MISSMATCH;
+            verifyChainResult.index = i;
+            return verifyChainResult;
+        }
+
         // Verify that the hash itself is valid
         std::vector<uint8_t> canonicalData(entries[i].canonicalData, entries[i].canonicalData + entries[i].canonicalDataLength);
         std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hashOfEntry = hash(canonicalData);
