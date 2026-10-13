@@ -41,6 +41,10 @@ add_resurs_module(resurs_audit
     ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
 target_sources(resurs_audit PRIVATE resurs_audit/wrapper.cpp)
 target_link_libraries(resurs_audit PRIVATE OpenSSL::Crypto)
+target_compile_definitions(resurs_audit PRIVATE RESURS_AUDIT_BUILDING_DLL)
+set_target_properties(resurs_audit PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN YES)
 
 option(RESURS_BUILD_AUDIT_DEMO
     "Build the resurs_audit demo executable"

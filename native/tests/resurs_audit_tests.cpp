@@ -1,8 +1,5 @@
 #include "wrapper.h"
-#include "resurs_audit.h"
 #include "audit_types.h"
-
-#include <openssl/evp.h>
 
 #include <algorithm>
 #include <array>
@@ -18,8 +15,9 @@
 std::array<uint8_t, resurs::audit::PKEY_BYTES>
 get_private_key()
 {
-    DigitalSign digSign;
-    return digSign.generate_private_key();
+    std::array<uint8_t, resurs::audit::PKEY_BYTES> privateKey{};
+    generate_private_key(privateKey.data());
+    return privateKey;
 }
 
 
@@ -27,30 +25,14 @@ std::array<uint8_t, resurs::audit::PKEY_BYTES>
 get_public_key(
     const std::array<uint8_t, resurs::audit::PKEY_BYTES>& privateKey)
 {
+    auto privateKeyCopy = privateKey;
     std::array<uint8_t, resurs::audit::PKEY_BYTES> publicKey{};
-
-    EVP_PKEY* pkey = EVP_PKEY_new_raw_private_key_ex(
-        nullptr,
-        "ED25519",
-        nullptr,
-        privateKey.data(),
-        privateKey.size()
+    assert(
+        ::get_public_key(
+            privateKeyCopy.data(),
+            publicKey.data()
+        ) == 0
     );
-
-    assert(pkey != nullptr);
-
-    size_t publicKeyLength = publicKey.size();
-
-    int result = EVP_PKEY_get_raw_public_key(
-        pkey,
-        publicKey.data(),
-        &publicKeyLength
-    );
-
-    assert(result == 1);
-    assert(publicKeyLength == publicKey.size());
-
-    EVP_PKEY_free(pkey);
 
     return publicKey;
 }
@@ -129,23 +111,33 @@ AuditEntry make_known_answer_entry(const uint8_t* canonicalData)
 
 void test_hash_is_deterministic()
 {
+    auto privateKey = get_private_key();
+
     const uint8_t data[] = {
         'H', 'e', 'l', 'l', 'o'
     };
 
     uint8_t hash1[resurs::audit::SHA256_HASH_BYTES]{};
     uint8_t hash2[resurs::audit::SHA256_HASH_BYTES]{};
+    uint8_t signature1[resurs::audit::DIGITAL_SIGNATURE_BYTES]{};
+    uint8_t signature2[resurs::audit::DIGITAL_SIGNATURE_BYTES]{};
 
-    int result1 = wrapper_hash(
+    int result1 = wrapper_hash_and_sign(
         data,
         sizeof(data),
-        hash1
+        privateKey.data(),
+        privateKey.size(),
+        hash1,
+        signature1
     );
 
-    int result2 = wrapper_hash(
+    int result2 = wrapper_hash_and_sign(
         data,
         sizeof(data),
-        hash2
+        privateKey.data(),
+        privateKey.size(),
+        hash2,
+        signature2
     );
 
     assert(result1 == 0);
@@ -167,6 +159,8 @@ void test_hash_is_deterministic()
 
 void test_different_data_produces_different_hash()
 {
+    auto privateKey = get_private_key();
+
     const uint8_t data1[] = {
         'H', 'e', 'l', 'l', 'o'
     };
@@ -177,20 +171,28 @@ void test_different_data_produces_different_hash()
 
     uint8_t hash1[resurs::audit::SHA256_HASH_BYTES]{};
     uint8_t hash2[resurs::audit::SHA256_HASH_BYTES]{};
+    uint8_t signature1[resurs::audit::DIGITAL_SIGNATURE_BYTES]{};
+    uint8_t signature2[resurs::audit::DIGITAL_SIGNATURE_BYTES]{};
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data1,
             sizeof(data1),
-            hash1
+            privateKey.data(),
+            privateKey.size(),
+            hash1,
+            signature1
         ) == 0
     );
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data2,
             sizeof(data2),
-            hash2
+            privateKey.data(),
+            privateKey.size(),
+            hash2,
+            signature2
         ) == 0
     );
 
@@ -210,9 +212,7 @@ void test_different_data_produces_different_hash()
 
 void test_hash_and_sign()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
 
     const uint8_t data[] = {
         'T', 'e', 's', 't', ' ', 'd', 'a', 't', 'a'
@@ -273,9 +273,7 @@ void test_hash_and_sign()
 
 void test_signature_verification()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data[] = {
@@ -284,18 +282,10 @@ void test_signature_verification()
 
     AuditEntry entry{};
 
-    // Hash canonical data
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data,
             sizeof(data),
-            entry.currentHash
-        ) == 0
-    );
-
-    // Sign hash
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
@@ -332,9 +322,7 @@ void test_signature_verification()
 
 void test_modified_data_is_detected()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data[] = {
@@ -344,15 +332,9 @@ void test_modified_data_is_detected()
     AuditEntry entry{};
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data,
             sizeof(data),
-            entry.currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
@@ -398,9 +380,7 @@ void test_modified_data_is_detected()
 
 void test_modified_signature_is_detected()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data[] = {
@@ -410,15 +390,9 @@ void test_modified_signature_is_detected()
     AuditEntry entry{};
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data,
             sizeof(data),
-            entry.currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
@@ -464,9 +438,7 @@ void test_modified_signature_is_detected()
 
 void test_invalid_previous_hash_is_detected()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data[] = {
@@ -476,15 +448,9 @@ void test_invalid_previous_hash_is_detected()
     AuditEntry entry{};
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data,
             sizeof(data),
-            entry.currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
@@ -526,9 +492,7 @@ void test_invalid_previous_hash_is_detected()
 
 void test_valid_two_entry_chain()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data1[] = {
@@ -557,15 +521,9 @@ void test_valid_two_entry_chain()
     );
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data1,
             sizeof(data1),
-            entries[0].currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
@@ -590,15 +548,9 @@ void test_valid_two_entry_chain()
     );
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data2,
             sizeof(data2),
-            entries[1].currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,
@@ -629,9 +581,7 @@ void test_valid_two_entry_chain()
 
 void test_modified_previous_hash_in_chain()
 {
-    DigitalSign digSign;
-
-    auto privateKey = digSign.generate_private_key();
+    auto privateKey = get_private_key();
     auto publicKey = get_public_key(privateKey);
 
     uint8_t data1[] = {
@@ -657,15 +607,9 @@ void test_modified_previous_hash_in_chain()
     );
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data1,
             sizeof(data1),
-            entries[0].currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
@@ -686,15 +630,9 @@ void test_modified_previous_hash_in_chain()
     );
 
     assert(
-        wrapper_hash(
+        wrapper_hash_and_sign(
             data2,
             sizeof(data2),
-            entries[1].currentHash
-        ) == 0
-    );
-
-    assert(
-        wrapper_sign(
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,

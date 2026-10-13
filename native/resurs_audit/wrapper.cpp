@@ -2,39 +2,41 @@
 #include "resurs_audit.h"
 #include "audit_types.h"
 
-// ----------- Internal function  -----------
-int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
-{
-    DigitalSign digSign;
-
-    std::vector<uint8_t> cData(canonicalData, canonicalData + canonicalDateLength);
-
-    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> result = digSign.hash(cData);
-
-    if (result.size() != resurs::audit::SHA256_HASH_BYTES)
+// ----------- Internal functions in anonymous namespace so it wont get exported  -----------
+namespace {
+    int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
     {
-        return -1;
+        DigitalSign digSign;
+
+        std::vector<uint8_t> cData(canonicalData, canonicalData + canonicalDateLength);
+
+        std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> result = digSign.hash(cData);
+
+        if (result.size() != resurs::audit::SHA256_HASH_BYTES)
+        {
+            return -1;
+        }
+
+        std::copy(result.begin(), result.end(), output_buffer);
+
+        return 0;
     }
 
-    std::copy(result.begin(), result.end(), output_buffer);
-
-    return 0;
-}
-
-int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
-{
-    DigitalSign digSign;
-
-    DigitalSignResultCode result = digSign.sign(privateKey, privateKeyLength, input_buffer, output_buffer);
-
-    if (result != SIGN_ALL_OK)
+    int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
     {
-        return -1;
+        DigitalSign digSign;
+
+        DigitalSignResultCode result = digSign.sign(privateKey, privateKeyLength, input_buffer, output_buffer);
+
+        if (result != SIGN_ALL_OK)
+        {
+            return -1;
+        }
+
+        return 0;
     }
 
-    return 0;
 }
-
 
 // ----------- Exposed functions -----------
 
