@@ -9,9 +9,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import se.comerit.resurs.config.EncryptionKey;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
 import se.comerit.resurs.security.CompanyPrincipal;
+import se.comerit.resurs.util.HMACHasher;
 
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,8 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * och rensar den efteråt, så att de inte påverkar varandra.
  */
 class RateLimitKeyResolverTest {
-
-    private final RateLimitKeyResolver resolver = new RateLimitKeyResolver();
+    private static final String KEY = Base64.getEncoder().encodeToString(new byte [32]);
+    private final HMACHasher hasher = new HMACHasher(new EncryptionKey(KEY, KEY));
+    private final RateLimitKeyResolver resolver = new RateLimitKeyResolver(hasher);
 
     @AfterEach
     void clearSecurityContext() {
@@ -53,14 +58,18 @@ class RateLimitKeyResolverTest {
         assertThat(resolver.resolve(requestFrom("203.0.113.5"))).isEqualTo("caseworker:5");
     }
 
-    //Ett inloggat företag får en nyckel baserad på orgnummer och person
+    //Ett inloggat företag får en nyckel baserad på en hash av orgnumret
     @Test
     void shouldUseOrgNumberAndPersonForLoggedInCompany() {
         CompanyPrincipal company = new CompanyPrincipal("556000-1234", "Fasen Elteknik AB", "750312-1234");
         loginAs(new UsernamePasswordAuthenticationToken(company, null,
                 List.of(new SimpleGrantedAuthority("ROLE_COMPANY"))));
 
-        assertThat(resolver.resolve(requestFrom("203.0.113.5"))).isEqualTo("company:556000-1234:750312-1234");
+        String key = resolver.resolve(requestFrom("203.0.113.5"));
+
+        assertThat(key).isEqualTo("company:" + HexFormat.of().formatHex(hasher.encode("556000-1234")));
+        assertThat(key).doesNotContain("556000-1234").doesNotContain("750312-1234");
+
     }
 
     //Den som inte är inloggad räknas på IP-adress
