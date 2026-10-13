@@ -186,8 +186,10 @@ const MyApplicationDetailsPage = () => {
             </div>
           </CardHeader>
           <CardBody className={s.infoBody}>
-            <p>{application.comment}</p>
-
+            <div className={s.commentBox}>
+              <p className={`subtitle ${s.commentLabel}`}>Meddelande från handläggare:</p>
+              <p className={s.commentText}>{application.comment}</p>
+            </div>
             <Button
               variant="ghost"
               className={s.dropzone}
