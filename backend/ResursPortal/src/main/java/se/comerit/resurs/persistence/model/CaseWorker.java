@@ -1,8 +1,11 @@
 package se.comerit.resurs.persistence.model;
 
 import jakarta.persistence.*;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
+import se.comerit.resurs.persistence.listener.CaseworkerSearchKeyListener;
 
 @Entity
+@EntityListeners(CaseworkerSearchKeyListener.class)
 @Table(name = "case_workers")
 public class CaseWorker {
 
@@ -14,13 +17,19 @@ public class CaseWorker {
     private Integer version;
 
     @Column(name = "name")
+    @Convert(converter = PiiAttributeConverter.class)
     private String name;
 
     @Column(name = "email", unique = true)
+    @Convert(converter = PiiAttributeConverter.class)
     private String email;
 
     @Column(name = "password_hash")
-    private  String passwordHash;
+    private String passwordHash;
+
+
+    @Column(name = "search_key_email", unique = true)
+    private byte[] searchKeyEmail;
 
     public CaseWorker() {
 
@@ -52,5 +61,9 @@ public class CaseWorker {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public void setSearchKeyEmail(byte[] searchKeyEmail) {
+        this.searchKeyEmail = searchKeyEmail;
     }
 }

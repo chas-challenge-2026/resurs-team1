@@ -1,17 +1,19 @@
 CREATE TABLE companies (
     id SERIAL PRIMARY KEY,
     version INT,
-    org_number VARCHAR(20) UNIQUE,
-    company_name VARCHAR(200),
-    authorized_signatory VARCHAR(100)
+    org_number bytea UNIQUE,
+    company_name bytea,
+    authorized_signatory bytea,
+    search_key_org_number bytea UNIQUE
 );
 
 CREATE TABLE case_workers (
     id SERIAL PRIMARY KEY,
     version INT,
-    name VARCHAR(100),
-    email VARCHAR(100) UNIQUE,
-    password_hash VARCHAR(60)
+    name bytea,
+    email bytea UNIQUE,
+    password_hash VARCHAR(60),
+    search_key_email bytea UNIQUE
 );
 
 CREATE TABLE applications (
@@ -24,11 +26,10 @@ CREATE TABLE applications (
     decision VARCHAR(20),
     decision_reason TEXT,
     scoring_result TEXT,
-    audit_log TEXT DEFAULT '[]',  -- JSON blob, no separate table
     duration_months INT,
-    contact_name TEXT,
-    contact_number TEXT,
-    contact_email TEXT,
+    contact_name bytea,
+    contact_number bytea,
+    contact_email bytea,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     comment TEXT
@@ -69,19 +70,6 @@ CREATE TABLE audit_events (
 
 CREATE INDEX idx_audit_application_id ON audit_events(application_id);
 CREATE INDEX idx_audit_action ON audit_events(action);
-
--- Seed: two companies (matching BankID mock org numbers)
-INSERT INTO companies (org_number, company_name, authorized_signatory) VALUES
-('556000-1234', 'Fasen Elteknik AB', 'Anders Karlsson'),
-('556000-5678', 'Britt Maries Ögonfransar AB', 'Maria Svensson');
-
--- Case worker (password = "password123")
-INSERT INTO case_workers (name, email, password_hash) VALUES
-('Karin Handläggare', 'karin@resurs.se', '$2a$10$mIgdY8b1wHXrzawxupEmruSMcn3kA5Aeci8J2cEyGS6yk2ErUJ62C');
-
--- Pre-existing application in REVIEW
-INSERT INTO applications (company_id, requested_amount, purpose, status, decision, scoring_result, audit_log,contact_name,contact_number,contact_email, duration_months, version) VALUES
-(1, 500000.00, 'Expansion av verksamheten', 'UNDER_REVIEW', null, 'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)', '[{"ts":"2026-01-15T10:00:00","action":"APPLICATION_CREATED"},{"ts":"2026-01-15T10:00:01","action":"SCORING_RUN","result":"REVIEW"}]','Anders Karlsson','0702222222','Anka@gmail.bygg',12,1);
 
 -- Branch Specific medians for use
 INSERT INTO branches (

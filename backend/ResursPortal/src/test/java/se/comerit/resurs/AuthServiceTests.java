@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.List;
 
 
 @Testcontainers
@@ -131,6 +132,8 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @Test
     void loginCaseWorker_shouldReturnWorkerData() {
         CaseWorker worker =  createWorker();
+        System.out.println();
+        List<CaseWorker> workers = caseWorkerRepo.findAll();
 
         CaseWorkerLoginResponse response =
                 authService.loginCaseWorker(EMAIL, PASSWORD);

@@ -14,10 +14,10 @@ import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.util.HMACHasher;
 import se.comerit.resurs.enums.ApplicationStatus;
 
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.NoSuchElementException;
@@ -34,9 +34,10 @@ public class ApplicationService {
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
     private final ScoringService scoringService;
+    private final HMACHasher hmacHasher;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService,CompanyService companyService) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -44,6 +45,7 @@ public class ApplicationService {
         this.validationService = validationService;
         this.scoringService = scoringService;
         this.companyService = companyService;
+        this.hmacHasher = hmacHasher;
     }
 
     //Submit application
@@ -55,7 +57,7 @@ public class ApplicationService {
         ////////////////
         //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
         /////////////////
-        Optional<Company> companyOptional = companyRepository.findByOrgNumber(newApplication.org_number());
+        Optional<Company> companyOptional = companyRepository.findBySearchKeyOrgNumber(hmacHasher.encode(newApplication.org_number()));
         Company company;
         //persist the new company in DB
         company = companyOptional.orElseGet(
@@ -102,12 +104,13 @@ public class ApplicationService {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
 
-        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber, pageable)
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hmacHasher.encode(orgNumber), pageable)
                 .stream()
                 .map(CreditApplicationDTO::new)
                 .toList();
 
-        if (applications.isEmpty() && companyRepository.findByOrgNumber(orgNumber).isEmpty()) {
+        if (applications.isEmpty() && companyRepository.findBySearchKeyOrgNumber(
+                hmacHasher.encode(orgNumber)).isEmpty()) {
             throw new NoSuchElementException("No company with organisation number " + orgNumber);
         }
         return applications;
