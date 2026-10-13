@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useCaseWorkerLogin, useCompanyLogin } from "../../hooks/useLogin";
 import type { SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch";
 import type { UserRole } from "../../types/user";
-import { EMAIL_PATTERN } from "../../constants/constants";
+import { EMAIL_PATTERN, ID_NUMBER_DIGITS } from "../../constants/constants";
+import { format10DigitNumber } from "../../utils/formatters";
 import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
@@ -20,15 +21,6 @@ const INITIAL_FORM = {
   personalNumber: "",
   email: "",
   password: "",
-}
-
-const ID_NUMBER_DIGITS = 10
-
-// force the shape
-// the "-" waits for a digit to follow it, otherwise backspace can never delete it
-const format10DigitNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
-  return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
 }
 
 const LoginPage = () => {

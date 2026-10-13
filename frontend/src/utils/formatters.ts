@@ -1,4 +1,4 @@
-import { PURPOSE_OPTIONS } from "../constants/constants";
+import { ID_NUMBER_DIGITS, PURPOSE_OPTIONS } from "../constants/constants";
 
 const swedishCurrencyFormatter = new Intl.NumberFormat("sv-SE");
 
@@ -46,4 +46,17 @@ export function formatFilename(filename: string): string {
 export function getPurposeLabel(purpose: string): string {
   const option = PURPOSE_OPTIONS.find((opt) => opt.value === purpose);
   return option ? option.label : purpose;
+}
+
+// force the shape
+// the "-" waits for a digit to follow it, otherwise backspace can never delete it
+export const format10DigitNumber = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
+  return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
+}
+
+export const isValidOrgNumber = (orgNumber: string): boolean => {
+  const trimmed = orgNumber.trim()
+  const orgRegex = /^(16)?\d{6}-\d{4}$/
+  return orgRegex.test(trimmed)
 }
