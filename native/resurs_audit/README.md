@@ -1,34 +1,37 @@
-# resurs_audit native API
+# `resurs_audit` native module
 
-`resurs_audit` is a C++17 shared native library for creating and verifying
-tamper-evident audit chains. It uses SHA-256 for entry hashes and Ed25519 for
-digital signatures through OpenSSL.
+`resurs_audit` is a C++17 shared library for hashing, Ed25519 signing, and
+verification of ordered audit chains. It uses OpenSSL and is built as:
 
-The current native integration boundary is declared in `wrapper.h`, while the
-shared data types and result codes are declared in `audit_types.h`. Unlike the
-`resurs_crypto` API, this interface is not yet a stable, JNA-ready C ABI because
-some exported signatures still use C++ types. A Java/JNA binding has therefore
-not been added yet.
+| Platform | Library |
+|---|---|
+| Linux x86-64 | `libresurs_audit.so` |
+| Windows x86-64 | `resurs_audit.dll` |
 
-## Wrapper API
+Java/JNA consumers should start with [JNA_INTEGRATION.md](JNA_INTEGRATION.md).
+The authoritative exported API is declared in [wrapper.h](wrapper.h).
 
-The module currently exposes these operations:
+## Public native ABI
 
-| Function | Purpose | Result |
-|---|---|---|
-| `generate_private_key` | Generates a raw 32-byte Ed25519 private key. | Writes the key to the caller-provided buffer. |
-| `get_public_key` | Derives a raw 32-byte public key from a private key. | `0` on success, `-1` if the private key cannot be converted. |
-| `wrapper_hash_and_sign` | Calculates SHA-256 over canonical entry data and signs the resulting hash with Ed25519. | `0` on success, otherwise `-1`. |
-| `wrapper_verify_chain` | Verifies hash links, entry hashes, and signatures in order. | Returns `VerifyChainResult`. |
+Exactly four functions are supported and exported:
 
-`wrapper_hash` and `wrapper_sign` also exist in `wrapper.h`, but are helper
-operations used to implement and test `wrapper_hash_and_sign`. New integrations
-should use the combined operation unless they specifically need the lower-level
-behavior.
+- `generate_private_key`
+- `get_public_key`
+- `wrapper_hash_and_sign`
+- `wrapper_verify_chain`
 
-## Data contract
+All other classes and functions are implementation details. In particular,
+`wrapper_hash` and `wrapper_sign` are internal functions in an anonymous
+namespace and are deliberately not exported. The CMake target hides symbols by
+default and `RESURS_AUDIT_API` explicitly exports the four supported functions.
 
-The caller supplies an ordered array of `AuditEntry` values:
+The functions have C linkage for stable symbol names. The current headers and
+data definitions use C++ constructs, so direct native consumers must compile
+as C++17; the headers are not currently C-source compatible.
+
+## Audit entry contract
+
+The verifier receives a contiguous, ordered array of entries:
 
 ```cpp
 struct AuditEntry
@@ -42,180 +45,189 @@ struct AuditEntry
 };
 ```
 
-The fields have the following meaning:
+- `canonicalData` is the RFC 8785-canonicalized, UTF-8 encoded JSON byte
+  sequence supplied by Java. Native performs no JSON parsing, serialization,
+  or normalization.
+- `signature` is a 64-byte Ed25519 signature of `currentHash`.
+- `previousHash` is all zeroes for entry 1 and otherwise equals the preceding
+  entry's `currentHash`.
+- `currentHash` is the 32-byte value `SHA-256(canonicalData)`.
+- `sequenceNumber` must start at 1 and equal the entry's one-based position.
 
-- `canonicalData` is the exact byte representation that is hashed. The module
-  does not serialize or normalize application data.
-- `canonicalDataLength` is the number of bytes to hash; canonical data is not
-  treated as a null-terminated string.
-- `signature` is the 64-byte Ed25519 signature of `currentHash`.
-- `previousHash` is the preceding entry's `currentHash`. It must contain 32
-  zero bytes for the first entry.
-- `currentHash` is `SHA-256(canonicalData)`.
-- `sequenceNumber` belongs to the audit record, but the current verifier relies
-  on array order and hash links rather than validating this field separately.
+`wrapper_verify_chain` therefore expects a complete chain for one application,
+sorted by ascending sequence number. A page or partial chain beginning at a
+number other than 1 will fail verification.
 
-The caller owns all input and output buffers. Key, hash, and signature data
-must be handled as binary data rather than strings.
+For every entry, verification checks in this order:
 
-## Chain verification
+1. The previous-hash link.
+2. `sequenceNumber == array index + 1`.
+3. The SHA-256 hash of the canonical bytes.
+4. The Ed25519 signature of `currentHash`.
 
-`wrapper_verify_chain` processes entries from index `0` to `entryCount - 1`.
-For each entry it verifies, in order:
+Verification stops on the first failure.
 
-1. `previousHash` matches the preceding entry's `currentHash`, or is all zeroes
-   for the first entry.
-2. `currentHash` matches a fresh SHA-256 hash of `canonicalData`.
-3. `signature` is a valid Ed25519 signature of `currentHash` for the supplied
-   public key.
+### Canonical-data contract
 
-Verification stops at the first failure. `VerifyChainResult.index` identifies
-that entry when the failure is entry-specific.
+Java owns construction of the audit JSON. Before signing, the complete
+unsigned audit entry is canonicalized according to RFC 8785 and encoded as
+UTF-8. The canonical object must include the same `sequenceNumber` and
+`previousHash` values that Java also supplies as separate `AuditEntry` fields.
+It must also include every application field that should be protected by the
+signature.
 
-### Using `VerifyChainResult`
+`currentHash` and `signature` must not be included in their own canonical
+input because they are outputs of the operation. A format/schema version and
+signing-key identifier should be included when those values are part of the
+persisted audit model.
 
-Always inspect `result_code` before reading `index`:
+RFC 8785 canonicalizes one entry's JSON representation; it does not sort the
+audit chain. Java must separately order the `AuditEntry` array by ascending
+`sequenceNumber` before verification.
 
-```cpp
-VerifyChainResult result = wrapper_verify_chain(
-    entries,
-    entryCount,
-    publicKey,
-    publicKeyLength
-);
+Native treats `canonicalData` as opaque bytes:
 
-switch (result.result_code)
-{
-    case VERIFY_CHAIN_ALL_OK:
-        // The complete chain is valid. Do not read result.index.
-        break;
-
-    case PREVIOUS_HASH_MISSMATCH:
-    case CURRENT_HASH_MISSMATCH:
-    case EVP_DIGEST_VERIFY_INIT_FAILED:
-    case EVP_DIGEST_VERIFY_FAILED:
-        // result.index is the zero-based index of the first invalid entry.
-        break;
-
-    case VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY:
-        // The public key is invalid. No entry was verified; do not read index.
-        break;
-}
+```text
+currentHash = SHA-256(canonicalData)
+signature   = Ed25519-sign(currentHash)
 ```
 
-`index` is only defined for entry-specific failures (`-1` through `-4`). Its
-value is not defined for success (`0`) or public-key conversion failure (`-5`),
-so callers must not read it in those cases. The index is zero-based and refers
-to the position in the supplied `entries` array, not to `sequenceNumber`.
+Consequently, `sequenceNumber` and `previousHash` are cryptographically
+protected when Java includes them in `canonicalData`. Native additionally
+checks their separate `AuditEntry` representations for chain structure. Native
+does not parse the JSON to compare the embedded values with the separate
+fields, so Java must derive both representations from the same authoritative
+values.
 
-### Verification result codes
+The shared Java/native contract must freeze the exact canonical object schema,
+field types, timestamp representation, null handling, and representation of
+binary values such as `previousHash`. Changing that contract changes hashes and
+signatures for otherwise equivalent entries and therefore requires format
+versioning.
 
-| Value | Name | Meaning |
-|---:|---|---|
-| `0` | `VERIFY_CHAIN_ALL_OK` | Every entry passed chain, hash, and signature verification. |
-| `-1` | `PREVIOUS_HASH_MISSMATCH` | The entry does not reference the expected previous hash. |
-| `-2` | `CURRENT_HASH_MISSMATCH` | The stored hash does not match the canonical data. |
-| `-3` | `EVP_DIGEST_VERIFY_INIT_FAILED` | OpenSSL could not initialize Ed25519 verification. |
-| `-4` | `EVP_DIGEST_VERIFY_FAILED` | The signature is invalid. |
-| `-5` | `VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY` | The supplied public key could not be converted to an OpenSSL key. |
+### Hash-and-sign buffers
 
-The enum names intentionally match the current implementation, including the
-existing `MISSMATCH` spelling, and should not be renamed without coordinating
-the consuming interface.
+`wrapper_hash_and_sign` receives the complete canonical byte buffer and its
+total byte length, not each JSON field separately. Java must provide a 32-byte
+private key, a writable 32-byte hash output, and a writable 64-byte signature
+output. On success, Java persists the resulting hash and signature together
+with the values needed to reproduce the exact canonical entry.
 
-The caller should treat every non-zero code as a failed verification. Codes
-`-1` and `-2` normally indicate modified data or a broken chain, while `-4`
-indicates that the signature does not match the stored hash and supplied public
-key. Codes `-3` and `-5` indicate that verification could not be performed and
-should be handled as operational or key-material errors rather than proof of a
-specific audit-entry modification.
+## Verification result codes
+
+| Value | Name | Meaning | `index` valid? |
+|---:|---|---|---|
+| `0` | `VERIFY_CHAIN_ALL_OK` | Every entry passed verification. | No |
+| `-1` | `PREVIOUS_HASH_MISSMATCH` | The previous-hash link is invalid. | Yes |
+| `-2` | `SEQUENCE_NUMBER_MISSMATCH` | The sequence is not `1, 2, 3, ...`. | Yes |
+| `-3` | `CURRENT_HASH_MISSMATCH` | Canonical data does not match `currentHash`. | Yes |
+| `-4` | `EVP_DIGEST_VERIFY_INIT_FAILED` | OpenSSL could not initialize verification. | Yes |
+| `-5` | `EVP_DIGEST_VERIFY_FAILED` | The Ed25519 signature is invalid. | Yes |
+| `-6` | `VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY` | The public key could not be converted. | No |
+
+The `MISSMATCH` spelling is part of the current native interface. Coordinate
+with consumers before renaming it.
+
+`VerifyChainResult.index` is zero-based and identifies a position in the
+supplied array, not a sequence number. Read it only for entry-specific failures
+`-1` through `-5`.
+
+## Key and output sizes
+
+| Value | Size |
+|---|---:|
+| Raw Ed25519 private key | 32 bytes |
+| Raw Ed25519 public key | 32 bytes |
+| SHA-256 hash | 32 bytes |
+| Ed25519 signature | 64 bytes |
+
+All values are binary buffers, not null-terminated strings. The caller owns
+every input and output buffer and must allocate the required size.
 
 ## Build and test
 
-From the `native` directory:
+Run tests in a Debug build because the current tests use C++ `assert`, which is
+disabled by `NDEBUG` in Release builds:
 
 ```bash
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
+cmake -S native -B build/audit-debug \
+  -DCMAKE_BUILD_TYPE=Debug \
   -DBUILD_TESTING=ON \
   -DRESURS_BUILD_AUDIT_DEMO=ON
-cmake --build build \
-  --target resurs_audit resurs_audit_demo resurs_audit_tests \
+cmake --build build/audit-debug \
+  --target resurs_audit resurs_audit_tests resurs_audit_demo \
   --parallel
-ctest --test-dir build --output-on-failure -R resurs_audit
+ctest --test-dir build/audit-debug \
+  -R resurs_audit_tests \
+  --output-on-failure
 ```
 
-On Linux this produces `libresurs_audit.so`. On Windows it produces
-`resurs_audit.dll`.
+Build distribution binaries separately with `CMAKE_BUILD_TYPE=Release` and
+`BUILD_TESTING=OFF`. Linux builds have been verified in Ubuntu 22.04 and 24.04
+containers, and Windows builds with MSVC x64.
 
-Build and run only the example with:
+Inspect the Linux exports with:
 
 ```bash
-cmake -S . -B build -DRESURS_BUILD_AUDIT_DEMO=ON
-cmake --build build --target resurs_audit_demo
-./build/resurs_audit_demo
+nm -D --defined-only libresurs_audit.so
 ```
 
-The example generates an Ed25519 key pair, hashes and signs one canonical audit
-entry, and verifies it through the wrapper API. It prints the generated key
-material for demonstration purposes; those keys must never be reused in a real
-environment.
+Inspect the Windows exports from an x64 Native Tools prompt with:
 
-### Docker build for Linux
-
-From the repository root:
-
-```bash
-docker build -t resurs-native ./native
-docker run --rm resurs-native
+```text
+dumpbin /exports resurs_audit.dll
 ```
 
-The image contains both `resurs_crypto` and `resurs_audit`, their demos, and
-their test executables. Tests run automatically while the image is built, and
-the default container command runs `resurs_audit_demo`.
+Only the four public ABI functions listed above should be exported.
 
-Run the audit tests again without rebuilding:
+## Prebuilt libraries
 
-```bash
-docker run --rm resurs-native /resurs-build/resurs_audit_tests
+Selected distribution binaries live under:
+
+```text
+prebuilt/
+├── linux-x86-64/libresurs_audit.so
+└── win32-x86-64/resurs_audit.dll
 ```
 
-See [native/DOCKER.md](../DOCKER.md) for all available Docker commands.
+The shared Linux prebuilt should be produced on Ubuntu 22.04 when one binary
+must support both Ubuntu 22.04 and 24.04. A library built on a newer Linux
+release must not be assumed to work on an older runtime. Platform-specific
+files in `artifacts/` are intermediate build outputs and are not distribution
+files.
 
-## Standardized Ed25519 verification
+## C/C++ implementation details (native team only)
 
-The automated tests use the private seed and public key from RFC 8032,
-Section 7.1, Test 1. This verifies that the module derives the expected public
-key from a standardized Ed25519 test key.
+This section is for native C/C++ development; Java/JNA consumers do not call
+these implementation types directly.
 
-The suite also contains a deterministic known-answer vector for this module's
-`SHA-256-then-Ed25519` construction. For the canonical bytes `abc`, it verifies:
+- `DigitalSign` in `resurs_audit.h/.cpp` owns the OpenSSL implementation.
+- `wrapper.cpp` translates the public buffer-based ABI to `DigitalSign`.
+- Internal `wrapper_hash` and `wrapper_sign` helpers have internal linkage.
+- The tests call only the four public functions so they exercise the same
+  boundary used by JNA.
+- Known-answer tests use the RFC 8032 test key and a deterministic
+  SHA-256-then-Ed25519 result for canonical bytes `abc`.
+- Tests cover modified data, hash, signature, previous hash, invalid sequence
+  start, sequence gaps, and valid multi-entry chains.
 
-- the standard SHA-256 digest
-  `ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad`;
-- the expected 64-byte Ed25519 signature generated from the RFC 8032 test key;
-- successful verification of the complete audit entry;
-- detection of modified canonical data, current hash, signature, and previous
-  hash.
+Do not expose `DigitalSign`, OpenSSL objects, STL containers, or exceptions as
+part of the supported JNA boundary. Changes to `AuditEntry`,
+`VerifyChainResult`, enum values, field order, or field widths are ABI changes
+and must be coordinated with the Java mapping and rebuilt prebuilt libraries.
 
-The remaining tests cover deterministic hashing, different-input hashing,
-hash-and-sign behavior, a valid two-entry chain, and detection of a broken
-link in a multi-entry chain.
+## Operational responsibilities
 
-Reference: [RFC 8032, Section 7.1](https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1).
-
-## Calling and storage rules
-
-- Create one deterministic canonical byte representation for each audit event;
-  semantically identical data with different byte formatting produces a
-  different hash and signature.
-- Persist the canonical data, signature, previous hash, current hash, and
-  sequence number required to reconstruct each `AuditEntry`.
-- Preserve entry order. Removing, inserting, or reordering entries must break
-  a hash link when the chain is assembled correctly.
-- Treat any non-zero verification result as an invalid or unverifiable chain.
-- Keep private signing keys outside the application database, preferably in a
+- Build the complete unsigned audit JSON with `sequenceNumber` and
+  `previousHash`, canonicalize it with RFC 8785, and pass its UTF-8 bytes and
+  total byte length to native.
+- Persist the exact canonical bytes, or persist sufficient immutable values to
+  reproduce byte-for-byte identical RFC 8785 output during verification.
+- Keep signing private keys outside the application database, preferably in a
   secrets manager or KMS-backed solution.
-- Public keys may be distributed to services or auditors that verify chains.
-- Define key rotation and public-key versioning before using more than one
-  signing key; the current `AuditEntry` structure does not store a key ID.
+- Persist a signing-key identifier alongside audit data when key rotation is
+  introduced; `AuditEntry` currently contains no key ID.
+- Treat every non-zero verification result as invalid or unverifiable.
+- A valid prefix does not prove that no entries were removed from the end. A
+  trusted expected final sequence number, entry count, or chain head is needed
+  to detect tail truncation.
