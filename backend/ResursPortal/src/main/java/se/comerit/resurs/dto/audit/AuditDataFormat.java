@@ -34,4 +34,9 @@ public final class AuditDataFormat {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CommentEntry(String workerName, String comment) {}
+
+    //Handläggaren har bett kunden om komplettering, fältet heter "comment" så att AuditService.findComments kan
+    // läsa det som en vanlig kommentar
+    public record DocumentsRequested(
+            String actorType, String workerName, ApplicationStatus previousStatus, String comment) {}
 }

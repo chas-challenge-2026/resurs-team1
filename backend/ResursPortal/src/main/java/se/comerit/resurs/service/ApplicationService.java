@@ -9,13 +9,15 @@ import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.util.HMACHasher;
+import se.comerit.resurs.enums.ApplicationStatus;
 
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.NoSuchElementException;
@@ -32,9 +34,10 @@ public class ApplicationService {
     private final CompanyRepository companyRepository;
     private final CreditApplicationRepository applicationRepository;
     private final ScoringService scoringService;
+    private final HMACHasher hmacHasher;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService,CompanyService companyService) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -42,6 +45,7 @@ public class ApplicationService {
         this.validationService = validationService;
         this.scoringService = scoringService;
         this.companyService = companyService;
+        this.hmacHasher = hmacHasher;
     }
 
     //Submit application
@@ -53,7 +57,7 @@ public class ApplicationService {
         ////////////////
         //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
         /////////////////
-        Optional<Company> companyOptional = companyRepository.findByOrgNumber(newApplication.org_number());
+        Optional<Company> companyOptional = companyRepository.findBySearchKeyOrgNumber(hmacHasher.encode(newApplication.org_number()));
         Company company;
         //persist the new company in DB
         company = companyOptional.orElseGet(
@@ -82,10 +86,12 @@ public class ApplicationService {
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);
+
         //loggar efter att application finns sparad i databas.
         auditService.applicationCreated(saved);
-        auditService.scoringRun(saved, newApplication.flagCount());
-
+        if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
+            auditService.scoringRun(saved, newApplication.flagCount());
+        }
         return new CreditApplicationDTO(saved);
     }
 
@@ -98,15 +104,61 @@ public class ApplicationService {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
 
-        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_OrgNumberOrderByCreatedAtDesc(orgNumber, pageable)
+        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hmacHasher.encode(orgNumber), pageable)
                 .stream()
                 .map(CreditApplicationDTO::new)
                 .toList();
 
-        if (applications.isEmpty() && companyRepository.findByOrgNumber(orgNumber).isEmpty()) {
+        if (applications.isEmpty() && companyRepository.findBySearchKeyOrgNumber(
+                hmacHasher.encode(orgNumber)).isEmpty()) {
             throw new NoSuchElementException("No company with organisation number " + orgNumber);
         }
         return applications;
+    }
+
+    // Kör om scoring på ett ärende som redan finns och uppdaterar det
+    @Transactional
+    public CreditApplicationDTO rescoreApplication(Long applicationId) {
+        CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
+
+        // Om en handläggare redan fattat ett beslut så får vi inte skriva över det
+        // Tittar på auditloggen och inte på status, eftersom scoring också sätter APPROVED/REJECTED själv och
+        // de automatiska besluten vill vi att man ska kunna köra om
+        if(auditService.hasManualDecision(applicationId)) {
+            throw new IllegalArgumentException((
+                    "Application " + applicationId + " has a manual decision and can not be re-scored"));
+        }
+        //Väntar ärendet på dokument från kunden ska vi inte köra om scoring, annars flyttas statusen bort från
+        // PENDING_DOCS och kunden slutar se vad som saknas
+        if (application.getStatus() == ApplicationStatus.PENDING_DOCS) {
+            throw new IllegalArgumentException(
+                    "Application " + applicationId + " is waiting for documents and can not be re-scored");
+        }
+
+        Company company = application.getCompany();
+
+        // Hämtar ny årsredovisning, är registret nere blir det 503 och ärendet rullas tillbaka
+        CompanyFinancialApiDTO financials = financialService
+                .fetchLatestAnnualReport(company.getOrg_number())
+                .orElseThrow();
+
+        // Bransch ska hämtas från validation service
+        NewApplicationDTO rescored = scoringService.scoreFromFinancialObject(
+                financials, application.getRequestedAmount(), "bransch",
+                company.getOrg_number(), company.getCompany_name(),
+                company.getAuthorized_signatory(),
+                application.getPurpose(), application.getDurationMonths());
+
+        // Skriver de nya resultatet på det befintliga ärendet, alltså skapas inget nytt
+        // Ingen save() behövs då ärendet redan hanteras av JPA inuti @Transactional
+        application.setStatus(rescored.status());
+        application.setDecision(rescored.decision());
+        application.setDecisionReason(rescored.decision_reason());
+        application.setScoringResult(rescored.scoring_result());
+
+        auditService.scoringRun(application, rescored.flagCount());
+
+        return new CreditApplicationDTO(application);
     }
 
 
@@ -128,7 +180,6 @@ public class ApplicationService {
     public List<ApplicationCommentDTO> findComments(Long applicationId) {
         return auditService.findComments(applicationId);
     }
-
 
 
 

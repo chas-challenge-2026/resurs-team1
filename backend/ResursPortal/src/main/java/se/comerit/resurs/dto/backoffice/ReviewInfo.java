@@ -1,5 +1,6 @@
 package se.comerit.resurs.dto.backoffice;
 
+import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -20,6 +21,7 @@ public record ReviewInfo(
         BigDecimal requestedAmount,
         String purpose,
         Instant createdAt,
+        ApplicationStatus status,
         String scoringResult,
         String decisionReason,
         String companyName,
@@ -30,6 +32,7 @@ public record ReviewInfo(
                 application.getRequestedAmount(),
                 application.getPurpose(),
                 application.getCreatedAt(),
+                application.getStatus(),
                 application.getScoringResult(),
                 application.getDecisionReason(),
                 application.getCompany().getCompany_name(),

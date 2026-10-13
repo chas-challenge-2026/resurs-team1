@@ -65,6 +65,7 @@ export interface Application {
   authorizedSignatory?: string
   durationMonths?: number
   documents?: ApplicationDocument[]
+  comment?: string
   companyFinances?: CompanyFinances | null // only from backoffice, null when no annual report is found
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
@@ -177,6 +178,10 @@ export const getBackofficeApplicationById = async (id: number): Promise<Applicat
 
 export const postDecision = async (applicationId: number, decision: Decision, comment: string): Promise<void> => {
   await api.post("/backoffice/decide", null, { params: { applicationId, decision, comment } })
+}
+
+export const postRequest = async (id: number, comment: string): Promise<void> => {
+  await api.post(`/backoffice/application/${id}/request-documents`, {comment})
 }
 
 export const getReviewPage = async (page: number): Promise<PagedResult<ReviewApplication>> => {

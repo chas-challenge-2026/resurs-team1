@@ -11,6 +11,9 @@ import Slider from "../Slider/Slider";
 import s from "./ApplicationWizard.module.css"
 import { getUser } from "../../utils/auth";
 import type { CompanyUser } from "../../types/user";
+import { useGetFinancial } from "../../hooks/useFinancial";
+import Loading from "../Loading/Loading";
+import Button from "../Button/Button";
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -39,6 +42,10 @@ interface ApplicationWizardProps {
   onChange: (patch: Partial<ApplicationFormData>) => void;
   /** if form submit has an error or not, use to show error message */
   isSubmitError: boolean;
+  /** If user has accepted terms or not */
+  isTermsAccepted: boolean;
+  /** Function for toggling accepting terms */
+  onTermsChange: (accepted: boolean) => void;
 }
 
 /**
@@ -63,9 +70,10 @@ interface ApplicationWizardProps {
  * // → values becomes { ...everything else, loanAmount: 2000000 }
  * ```
  */
-const ApplicationWizard = ({ step, values, onChange, isSubmitError }: ApplicationWizardProps) => {
+const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccepted, onTermsChange }: ApplicationWizardProps) => {
   const user = getUser() as CompanyUser
-
+  const financials = useGetFinancial()
+  
   switch (step) {
     case 1:
       return (
@@ -98,6 +106,7 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError }: Applicatio
           </CardBody>
         </Card>
       )
+
     case 2: {
       // an untouched field is not wrong yet, so only complain once something is typed
       const emailError =
@@ -149,33 +158,114 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError }: Applicatio
     }
 
     case 3: {
-      const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
+      
+      if (financials.isLoading) {
+        return (
+          <Card>
+            <CardBody className={s.loadingCard}>
+              <Loading />
+              <span>Hämtar ekonomiska uppgifter från Bolagsverket...</span>
+            </CardBody>
+          </Card>
+        )
+      }
+      
+      if (financials.isError || !financials.data) {
+        return (
+          <Card>
+            <CardBody className={s.errorCard}>
+              <p>Det gick inte att hämta de ekonomiska uppgifterna automatiskt.</p>
+              <Button variant="secondary" onClick={() => financials.refetch()}>
+                Försök igen
+              </Button>
+            </CardBody>
+          </Card>
+        )
+      }
+
+      const { incomeStatement, balanceSheet } = financials.data
 
       return (
         <Card>
           <CardBody>
-            <p className={`information-text ${s.informationText}`}>
-              Kontrollera att uppgifterna nedan stämmer innan du går vidare.
-            </p>
-            <DataList>
-              <DataListItem label="Organisationsnummer" value={values.orgNumber} />
-              <DataListItem label="Företagsnamn" value={values.companyName} />
-              <DataListItem label="Kontaktperson" value={values.contactName} />
-              <DataListItem label="E-post" value={values.email} />
-              <DataListItem label="Telefonnummer" value={values.phoneNumber} />
-              <DataListItem label="Ändamål" value={purposeLabel ?? "Ej valt"} />
-              <DataListItem label="Önskat belopp" value={formatCurrency(values.requestedAmount)} />
-              <DataListItem
-                label="Önskad återbetalningstid"
-                value={values.durationMonths ? `${values.durationMonths} mån` : "Ej valt"}
-              />
-            </DataList>
-            
             <div className={s.infoBox}>
               <span className={s.infoBoxTitle}>Automatisk datahämtning</span>
               <p>
-                När du skickar in ansökan hämtar vi automatiskt företagets senast registrerade årsredovisning och bokslutsuppgifter via organisationsnumret.
+                Ekonomiska uppgifter hämtas automatiskt från Bolagsverket. Du behöver inte fylla i något manuellt.
               </p>
+            </div>
+
+            <DataList>
+              <DataListItem label="Företagsnamn" value={user.companyName} />
+              <DataListItem label="Omsättning (senaste räkenskapsåret)" value={formatCurrency(incomeStatement.revenue)} />
+              <DataListItem label="Rörelseresultat / EBIT" value={formatCurrency(incomeStatement.operatingResult)} />
+              <DataListItem label="Eget kapital" value={formatCurrency(balanceSheet.equity)} />
+              <DataListItem label="Summa tillgångar" value={formatCurrency(balanceSheet.totalAssets)} />
+              <DataListItem label="Kortfristiga skulder" value={formatCurrency(balanceSheet.shortTermLiabilities)} />
+            </DataList>
+          </CardBody>
+        </Card>
+      )
+    }
+
+    case 4: {
+      const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
+
+      return (
+        <Card>
+          <CardBody className={s.checkContainer}>
+            <p className={`information-text ${s.informationText}`}>
+              Kontrollera att uppgifterna stämmer innan du skickar in.
+            </p>
+
+            <div>
+              <h3 className="subtitle">Kontakt</h3>
+              <DataList>
+                <DataListItem label="Organisationsnummer" value={values.orgNumber} />
+                <DataListItem label="Kontaktperson" value={values.contactName} />
+                <DataListItem label="E-post" value={values.email} />
+                <DataListItem label="Telefonnummer" value={values.phoneNumber} />
+              </DataList>
+            </div>
+
+            <div>
+              <h3 className="subtitle">Ansökan</h3>
+              <DataList>
+                <DataListItem label="Ändamål" value={purposeLabel ?? "Ej valt"} />
+                <DataListItem label="Belopp" value={formatCurrency(values.requestedAmount)} />
+                <DataListItem
+                  label="Återbetalningstid"
+                  value={values.durationMonths ? `${values.durationMonths} mån` : "Ej valt"}
+                />
+              </DataList>
+            </div>
+
+            {financials.data && 
+              <div>
+                <h3 className="subtitle">Ekonomi</h3>
+                <DataList>
+                  <DataListItem label="Företagsnamn" value={user.companyName} />
+                  <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
+                  <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
+                </DataList>
+              </div>
+            }
+
+            <div>
+              <label className={s.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={isTermsAccepted}
+                  onChange={(e) => onTermsChange(e.target.checked)}
+                />
+                <span className="information-text">
+                  Jag intygar att uppgifterna är korrekta och godkänner Resurs{" "}
+                  <a href="https://documenthandler.resurs.com/Dokument.pdf?customerType=legal&docType=commonTerms&land=SE&language=sv" target="_blank" rel="noopener noreferrer" className={s.link}>
+                    allmänna villkor
+                  </a>{" "}
+                  samt att kreditupplysning får inhämtas.
+                </span>
+              </label>
             </div>
 
             {isSubmitError &&

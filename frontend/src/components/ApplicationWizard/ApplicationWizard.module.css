@@ -37,3 +37,32 @@
   font-size: var(--font-size-sm);
   text-align: end;
 }
+
+.loadingCard {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.errorCard {
+  align-items: start;
+}
+
+.checkContainer {
+  gap: var(--space-base);
+}
+
+.link {
+  color: var(--color-primary);
+}
+
+.checkboxLabel {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}

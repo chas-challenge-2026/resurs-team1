@@ -133,17 +133,26 @@ const MyApplicationDetailsPage = () => {
           <CardHeader className={s.infoHeader}>
             <div className={s.headerText}>
               <h3 className={s.infoTitle}>Din ansökan har blivit avslagen</h3>
-              <p className={s.infoSubtitle}>
-                Din ansökan kunde tyvärr inte beviljas automatiskt på grund av följande faktorer:
-              </p>
-              <ul className={s.reasonList}>
-                {reasons.map((reason, index) => (
-                  <li key={index} className={s.reasonItem}>
-                    <span className={s.bulletIcon}>-</span>
-                    <span>{reason}</span>
-                  </li>
-                ))}
-              </ul>
+              {application.comment ? (
+                <div className={s.commentBox}>
+                  <p className={`subtitle ${s.commentLabel}`}>Meddelande från handläggare:</p>
+                  <p className={s.commentText}>{application.comment}</p>
+                </div>
+              ) : (
+                <>
+                <p className={s.infoSubtitle}>
+                  Din ansökan kunde tyvärr inte beviljas automatiskt på grund av följande faktorer:
+                </p>
+                <ul className={s.reasonList}>
+                  {reasons.map((reason, index) => (
+                    <li key={index} className={s.reasonItem}>
+                      <span className={s.bulletIcon}>-</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+                </>
+              )}
             </div>
           </CardHeader>
         </Card>
@@ -177,8 +186,10 @@ const MyApplicationDetailsPage = () => {
             </div>
           </CardHeader>
           <CardBody className={s.infoBody}>
-            <p>{application.decision}</p>
-
+            <div className={s.commentBox}>
+              <p className={`subtitle ${s.commentLabel}`}>Meddelande från handläggare:</p>
+              <p className={s.commentText}>{application.comment}</p>
+            </div>
             <Button
               variant="ghost"
               className={s.dropzone}

@@ -17,6 +17,7 @@ final class MockCompanyData {
 
     static final String UNAVAILABLE_ORG_NUMBER = "556000-5555";
     private static final Instant UPDATED_AT = Instant.parse("2026-08-14T10:06:04Z");
+    static final String ANNUAL_REPORT_UNAVAILABLE_ORG_NUMBER = "556000-4444";
 
     static final Map<String, CompanyValidationApiDTO> REGISTRY = Map.of(
             "556000-1234", new CompanyValidationApiDTO("Fasen Elteknik AB","556000-1234", List.of(
@@ -35,7 +36,11 @@ final class MockCompanyData {
 
             "556000-9999", new CompanyValidationApiDTO("Frukt och grönt Göteborg","556000-9999", List.of(
                     new Signatory("681105-9999", "Erik Lindqvist", "Styrelseordförande", SigningRight.ALONE)
+            ), UPDATED_AT),
+            "556000-4444", new CompanyValidationApiDTO("Karlssons Bygg AB", "556000-4444", List.of(
+                    new Signatory("750312-1234", "Anders Karlsson", "Styrelseordförande", SigningRight.ALONE)
             ), UPDATED_AT)
+
     );
 
     // 556000-7777 intentionally has no annual report

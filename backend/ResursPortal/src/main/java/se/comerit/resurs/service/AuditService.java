@@ -92,6 +92,11 @@ public class AuditService {
                 .stream().map(AuditEventDTO::new ).toList();
     }
 
+    // Svarar ja/nej på om en handläggare har fattat ett beslut på ärendet
+    public boolean hasManualDecision(Long applicationId) {
+        return auditEventRepository.existsByApplicationIdAndAction(applicationId, AuditAction.MANUAL_DECISION);
+    }
+
     public void commentAdded(CreditApplication application, String workerEmail, String workerName, String comment) {
         saveEvent(application, AuditAction.COMMENT_ADDED, workerEmail,
                 new AuditDataFormat.CommentAdded("CASE_WORKER", workerName, comment));
@@ -100,7 +105,7 @@ public class AuditService {
     public List<ApplicationCommentDTO> findComments(Long applicationId) {
         return auditEventRepository
                 .findByApplicationIdAndActionInOrderBySequenceNumberAsc(applicationId,
-                        List.of(AuditAction.MANUAL_DECISION, AuditAction.COMMENT_ADDED))
+                        List.of(AuditAction.MANUAL_DECISION, AuditAction.COMMENT_ADDED, AuditAction.DOCUMENTS_REQUESTED))
                 .stream()
                 .map(this::toComment)
                 .flatMap(Optional::stream)
@@ -113,6 +118,13 @@ public class AuditService {
 
         return Optional.ofNullable(entry.comment())
                 .map(text -> new ApplicationCommentDTO(entry.workerName(), text, event.getOccurredAt()));
+    }
+
+    //Loggar att en handläggare bett kunden om fler dokument
+    public void documentsRequested(CreditApplication application, String workerEmail, String workerName,
+                                   ApplicationStatus previousStatus, String comment) {
+        saveEvent(application, AuditAction.DOCUMENTS_REQUESTED, workerEmail,
+                new AuditDataFormat.DocumentsRequested("CASE_WORKER", workerName, previousStatus, comment));
     }
 
 

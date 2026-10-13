@@ -10,6 +10,7 @@ import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
+import se.comerit.resurs.util.HMACHasher;
 
 
 /**
@@ -30,14 +31,15 @@ public class AuthService {
     private final CaseWorkerRepository caseWorkerRepository;
     private final PasswordEncoder passwordEncoder;
     private final BankIdService bankIdService;
-//    private final CompanyValidationService companyValidationService;
+    private final HMACHasher hasher;
 
 
-    public AuthService(BankIdService bankIdService, CompanyValidationService validationService, CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(BankIdService bankIdService, CompanyValidationService validationService, CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
         this.bankIdService = bankIdService;
         this.validationService = validationService;
         this.caseWorkerRepository = caseWorkerRepository;
         this.passwordEncoder = passwordEncoder;
+        this.hasher = hasher;
     }
 
     // BankID mock — hardcoded org numbers, real BankID integration skipped -> old comment
@@ -68,7 +70,7 @@ public class AuthService {
 //            );
 
     public CaseWorkerLoginResponse loginCaseWorker(String email, String password) {
-        CaseWorker worker = caseWorkerRepository.findByEmail(email)
+        CaseWorker worker = caseWorkerRepository.findBySearchKeyEmail(hasher.encode(email))
                 .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
 
 

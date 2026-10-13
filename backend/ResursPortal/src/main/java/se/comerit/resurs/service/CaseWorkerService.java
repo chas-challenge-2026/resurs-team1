@@ -9,21 +9,24 @@ import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
 import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
+import se.comerit.resurs.util.HMACHasher;
 
 @Service
 public class CaseWorkerService {
 
     private final CaseWorkerRepository caseWorkerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final HMACHasher hasher;
 
 
-    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder) {
+    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
         this.caseWorkerRepository = caseWorkerRepository;
         this.passwordEncoder = passwordEncoder;
+        this.hasher = hasher;
     }
 
     public CaseWorkerResponse create(CreateCaseWorkerRequest request) {
-        if (caseWorkerRepository.findByEmail(request.email()).isPresent()) {
+        if (caseWorkerRepository.findBySearchKeyEmail(hasher.encode(request.email())).isPresent()) {
             throw new IllegalArgumentException("Email already in use.");
         }
 
