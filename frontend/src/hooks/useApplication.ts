@@ -1,11 +1,12 @@
-import { type QueryKey, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage } from "../api/applicationApi"
+import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 
-export const useApplications = () => {
+export const useApplications = (page: number) => {
   return useQuery<Application[], ApiErrorPayload>({
-    queryKey: ["applications"],
-    queryFn: getApplications,
+    queryKey: ["applications", "page", page], // "page" keeps it apart from ["applications", id]
+    queryFn: () => getApplications(page),
+    placeholderData: keepPreviousData, // keep the old page on screen while the next loads
   })
 }
 
@@ -70,5 +71,13 @@ export const useDecidedApplications = () => {
     select: (data) => data.pages.flatMap((page) => page.content.map((application) => ({
       ...application, status: application.decision as ApplicationStatus
     })))
+  })
+}
+
+export const useDetailedApplication = (id: number) => {
+  return useQuery<DetailedApplication, ApiErrorPayload>({
+    queryKey: ["detailedapplication", id],
+    queryFn: () => getApplicationDetails(id),
+    enabled: typeof id === "number" && !isNaN(id),
   })
 }

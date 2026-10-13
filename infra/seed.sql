@@ -31,8 +31,8 @@ CREATE TABLE applications (
     contact_number bytea,
     contact_email bytea,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    comment TEXT
 );
 
 CREATE TABLE documents (

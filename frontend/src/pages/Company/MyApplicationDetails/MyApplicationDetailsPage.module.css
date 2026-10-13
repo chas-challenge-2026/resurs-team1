@@ -10,6 +10,21 @@
   align-items: center;
 }
 
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.backButton:hover {
+  color: var(--color-text-main);
+}
 
 .description {
   color: var(--color-text-muted);
@@ -90,6 +105,17 @@
   display: flex;
   border-style: dashed;
   align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Rejected list */
+.reasonList {
+  list-style: none;
+  padding-top: var(--space-xs);
+}
+
+.reasonItem {
+  display: flex;
   gap: var(--space-sm);
 }
 

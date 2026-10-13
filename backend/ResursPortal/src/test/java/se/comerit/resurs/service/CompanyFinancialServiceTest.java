@@ -1,13 +1,16 @@
 package se.comerit.resurs.service;
 
+import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
+import se.comerit.resurs.client.companyvalidation.RegistryResponseValidator;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO.CompanyBalanceSheet;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO.CompanyCashFlowStatement;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO.CompanyIncomeStatement;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
+import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -27,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Klienten ersätts av StubClient nedan.
  */
 public class CompanyFinancialServiceTest {
+    private static final RegistryResponseValidator RESPONSE_VALIDATOR =
+            new RegistryResponseValidator(Validation.buildDefaultValidatorFactory().getValidator());
 
     private static final String ORG_NUMBER = "556000-1234";
 
@@ -43,7 +48,7 @@ public class CompanyFinancialServiceTest {
     @Test
     void fetchLatestAnnualReport_shouldReturnReport_whenRegistryHasOne() {
         CompanyFinancialService service = new CompanyFinancialService(
-                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, CASH_FLOW)));
+                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, CASH_FLOW)), RESPONSE_VALIDATOR);
 
         Optional<CompanyFinancialApiDTO> result = service.fetchLatestAnnualReport(ORG_NUMBER);
 
@@ -55,7 +60,7 @@ public class CompanyFinancialServiceTest {
     @Test
     void fetchLatestAnnualReport_shouldKeepCashFlow_whenCompanyReportsOne() {
         CompanyFinancialService service = new CompanyFinancialService(
-                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, CASH_FLOW)));
+                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, CASH_FLOW)), RESPONSE_VALIDATOR);
 
         CompanyCashFlowStatement cashFlow = service.fetchLatestAnnualReport(ORG_NUMBER)
                 .orElseThrow()
@@ -68,7 +73,7 @@ public class CompanyFinancialServiceTest {
     @Test
     void fetchLatestAnnualReport_shouldDefaultCashFlowToZero_whenCompanyReportsNone() {
         CompanyFinancialService service = new CompanyFinancialService(
-                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, null)));
+                new StubClient(new CompanyFinancialApiDTO(INCOME, BALANCE, null)), RESPONSE_VALIDATOR);
 
         CompanyCashFlowStatement cashFlow = service.fetchLatestAnnualReport(ORG_NUMBER)
                 .orElseThrow()
@@ -81,7 +86,7 @@ public class CompanyFinancialServiceTest {
 
     @Test
     void fetchLatestAnnualReport_shouldReturnEmpty_whenCompanyHasNoAnnualReport() {
-        CompanyFinancialService service = new CompanyFinancialService(new StubClient(null));
+        CompanyFinancialService service = new CompanyFinancialService(new StubClient(null), RESPONSE_VALIDATOR);
 
         Optional<CompanyFinancialApiDTO> result = service.fetchLatestAnnualReport(ORG_NUMBER);
 
@@ -90,9 +95,21 @@ public class CompanyFinancialServiceTest {
 
     @Test
     void fetchLatestAnnualReport_shouldPropagateException_whenRegistryIsUnavailable() {
-        CompanyFinancialService service = new CompanyFinancialService(new UnavailableClient());
+        CompanyFinancialService service = new CompanyFinancialService(new UnavailableClient(), RESPONSE_VALIDATOR);
 
         assertThrows(CompanyRegistryUnavailableException.class,
+                () -> service.fetchLatestAnnualReport(ORG_NUMBER));
+    }
+
+    @Test
+    void fetchLatestAnnualReport_shouldThrow_whenRegistryResponseIsIncomplete() {
+        CompanyBalanceSheet missingTotalAssets = new CompanyBalanceSheet(
+                new BigDecimal("8000000"), new BigDecimal("3000000"), null,
+                new BigDecimal("1500000"), new BigDecimal("10500000"));
+        CompanyFinancialService service = new CompanyFinancialService(
+                new StubClient(new CompanyFinancialApiDTO(INCOME, missingTotalAssets, CASH_FLOW)), RESPONSE_VALIDATOR);
+
+        assertThrows(InvalidRegistryResponseException.class,
                 () -> service.fetchLatestAnnualReport(ORG_NUMBER));
     }
 

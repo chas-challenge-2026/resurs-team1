@@ -1,4 +1,4 @@
-package se.comerit.resurs.client;
+package se.comerit.resurs.client.bankId;
 
 import org.springframework.stereotype.Component;
 import se.comerit.resurs.dto.bankid.BankIdVerificationResult;

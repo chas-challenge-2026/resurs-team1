@@ -16,7 +16,7 @@ public class ApplicationAccessPolicyTest {
 
     private CreditApplicationDTO applicationFor(String orgNumber) {
         return new CreditApplicationDTO(1L, null, null, null, null, null, null, null,
-                null, null, null, orgNumber, null, null);
+                null, null, null, orgNumber, null, null, null);
     }
 
     @Test

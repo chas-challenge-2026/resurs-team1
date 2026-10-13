@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { FiArrowRight } from "react-icons/fi"
 import ApplicationWizard, { type ApplicationFormData} from "../../../components/ApplicationWizard/ApplicationWizard"
 import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
@@ -8,12 +7,10 @@ import Button from "../../../components/Button/Button"
 import { getUser } from "../../../utils/auth"
 import { useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
+import Loading from "../../../components/Loading/Loading"
 
-const TOTAL_STEPS = 3
-// the receipt is not a step, it has no progress bar and no way back
-const RECEIPT_STEP = TOTAL_STEPS + 1
-
-const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
+const TOTAL_STEPS = 4
+const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
 
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
@@ -31,6 +28,7 @@ const ApplicationFormPage = () => {
     requestedAmount: 3000000,
     durationMonths: undefined,
   })
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false)
 
   // old answers first, then the patch overwrites only what changed
   const handleChange = (patch: Partial<ApplicationFormData>) =>
@@ -60,27 +58,16 @@ const ApplicationFormPage = () => {
         purpose: values.purpose,
         requestedAmount: values.requestedAmount
       }, 
-      { onSuccess: () => setStep(RECEIPT_STEP) }
-    )
-  }
-
-  if (step === RECEIPT_STEP) {
-    return (
-      <div className={s.wizard}>
-        <ApplicationWizard step={step} values={values} onChange={handleChange} />
-
-        <div className={s.actions}>
-          <Button className={s.submit} onClick={() => navigate("/mina-ansokningar")}>
-            Mina ansökningar
-            <FiArrowRight aria-hidden />
-          </Button>
-        </div>
-      </div>
+      { onSuccess: (response) => {
+        navigate(`/mina-ansokningar/${response.id}`, {replace: true})
+      }}
     )
   }
 
   return (
     <div className={s.wizard}>
+      {submitApplication.isPending && <Loading fullscreen label="Skickar din ansökan..." delay />}
+
       <div className={s.header}>
         <div className={s.textWrapper}>
           <p className="subtitle">Steg {step} av {TOTAL_STEPS}</p>
@@ -89,7 +76,7 @@ const ApplicationFormPage = () => {
         <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
 
-      <ApplicationWizard step={step} values={values} onChange={handleChange} />
+      <ApplicationWizard step={step} values={values} onChange={handleChange} isSubmitError={submitApplication.isError} isTermsAccepted={isTermsAccepted} onTermsChange={setIsTermsAccepted} />
 
       <div className={s.actions}>
         {step > 1 && (
@@ -103,15 +90,12 @@ const ApplicationFormPage = () => {
         <Button
           className={s.submit}
           // pending stops a double click from sending two applications
-          disabled={!stepIsComplete || submitApplication.isPending}
+          disabled={!stepIsComplete || step === TOTAL_STEPS && !isTermsAccepted || submitApplication.isPending}
           onClick={step === TOTAL_STEPS ? handleSubmit : () => setStep(step + 1)}
         >
           {step !== TOTAL_STEPS ? "Fortsätt" : submitApplication.isPending ? "Skickar..." : "Skicka ansökan"}
         </Button>
       </div>
-        {submitApplication.isError &&
-          <p role="alert" className={s.submitError}>Ansökan kunde inte skickas just nu. Försök igen</p>
-        }
     </div>
   )
 }

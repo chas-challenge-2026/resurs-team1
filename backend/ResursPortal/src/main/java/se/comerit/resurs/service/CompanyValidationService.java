@@ -2,6 +2,7 @@ package se.comerit.resurs.service;
 
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
+import se.comerit.resurs.client.companyvalidation.RegistryResponseValidator;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
@@ -11,13 +12,16 @@ import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureRea
 public class CompanyValidationService {
 
     private final CompanyValidationClient client;
+    private final RegistryResponseValidator responseValidator;
 
-    public CompanyValidationService(CompanyValidationClient client) {
+    public CompanyValidationService(CompanyValidationClient client, RegistryResponseValidator responseValidator) {
         this.client = client;
+        this.responseValidator = responseValidator;
     }
 
     public CompanyValidationApiDTO validateCompanyExists(String orgNumber) {
         return client.lookup(orgNumber)
+                .map(company -> responseValidator.validate(company, orgNumber))
                 .orElseThrow(() -> new CompanyValidationFailedException(
                         CompanyValidationFailureReason.COMPANY_NOT_FOUND));
     }

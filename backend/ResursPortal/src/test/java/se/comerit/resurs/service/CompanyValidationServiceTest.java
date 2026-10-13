@@ -1,7 +1,9 @@
 package se.comerit.resurs.service;
 
+import jakarta.validation.Validation;
 import org.junit.jupiter.api.Test;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
+import se.comerit.resurs.client.companyvalidation.RegistryResponseValidator;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO.Signatory;
@@ -9,6 +11,7 @@ import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
+import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
 
 import java.time.Instant;
 import java.util.List;
@@ -42,9 +45,12 @@ public class CompanyValidationServiceTest {
             ),
             Instant.parse("2026-08-14T10:06:04Z"));
 
+    private static final RegistryResponseValidator RESPONSE_VALIDATOR =
+            new RegistryResponseValidator(Validation.buildDefaultValidatorFactory().getValidator());
+
     @Test
     void validateCompanyExists_shouldReturnCompany_whenRegistryHasIt() {
-        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY));
+        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY), RESPONSE_VALIDATOR);
 
         CompanyValidationApiDTO result = service.validateCompanyExists(ORG_NUMBER);
 
@@ -54,7 +60,7 @@ public class CompanyValidationServiceTest {
 
     @Test
     void validateCompanyExists_shouldThrowCompanyNotFound_whenRegistryHasNoCompany() {
-        CompanyValidationService service = new CompanyValidationService(new StubClient(null));
+        CompanyValidationService service = new CompanyValidationService(new StubClient(null), RESPONSE_VALIDATOR);
 
         CompanyValidationFailedException thrown = assertThrows(
                 CompanyValidationFailedException.class,
@@ -65,15 +71,25 @@ public class CompanyValidationServiceTest {
 
     @Test
     void validateCompanyExists_shouldPropagateException_whenRegistryIsUnavailable() {
-        CompanyValidationService service = new CompanyValidationService(new UnavailableClient());
+        CompanyValidationService service = new CompanyValidationService(new UnavailableClient(), RESPONSE_VALIDATOR);
 
         assertThrows(CompanyRegistryUnavailableException.class,
                 () -> service.validateCompanyExists(ORG_NUMBER));
     }
 
     @Test
+    void validateCompanyExists_shouldThrow_whenRegistryResponseIsIncomplete() {
+        CompanyValidationApiDTO missingName = new CompanyValidationApiDTO(
+                null, ORG_NUMBER, COMPANY.signatories(), COMPANY.updatedAt());
+        CompanyValidationService service = new CompanyValidationService(new StubClient(missingName), RESPONSE_VALIDATOR);
+
+        assertThrows(InvalidRegistryResponseException.class,
+                () -> service.validateCompanyExists(ORG_NUMBER));
+    }
+
+    @Test
     void validateSignatory_shouldReturnSignatory_whenPersonMaySignAlone() {
-        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY));
+        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY), RESPONSE_VALIDATOR);
 
         Signatory result = service.validateSignatory(COMPANY, SIGNS_ALONE);
 
@@ -83,7 +99,7 @@ public class CompanyValidationServiceTest {
 
     @Test
     void validateSignatory_shouldThrowNotAuthorized_whenPersonIsNotASignatory() {
-        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY));
+        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY), RESPONSE_VALIDATOR);
 
         CompanyValidationFailedException thrown = assertThrows(
                 CompanyValidationFailedException.class,
@@ -94,7 +110,7 @@ public class CompanyValidationServiceTest {
 
     @Test
     void validateSignatory_shouldThrowRequiresJointSignature_whenPersonMayNotSignAlone() {
-        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY));
+        CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY), RESPONSE_VALIDATOR);
 
         CompanyValidationFailedException thrown = assertThrows(
                 CompanyValidationFailedException.class,
