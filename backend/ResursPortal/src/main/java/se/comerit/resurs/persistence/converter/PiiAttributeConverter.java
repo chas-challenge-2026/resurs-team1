@@ -19,7 +19,6 @@ public class PiiAttributeConverter
         if (attribute == null) {
             return null;
         }
-        System.out.print("encoded" + attribute);
         return encryption.encode(attribute);
     }
 
@@ -28,7 +27,6 @@ public class PiiAttributeConverter
         if (dbData == null) {
             return null;
         }
-        System.out.print("decoded" + dbData);
         return encryption.decode(dbData);
     }
 }
