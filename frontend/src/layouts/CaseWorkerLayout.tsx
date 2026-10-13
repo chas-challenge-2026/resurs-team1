@@ -110,7 +110,7 @@ const CaseWorkerLayout = () => {
             ))}
             <div className={s.sideBarHeader}>
               {!isCollapsed && (
-                <p className={s.casesLength}>{activeList.data?.length} ärenden</p>
+                <p className={s.casesLength}>{activeList.data?.length || 0} ärenden</p>
               )}
               
               <Button
@@ -128,8 +128,8 @@ const CaseWorkerLayout = () => {
             <>
               {activeList && (
                 <div className={s.casesWrapper}>
-                  {activeList.isPending && <Loading size="sm" label="Hämtar ärenden..." />}
-                  {activeList.isError && <p>{activeList.error.message}</p>}
+                  {activeList.isPending && <div className={s.loadingWrapper}><Loading label="Hämtar ärenden..." /></div>}
+                  {activeList.isError && <p className={s.error}>Kunde inte hitta några ärenden...</p>}
                   {activeList.data?.map((application) => (
                     <SidebarCaseCard key={application.id} application={application} />
                   ))}
