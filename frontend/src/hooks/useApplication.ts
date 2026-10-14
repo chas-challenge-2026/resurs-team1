@@ -1,12 +1,31 @@
 import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest, getCompanyApplications } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
+import { isValidOrgNumber } from "../utils/formatters"
 
 export const useApplications = (page: number) => {
   return useQuery<Application[], ApiErrorPayload>({
     queryKey: ["applications", "page", page], // "page" keeps it apart from ["applications", id]
     queryFn: () => getApplications(page),
     placeholderData: keepPreviousData, // keep the old page on screen while the next loads
+  })
+}
+
+export const useCompanyApplications = (orgNumber: string) => {
+  const isValid = isValidOrgNumber(orgNumber)
+
+  return useInfiniteQuery<Application[], ApiErrorPayload, Application[]>({
+    queryKey: ["companyApplications", orgNumber],
+    queryFn: ({pageParam}) => getCompanyApplications(orgNumber, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 10) {
+        return undefined
+      }
+      return allPages.length
+    },
+    enabled: isValid,
+    select: (data) => data.pages.flat()
   })
 }
 

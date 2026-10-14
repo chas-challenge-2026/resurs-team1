@@ -4,6 +4,8 @@ import type { IconType } from "react-icons"
 import type { DropdownOption } from "../components/Dropdown/Dropdown"
 import type { ButtonGroupOption } from "../components/ButtonGroup/ButtonGroup"
 
+export const ID_NUMBER_DIGITS = 10
+
 export const PURPOSE_OPTIONS: DropdownOption<PurposeValue>[] = [
   { value: "Expansion", label: "Expansion" },
   { value: "workingCapital", label: "Rörelsekapital" },

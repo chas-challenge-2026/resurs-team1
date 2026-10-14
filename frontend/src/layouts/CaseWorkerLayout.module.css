@@ -4,11 +4,37 @@
 }
 
 /* Sidebar */
+.loadingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.error {
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+}
+
 .sideBarHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-xs) var(--space-sm);
+}
+
+.searchHeaderInfo {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-xs) var(--space-sm);
+  align-items: center;
+}
+
+.clearSearchButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .sticky {
