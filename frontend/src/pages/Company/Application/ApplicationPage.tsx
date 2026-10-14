@@ -20,7 +20,6 @@ const ApplicationFormPage = () => {
   //grab recent application to get a name for autofill
   const recentApplications = useApplications(0)
   const recentContactDetails = recentApplications.data?.[0]?.contactDetails
-  console.log(`result:`, recentContactDetails)
 
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({

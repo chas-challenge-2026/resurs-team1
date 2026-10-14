@@ -1,5 +1,5 @@
 import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest, getCompanyApplications } from "../api/applicationApi"
+import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest, getCompanyApplications, getAuditLog, type AuditEvent } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
 import { isValidOrgNumber } from "../utils/formatters"
 
@@ -76,6 +76,14 @@ export const useBackofficeApplication = (id: number | undefined) => {
   return useQuery<Application, ApiErrorPayload>({
     queryKey: ["backofficeApplications", id],
     queryFn: () => getBackofficeApplicationById(id!),
+    enabled: typeof id === "number" && !isNaN(id),
+  })
+}
+
+export const useAuditLog = (id: number | undefined) => {
+  return useQuery<AuditEvent[], ApiErrorPayload>({
+    queryKey: ["backofficeApplications", id, "audit"], // same prefix so decisions and requests refetch it too
+    queryFn: () => getAuditLog(id!),
     enabled: typeof id === "number" && !isNaN(id),
   })
 }

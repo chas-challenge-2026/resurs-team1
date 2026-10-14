@@ -1,5 +1,5 @@
 import { FiAlertCircle, FiClock, FiCheckCircle, FiXCircle } from "react-icons/fi"
-import type { ApplicationStatus, PurposeValue } from "../api/applicationApi"
+import type { ActorType, ApplicationStatus, AuditActions, PurposeValue } from "../api/applicationApi"
 import type { IconType } from "react-icons"
 import type { DropdownOption } from "../components/Dropdown/Dropdown"
 import type { ButtonGroupOption } from "../components/ButtonGroup/ButtonGroup"
@@ -25,6 +25,21 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   UNDER_REVIEW: "Manuell granskning",
   APPROVED: "Godkänd",
   REJECTED: "Avvisad"
+}
+
+export const AUDIT_ACTION_LABELS: Record<AuditActions, string> = {
+  APPLICATION_CREATED: "Ansökan skickades in",
+  SCORING_RUN: "Automatisk bedömning",
+  DOCUMENT_UPLOADED: "Dokument uppladdat",
+  MANUAL_DECISION: "Beslut fattat",
+  COMMENT_ADDED: "Kommentar tillagd",
+  DOCUMENTS_REQUESTED: "Komplettering begärd",
+}
+
+export const ACTOR_LABELS: Record<ActorType, string> = {
+  COMPANY: "Företag",
+  SYSTEM: "System",
+  CASE_WORKER: "Handläggare",
 }
 
 export const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
