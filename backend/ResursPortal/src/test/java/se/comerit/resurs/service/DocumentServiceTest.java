@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.NoSuchElementException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -89,12 +91,12 @@ class DocumentServiceTest {
     }
 
     @Test
-    void uploadDocument_unknownApplicationId_throwsIllegalArgumentException() {
+    void uploadDocument_unknownApplicationId_throwsNoSuchElementException() {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
 
         assertThatThrownBy(() -> documentService.uploadDocument(999_999L, "balansrakning", file))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("Application not found");
     }
 
@@ -146,14 +148,26 @@ class DocumentServiceTest {
     }
 
     @Test
-    void uploadDocument_otherDocType_doesNotAffectStatus() throws IOException {
+    void uploadDocument_otherDocType_movesStatusToUnderReview() throws IOException {
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
                 "application/pdf", "innehall".getBytes());
         CreditApplication application = createApplication(ApplicationStatus.PENDING_DOCS);
 
         documentService.uploadDocument(application.getId(), "balansrakning", file);
         CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
-        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+    }
+
+    //Ett dokument på ett ärende som inte väntar på dokument ska inte ändra statusen
+    @Test
+    void uploadDocument_whenNotWaitingForDocuments_doesNotChangeStatus() throws IOException {
+        MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
+                "application/pdf", "innehall".getBytes());
+        CreditApplication application = createApplication(ApplicationStatus.APPROVED);
+
+        documentService.uploadDocument(application.getId(), "pdf", file);
+        CreditApplication updated = creditApplicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
     }
 
     @Test
@@ -163,9 +177,9 @@ class DocumentServiceTest {
     }
 
     @Test
-    void findByApplicationId_unknownApplication_throwsIllegalArgumentException() {
+    void findByApplicationId_unknownApplication_throwsNoSuchElementException() {
         assertThatThrownBy(() -> documentService.findByApplicationId(999_999L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("Application not found");
     }
 }

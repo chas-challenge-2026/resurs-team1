@@ -10,12 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpSession;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.service.DocumentService;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -49,17 +47,8 @@ public class DocumentController {
     }
 
     @GetMapping("application/{applicationId}")
-    public ResponseEntity<List<DocumentDTO>> listDocuments(@PathVariable("applicationId") Long applicationId,
-                                                           HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        try {
-            List<DocumentDTO> documents = documentService.findByApplicationId(applicationId);
-            return ResponseEntity.ok(documents);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<List<DocumentDTO>> listDocuments(@PathVariable("applicationId") Long applicationId) {
+        return ResponseEntity.ok(documentService.findByApplicationId(applicationId));
     }
 // Old thymeleaf compatible method
 // Keeping the method as documentations for what was delivered to frontend
@@ -83,20 +72,11 @@ public class DocumentController {
     @PostMapping("/upload")
     public ResponseEntity<Void> uploadDocument(@RequestParam("applicationId") Long applicationId,
                                                @RequestParam("docType") String docType,
-                                               @RequestParam("file") MultipartFile file,
-                                               HttpSession session) {
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+                                               @RequestParam("file") MultipartFile file) {
 
-        try {
-            documentService.uploadDocument(applicationId, docType, file);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        documentService.uploadDocument(applicationId, docType, file);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+
     }
 
         // Session check copy-pasted in every method — should be an interceptor
@@ -112,16 +92,7 @@ public class DocumentController {
 //    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Resource> downloadDocument(@PathVariable("id") Long documentId,
-                                                     HttpSession session) {
-        // Session check copy-pasted in every method — should be an interceptor
-//        if (session.getAttribute("userId") == null) {
-//            return ResponseEntity.status(302).header("Location", "/login").build();
-//        }
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<Resource> downloadDocument(@PathVariable("id") Long documentId) {
         File file = documentService.resolveFileForDownload(documentId);
         if (file == null) {
             return ResponseEntity.notFound().build();

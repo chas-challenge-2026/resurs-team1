@@ -1,8 +1,11 @@
 package se.comerit.resurs.persistence.model;
 
 import jakarta.persistence.*;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
+import se.comerit.resurs.persistence.listener.CompanySearchKeyListener;
 
 @Entity
+@EntityListeners(CompanySearchKeyListener.class)
 @Table(name = "companies")
 public class Company {
 
@@ -10,15 +13,25 @@ public class Company {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Integer version;
+
     @Column(unique = true,name = "org_number" )
+    @Convert(converter = PiiAttributeConverter.class)
     private String orgNumber;
 
     @Column(name = "companyName")
+    @Convert(converter = PiiAttributeConverter.class)
     private String companyName;
 
 
     @Column(name = "authorized_signatory")
+    @Convert(converter = PiiAttributeConverter.class)
     private String authorizedSignatory;
+
+    @Column(name = "search_key_org_number",unique = true)
+    private byte[] searchKeyOrgNumber;
+
 
     public Company() {
 
@@ -61,5 +74,9 @@ public class Company {
 
     public void setAuthorized_signatory(String authorized_signatory) {
         this.authorizedSignatory = authorized_signatory;
+    }
+
+    public void setSearchKeyOrgNumber(byte[] searchKeyOrgNumber) {
+        this.searchKeyOrgNumber = searchKeyOrgNumber;
     }
 }

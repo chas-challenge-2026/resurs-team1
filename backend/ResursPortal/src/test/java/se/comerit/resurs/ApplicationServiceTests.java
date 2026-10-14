@@ -11,26 +11,34 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.model.AuditEvent;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.service.ApplicationService;
+import se.comerit.resurs.service.BackofficeService;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
 class ApplicationServiceTests {
+
+    private static final ContactDetails mockContacts = new ContactDetails("Chunky","Chunk@Jungle.DKI","000999999");
 
     private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
             .resolve("../../infra/seed.sql")
@@ -62,6 +70,9 @@ class ApplicationServiceTests {
 
     private Company testCompany;
 
+    @Autowired
+    private BackofficeService backofficeService;
+
     @BeforeEach
     void setUp() {
         auditEventRepository.deleteAll();
@@ -82,7 +93,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_shouldPersistApplication() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO());
+        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
 
         assertThat(saved).isNotNull();
@@ -107,7 +118,7 @@ class ApplicationServiceTests {
 
         NewApplicationDTO dto = createApplicationDTO();
 
-        CreditApplicationDTO saved = applicationService.saveApplication(dto);
+        CreditApplicationDTO saved = applicationService.saveApplication(dto,mockContacts);
 
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
@@ -190,12 +201,14 @@ class ApplicationServiceTests {
         );
 
         CreditApplicationDTO saved =
-                applicationService.saveApplication(dto);
+                applicationService.saveApplication(dto,mockContacts);
 
         assertThat(saved.orgNumber())
                 .isEqualTo("111111-2222");
     }
 
+    /* This test no longer reflect behavior. application never reaches this point without validation of the company
+    meaning we now save the company if it does not exist in database, as company does not reflect an "account"
     @Test
     void saveApplication_shouldThrowWhenCompanyDoesNotExist() {
 //kolla över
@@ -205,12 +218,13 @@ class ApplicationServiceTests {
         );
 
         assertThatThrownBy(() ->
-                applicationService.saveApplication(dto)
+                applicationService.saveApplication(dto,mockContacts)
         ).isInstanceOf(Exception.class);
 
         assertThat(applicationRepository.count())
                 .isZero();
     }
+    */
 
     // ============================================================
     // findApplicationByID()
@@ -220,7 +234,7 @@ class ApplicationServiceTests {
     void findApplicationByID_shouldReturnApplication() {
 //kolla över
         CreditApplicationDTO saved =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         CreditApplicationDTO result =
                 applicationService.findApplicationByID(saved.id());
@@ -261,21 +275,21 @@ class ApplicationServiceTests {
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                )
+                ),mockContacts
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                )
+                ),mockContacts
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "111111-2222",
                         "Other Company"
-                )
+                ),mockContacts
         );
 
         List<CreditApplicationDTO> applications =
@@ -307,11 +321,11 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnCompanyApplications() {
 //kolla över
         applicationService.saveApplication(
-                createApplicationDTO()
+                createApplicationDTO(),mockContacts
         );
 
         applicationService.saveApplication(
-                createApplicationDTO()
+                createApplicationDTO(),mockContacts
         );
 
         List<CreditApplicationDTO> applications =
@@ -330,9 +344,9 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompanyDesc_shouldRespectPageSize() {
 //kolla över
-        applicationService.saveApplication(createApplicationDTO());
-        applicationService.saveApplication(createApplicationDTO());
-        applicationService.saveApplication(createApplicationDTO());
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         Pageable pageable = PageRequest.of(0, 2);
 
@@ -350,10 +364,10 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnNewestFirst() {
 //kolla över
         CreditApplicationDTO first =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         CreditApplicationDTO second =
-                applicationService.saveApplication(createApplicationDTO());
+                applicationService.saveApplication(createApplicationDTO(),mockContacts);
 
         List<CreditApplicationDTO> applications =
                 applicationService.readApplicationsByCompanyDesc(
@@ -370,6 +384,73 @@ class ApplicationServiceTests {
         assertThat(applications.get(1).id())
                 .isEqualTo(first.id());
     }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnOnlyApplicationsForThatCompany() {
+        Company target = saveCompany("556000-1111");
+        Company other = saveCompany("556000-2222");
+
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.UNDER_REVIEW));
+        applicationRepository.save(createApplicationFor(target, ApplicationStatus.APPROVED));
+        applicationRepository.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
+
+        List<CreditApplicationDTO> result =
+                applicationService.getApplicationsByOrgNumber("556000-1111", PageRequest.of(0,20));
+
+        assertThat(result).hasSize(2);
+        assertThat(result)
+                .extracting(CreditApplicationDTO::orgNumber)
+                .containsOnly("556000-1111");
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldReturnEmptyListWhenCompanyHasNoApplications() {
+        saveCompany("556000-1111");
+
+        assertThat(applicationService.getApplicationsByOrgNumber("556000-1111", PageRequest.of(0,20))).isEmpty();
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenCompanyDoesNotExist() {
+        saveCompany("556000-1111");
+
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("556000-9999", PageRequest.of(0,20)))
+                .isInstanceOf(java.util.NoSuchElementException.class);
+    }
+
+    @Test
+    void getApplicationsByOrgNumber_shouldThrowWhenOrgNumberIsBlank() {
+        assertThatThrownBy(() -> applicationService.getApplicationsByOrgNumber("   ", PageRequest.of(0,20)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private Company saveCompany(String orgNumber) {
+        Company company = new Company();
+        company.setOrg_number(orgNumber);
+        company.setCompany_name("Test Company");
+        company.setAuthorized_signatory("Test Signatory");
+
+        return companyRepository.save(company);
+    }
+
+    private CreditApplication createApplicationFor(Company company, ApplicationStatus status) {
+        CreditApplication application = new CreditApplication();
+        application.setCompany(company);
+        application.setRequestedAmount(new BigDecimal("10000.00"));
+        application.setPurpose("Test loan");
+        application.setStatus(status);
+
+        return application;
+    }
+
+    //Sparar bolag + ärende i databasen, sätter durationMonths=12
+    private CreditApplication saveApplicationFor(String orgNumber, ApplicationStatus status) {
+        Company company = saveCompany(orgNumber);
+        CreditApplication application = createApplicationFor(company, status);
+        application.setDurationMonths(12);
+        return applicationRepository.save(application);
+    }
+
 
     // ============================================================
     // Test data
@@ -388,7 +469,8 @@ class ApplicationServiceTests {
     ) {
         return new NewApplicationDTO(
                 new BigDecimal("250000"),     // requestedAmount
-                "Expansion",                  // purpose
+                "Expansion",                    // purpose
+                12,                             //durationMonths
                 ApplicationStatus.PENDING_DOCS, // status
                 "APPROVED",                   // decision
                 "Test decision reason",       // decision_reason
@@ -398,6 +480,111 @@ class ApplicationServiceTests {
                 "Test Person",                // authorized_signatory
                 3                            // flagCount
         );
+    }
+
+    // ============================================================
+    // rescoreApplication()
+    // ============================================================
+
+    @Test
+    void rescoreApplication_shouldUpdateSameApplication() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+
+        CreditApplicationDTO result = applicationService.rescoreApplication(application.getId());
+
+        assertThat(result.id()).isEqualTo(application.getId());
+        assertThat(result.scoringResult()).isNotBlank();
+        assertThat(applicationRepository.findAll()).hasSize(1);
+
+        //Kollar också att ändringen faktiskt sparades i databasen
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getScoringResult()).isNotBlank();
+        assertThat(fromDb.getDecision()).isNotBlank();
+    }
+
+    // Ett ärende som inte finns ska ge NoSuchElementException (blir 404 i controllern)
+    @Test
+    void rescoreApplication_shouldThrowWhenApplicationDoesNotExist() {
+        assertThatThrownBy(() -> applicationService.rescoreApplication(999999L))
+                .isInstanceOf(NoSuchElementException.class);
+    }
+
+    //Har en handläggare redan fattat ett beslut får scoring inte skriva över det
+    // beslutet skapas via BackofficeService (som är @Transactional och loggar MANUAL_DECISION), alltså samma väg som
+    // en handläggare använder.
+    @Test
+    void rescoreApplication_shouldThrowWhenManualDecisionExists() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+        backofficeService.application_decision(application.getId(), ApplicationStatus.APPROVED,
+                "handlaggare@test.se", "Test Handläggare", "ok");
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("manual decision");
+
+        // Ärendet ska vara orört alltså handläggarens beslut ska vara kvar och ingen score ska ha skrivits
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(fromDb.getScoringResult()).isNull();
+    }
+
+    //Ett automatiskt beslut (REJECTED från scoring, inget manuellt beslut) ska gå att köra om
+    @Test
+    void rescoreApplication_shouldAllowRescoreOfAutomaticDecision() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.REJECTED);
+        CreditApplicationDTO result = applicationService.rescoreApplication(application.getId());
+        assertThat(result.scoringResult()).isNotBlank();
+    }
+
+    // Omkörningen ska loggas som en SCORING_RUN i auditloggen
+    @Test
+    void rescoreApplication_shouldWriteScoringRunEvent() {
+        CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
+        applicationService.rescoreApplication(application.getId());
+        List<AuditEvent> events = auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(application.getId());
+        assertThat(events).extracting(AuditEvent::getAction)
+                .containsExactly(AuditAction.SCORING_RUN);
+    }
+
+    //Om det inte finns någon årsredovisning för bolaget ska omkörningen misslyckas (NoSuchElementException)
+    @Test
+    void rescoreApplication_shouldThrowWhenFinancialsMissing() {
+        CreditApplication application = saveApplicationFor("556000-0000", ApplicationStatus.UNDER_REVIEW);
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(NoSuchElementException.class);
+    }
+
+    // Om registret ligger nere (556000-5555 simulerar det) ska felet kastas vidare och ärendet ska vara oförändrat
+    // t.ex när kreditupplysningen inte fungerar just nu
+    @Test
+    void rescoreApplication_shouldLeaveApplicationUnchangedWhenRegistryIsDown() {
+        CreditApplication application = saveApplicationFor("556000-5555", ApplicationStatus.UNDER_REVIEW);
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(CompanyRegistryUnavailableException.class);
+
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
+        assertThat(fromDb.getScoringResult()).isNull();
+
+        assertThat(auditEventRepository.findByApplicationIdOrderBySequenceNumberAsc(application.getId()))
+                .isEmpty();
+    }
+
+    //Ett ärende som väntar på dokument från kunden ska inte kunna köras om, då skulle statusen flyttas bort från PENDING_DOCS
+    @Test
+    void rescoreApplication_shouldThrowWhenWaitingForDocument() {
+        CreditApplication application = saveApplicationFor("556000-7777",
+                ApplicationStatus.PENDING_DOCS);
+
+        assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("waiting for documents");
+
+        //Ärendet ska vara orört
+        CreditApplication fromDb = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
+        assertThat(fromDb.getScoringResult()).isNull();
     }
 }
 

@@ -1,33 +1,39 @@
 package se.comerit.resurs.service;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.caseworker.CaseWorkerResponse;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
+import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.security.PasswordHasher;
+import se.comerit.resurs.util.HMACHasher;
 
 @Service
 public class CaseWorkerService {
 
     private final CaseWorkerRepository caseWorkerRepository;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
+    private final HMACHasher hasher;
 
-    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordHasher passwordHasher) {
+
+    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
         this.caseWorkerRepository = caseWorkerRepository;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
+        this.hasher = hasher;
     }
 
     public CaseWorkerResponse create(CreateCaseWorkerRequest request) {
-        if (caseWorkerRepository.findByEmail(request.email()).isPresent()) {
+        if (caseWorkerRepository.findBySearchKeyEmail(hasher.encode(request.email())).isPresent()) {
             throw new IllegalArgumentException("Email already in use.");
         }
 
         CaseWorker caseWorker = new CaseWorker();
         caseWorker.setName(request.name());
         caseWorker.setEmail(request.email());
-        caseWorker.setPasswordHash(passwordHasher.md5Hash(request.password()));
+        caseWorker.setPasswordHash(passwordEncoder.encode(request.password()));
 
         CaseWorker saved = caseWorkerRepository.save(caseWorker);
         return new CaseWorkerResponse(saved);
@@ -38,19 +44,21 @@ public class CaseWorkerService {
         return new CaseWorkerResponse(caseWorker);
     }
 
+    //No transactional dirtychecking here in order to handle the exceptions on the save()
     public CaseWorkerResponse update(Long id, UpdateCaseWorkerRequest request) {
         CaseWorker caseWorker = caseWorkerRepository.findById(id).orElseThrow();
 
-        caseWorkerRepository.findByEmail(request.email())
-                .filter(existing -> !existing.getId().equals(id))
-                .ifPresent(existing -> {
-                    throw new IllegalArgumentException("Email already in use");
-                });
 
         caseWorker.setName(request.name());
         caseWorker.setEmail(request.email());
 
-        CaseWorker updated = caseWorkerRepository.save(caseWorker);
+        CaseWorker updated;
+        try{
+            updated = caseWorkerRepository.save(caseWorker);
+        } catch (DataIntegrityViolationException ex){
+            throw new EmailAlreadyInUseException("Email already in use");
+        }
+
         return new CaseWorkerResponse(updated);
     }
 

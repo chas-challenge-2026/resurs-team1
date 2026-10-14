@@ -8,7 +8,7 @@ interface CardProps extends HTMLAttributes<HTMLElement> {
   /** The content to display inside the card (e.g. CardHeader, CardBody, CardFooter). */
   children: React.ReactNode;
   /** Visual style variant of the card. */
-  variant?: "default" | "accent" | "warning";
+  variant?: "default" | "accent" | "info";
   /** Custom accent color for top line when variant="accent" (e.g. "var(--color-primary)"). */
   accentColor?: string;
   /** Semantic HTML element to render. Use 'article' or 'section' for standalone content. */
@@ -35,7 +35,7 @@ const Card = ({children, variant = "default", accentColor, as: Component = "div"
 
   const combinedClassName = [ s.card, s[variant], className].filter(Boolean).join(" ");
 
-  //Add variable for accent color
+  //accentColor becomes --card-accent-color to style correct part of element
   const combinedStyle: CSSProperties = {
     ...style,
     ...(accentColor ? { ["--card-accent-color" as string]: accentColor } : {}),

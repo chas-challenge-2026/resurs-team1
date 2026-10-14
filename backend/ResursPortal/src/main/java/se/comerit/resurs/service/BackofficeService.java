@@ -2,10 +2,14 @@ package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.DocumentDTO;
+import se.comerit.resurs.dto.PagedResult;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
@@ -14,8 +18,19 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
-
 import java.util.List;
+
+/**
+ * BackofficeService -> allt en handläggare behöver för att granska ansökningar
+ *
+ * Ansvarar för: hämta ansökningar som väntar på granskning och de som redan är avgjorda,
+ * en sida i taget så det inte blir för mycket data på en gång, samt spara ett beslut
+ * (godkänd/avslag) och en kommentar på ärendet och se till att det loggas.
+ *
+ * Inte ansvarig för: att kolla om användaren är inloggad eller hur datan visas på skärmen ->
+ * det sköts av BackofficeController respektive frontend.
+ *
+ */
 
 @Service
 public class BackofficeService {
@@ -24,6 +39,7 @@ public class BackofficeService {
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
 
+
     @Autowired
     public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
         this.auditService = auditService;
@@ -31,25 +47,25 @@ public class BackofficeService {
         this.documentRepo = documentRepo;
     }
 
+    //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
+    //Further requires indexation, and sorting options
+    public BackOfficeListsDTO applicationsForReview(
+            @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-    //Fetch all applications marked UNDER_REVIEW
-    //Further requires indexation,  further work includes pagination and sorting options
-    public BackOfficeListsDTO applicationsForReview(){
+        PagedResult<ReviewInfo> underReview = PagedResult.from(
+                creditRepo.findByStatusInOrderByCreatedAtAsc(
+                        List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING,ApplicationStatus.PENDING_DOCS),
+                        reviewPageable)
+                        .map(ReviewInfo::new));
 
-        List<ReviewInfo> underReviewList;
-        List<HistoricalReviewInfo> decidedReviewList;
-
-        underReviewList = creditRepo.findByStatusOrderByCreatedAtAsc(ApplicationStatus.UNDER_REVIEW).stream()
-                .map(ReviewInfo::new).toList();
-
-        decidedReviewList = creditRepo.findByStatusInOrderByCreatedAtAsc(
-                List.of(ApplicationStatus.APPROVED,ApplicationStatus.REJECTED),
-                PageRequest.of(0, 20
-                )
-        ).stream().map(HistoricalReviewInfo::new).toList();
+        PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
+                creditRepo.findByStatusInOrderByCreatedAtAsc(
+                        List.of(ApplicationStatus.APPROVED, ApplicationStatus.REJECTED),
+                        decidedPageable)
+                        .map(HistoricalReviewInfo::new));
 
 
-        return new BackOfficeListsDTO(decidedReviewList,underReviewList);
+        return new BackOfficeListsDTO(decidedReview,underReview);
     }
 
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)
@@ -61,6 +77,7 @@ public class BackofficeService {
 
         application.setStatus(decision);
         application.setDecision(decision.toString());
+        application.setComment(comment == null || comment.isBlank() ? null : comment);
 
       auditService.manualDecision(application, workerEmail, workerName, previousStatus, comment);
 
@@ -77,6 +94,41 @@ public class BackofficeService {
 
         return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
     }
+
+    @Transactional
+    public void application_comment(Long applicationId, String comment, String workerEmail, String workerName) {
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+        application.setComment(comment);
+
+        auditService.commentAdded(application, workerEmail, workerName, comment);
+    }
+
+    //Hämtar hela auditloggen för ett ärende, äldsta händelsen först
+    // Kollar först att ärendet finns, annars hade ett okänt id gett en tom lista istället för 404
+    public List<AuditEventDTO> application_audit_log(Long applicationId) {
+        creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+        return auditService.findAuditEventsByApplicationID(applicationId);
+    }
+
+    //Handläggaren ber kunden komplettera: ärendet får status PENDING_DOCS och texten sparas som senaste kommentar,
+    // så att kunden kan se vad som saknas
+    @Transactional
+    public void application_request_documents(Long applicationId, String comment, String workerEmail, String workerName) {
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+        ApplicationStatus previousStatus = application.getStatus();
+
+        //Ett avgjort ärende kan inte kompletteras
+        if (previousStatus == ApplicationStatus.APPROVED || previousStatus == ApplicationStatus.REJECTED) {
+            throw new IllegalArgumentException("Application " + applicationId + " " +
+                    "already has a decision and can not be completed");
+        }
+
+        application.setStatus(ApplicationStatus.PENDING_DOCS);
+        application.setComment(comment);
+
+        auditService.documentsRequested(application, workerEmail, workerName, previousStatus, comment);
+    }
+
 
 
 

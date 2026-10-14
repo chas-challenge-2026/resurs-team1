@@ -1,0 +1,164 @@
+package se.comerit.resurs;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
+
+import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
+import se.comerit.resurs.dto.auth.CompanyLoginResponse;
+import se.comerit.resurs.exception.auth.LoginFailedException;
+import se.comerit.resurs.exception.auth.LoginFailureReason;
+import se.comerit.resurs.exception.bankid.BankIdVerificationFailedException;
+import se.comerit.resurs.persistence.CaseWorkerRepository;
+import se.comerit.resurs.persistence.CompanyRepository;
+import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.DocumentRepository;
+import se.comerit.resurs.persistence.model.CaseWorker;
+import se.comerit.resurs.persistence.model.Company;
+import se.comerit.resurs.service.AuthService;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.List;
+
+
+@Testcontainers
+@ActiveProfiles("test")
+@SpringBootTest
+
+public class AuthServiceTests {
+
+    private static final String WORKER_NAME = "Test Arbetare";
+    private static final String EMAIL = "Testarn@resurs.se";
+    //icke hashat lösenordet
+    private static final String PASSWORD = "password123";
+    //samma lösen fast hashat
+    @Autowired
+    private  PasswordEncoder passwordEncoder;
+
+private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
+            .resolve("../../infra/seed.sql")
+            .normalize();
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("resurs_test")
+            .withUsername("test")
+            .withPassword("test")
+            .withCopyFileToContainer(
+                    MountableFile.forHostPath(SEED_SQL),
+                    "/docker-entrypoint-initdb.d/seed.sql");
+
+
+
+    @Autowired
+    private AuthService authService;
+    @Autowired
+    private CompanyRepository companyRepo;
+    @Autowired
+    private CaseWorkerRepository caseWorkerRepo;
+    @Autowired
+    private CreditApplicationRepository creditRepo;
+
+    @Autowired
+    private DocumentRepository documentRepo;
+
+
+    @BeforeEach
+    void cleanDatabase() {
+        documentRepo.deleteAll();
+        creditRepo.deleteAllInBatch();
+        companyRepo.deleteAllInBatch();
+        caseWorkerRepo.deleteAll();
+    }
+
+    private Company createCompany(){
+        Company company = new Company();
+        company.setCompany_name("Fasen Elteknik AB");
+        company.setOrg_number("556000-1234");
+        company.setAuthorized_signatory("Anders Karlsson");
+         return companyRepo.save(company);
+
+    }
+
+    private CaseWorker createWorker(){
+        CaseWorker worker = new CaseWorker();
+        worker.setName(WORKER_NAME);
+        worker.setEmail(EMAIL);
+        worker.setPasswordHash(passwordEncoder.encode(PASSWORD));
+        return caseWorkerRepo.save(worker);
+
+    }
+
+    @Test
+    void companyLogin_shouldReturnCompanyData(){
+         Company company = createCompany();
+         CompanyLoginResponse response = authService.loginCompany(
+                 "556000-1234", "750312-1234");
+
+
+        assertThat(response.role()).isEqualTo("company");
+        assertThat(response.orgNumber()).isEqualTo(company.getOrg_number());
+        assertThat(response.companyName()).isEqualTo("Fasen Elteknik AB");
+        assertThat(response.name()).isEqualTo("Anders Karlsson");
+    }
+
+    @Test
+    void loginCompany_shouldRejectWhenPersonalNumberIsNotApprovedByBankId() {
+        createCompany();
+
+        assertThrows(
+                BankIdVerificationFailedException.class,
+                () -> authService.loginCompany("556000-1234", "000000000000"));
+    }
+
+    @Test
+    void loginCaseWorker_shouldReturnWorkerData() {
+        CaseWorker worker =  createWorker();
+        System.out.println();
+        List<CaseWorker> workers = caseWorkerRepo.findAll();
+
+        CaseWorkerLoginResponse response =
+                authService.loginCaseWorker(EMAIL, PASSWORD);
+
+        assertThat(response.userId()).isEqualTo(worker.getId());
+        assertThat(response.role()).isEqualTo("caseWorker");
+        assertThat(response.name()).isEqualTo(worker.getName());
+        assertThat(response.email()).isEqualTo(worker.getEmail());
+
+    }
+
+    @Test
+    void loginCaseWorker_shouldRejectWrongPassword() {
+        createWorker();
+
+        LoginFailedException thrown = assertThrows(
+                LoginFailedException.class,
+                () -> authService.loginCaseWorker("Testarn@resurs.se", "fel"));
+
+        assertThat(thrown.reason()).isEqualTo(LoginFailureReason.BAD_CREDENTIALS);
+    }
+}
+
+
+
+
+
+

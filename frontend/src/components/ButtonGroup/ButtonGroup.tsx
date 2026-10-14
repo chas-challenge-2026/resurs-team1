@@ -32,7 +32,7 @@ interface ButtonGroupProps<T extends string | number> {
 }
 
 /**
- * ButtonGroup – A semantic and accessible radio group styled as interactive buttons.
+ * ButtonGroup: A semantic and accessible radio group styled as interactive buttons.
  * Used in wizard steps for single-choice selections where users need to make quick decisions.
  *
  * @example

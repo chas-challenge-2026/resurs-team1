@@ -21,7 +21,7 @@ const CompanyHomePage = () => {
             <p>Starta en kreditansökan för er verksamhet. Fyll i uppgifter och få svar inom några minuter.</p>
           </CardBody>
           <CardFooter>
-            <Link to="/kreditansokan" className={`${c.stretchedLink} ${s.link}`}>Påbörja ansökan</Link>
+            <Link to="/kreditansokan" className={`${c.stretchedLink} ${s.link}`}>Påbörja ansökan &rarr;</Link>
           </CardFooter>
         </Card>
 
@@ -34,7 +34,7 @@ const CompanyHomePage = () => {
             <p>Följ status på pågående ärenden och se er ansökningshistorik</p>
           </CardBody>
           <CardFooter>
-            <Link to="/mina-ansokningar" className={`${c.stretchedLink} ${s.link}`}>Visa ansökningar</Link>
+            <Link to="/mina-ansokningar" className={`${c.stretchedLink} ${s.link}`}>Visa ansökningar &rarr;</Link>
           </CardFooter>
         </Card>
       </div>

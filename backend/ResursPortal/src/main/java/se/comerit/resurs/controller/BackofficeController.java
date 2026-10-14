@@ -1,52 +1,66 @@
 package se.comerit.resurs.controller;
 
 
-import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.backoffice.ApplicationCommentRequest;
+import se.comerit.resurs.dto.backoffice.ApplicationWithFinancesDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.security.CaseWorkerPrincipal;
+import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.service.CompanyFinancialService;
+
+import java.util.List;
+import java.util.Optional;
 
 
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
  *
+ * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut, se detaljer,
+ * och kommentera ett ärende samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ * Controllern kan också köra om scoring på ett ärende.
+ *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern
- *  - Audit log uppdateras via JSON string manipulation
+ *  - Audit log uppdateras via JSON string manipulation / gammalt, utbytt mot Jackson
  *  - Ingen e-postnotifiering vid beslut
  *  - Session check copy-pasteat
- *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
+@PreAuthorize("hasRole('CASE_WORKER')")
 @RestController
 @RequestMapping("/api/backoffice")
 public class BackofficeController {
 
     private final BackofficeService service;
+    private final CompanyFinancialService financeService;
 
     @Autowired
-    public BackofficeController(BackofficeService service) {
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
         this.service = service;
+        this.financeService = financeService;
     }
 
     @GetMapping
-    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(HttpSession session) {
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(
+            @Qualifier("review") Pageable reviewPageable, @Qualifier("decided") Pageable decidedPageable) {
 
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
-        BackOfficeListsDTO applicationLists = service.applicationsForReview();
+        BackOfficeListsDTO applicationLists = service.applicationsForReview(
+                reviewPageable, decidedPageable);
 
         /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
         model.addAttribute("reviewApplications", applicationLists.reviewApplications());
@@ -55,25 +69,17 @@ public class BackofficeController {
         model.addAttribute("reviewCount", applicationLists.reviewApplications().size());
         return "backoffice";
         */
-
         return ResponseEntity.ok(applicationLists);
 
     }
 
     @PostMapping("/decide")
     public ResponseEntity<Void> decide(@RequestParam("applicationId") Long applicationId,
-                         @RequestParam("decision") String decision,
-                         @RequestParam(value = "comment", defaultValue = "") String comment,
-                         HttpSession session) {
+                                       @RequestParam("decision") String decision,
+                                       @RequestParam(value = "comment", defaultValue = "") String comment,
+                                       @AuthenticationPrincipal CaseWorkerPrincipal principal
+                                       ) {
 
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         //Any status other than Approved or Rejected results in a redirection.
         //Update: REST-APIs should respond with bad request. /Jonathan
@@ -82,8 +88,8 @@ public class BackofficeController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        String workerName = (String) session.getAttribute("workerName");
-        String workerEmail = (String) session.getAttribute("workerEmail");
+        String workerName = principal.name();
+        String workerEmail = principal.email();
         ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
         service.application_decision(applicationId,newStatus,workerEmail, workerName,comment);
@@ -95,19 +101,11 @@ public class BackofficeController {
     }
 
     @GetMapping("/application/{id}")
-    public ResponseEntity<CreditApplicationDetails> viewApplicationDetail(
-            @PathVariable("id") Long id,
-            HttpSession session) {
-        // Session check copy-pasted in every method — should be an interceptor
-        // Im changing this temporarily to make it REST, Frontend should do the redirection /Jonathan
-        if (session.getAttribute("userId") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (!"caseWorker".equals(session.getAttribute("role"))){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<ApplicationWithFinancesDTO> viewApplicationDetail(
+            @PathVariable("id") Long id
+            ) {
         CreditApplicationDetails details = service.application_details(id);
+        Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
         /*
         Map<String, Object> app = apps.get(0);
         model.addAttribute("application", app);
@@ -115,7 +113,30 @@ public class BackofficeController {
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 
+        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
+    }
 
-        return ResponseEntity.ok(details);
+    @PostMapping("/application/{id}/comment")
+    public ResponseEntity<Void> commentApplication(@PathVariable("id") Long id,
+                                                   @Valid @RequestBody ApplicationCommentRequest request,
+                                                   @AuthenticationPrincipal CaseWorkerPrincipal principal) {
+        service.application_comment(id, request.comment(), principal.email(), principal.name());
+        return ResponseEntity.ok().build();
+    }
+
+    // GET /api/backoffice/application/{id}/audit
+    //Hela auditloggen för ett ärende, bara handläggare kan göra det, eftersom klassen har @PreAuthorize
+    @GetMapping("/application/{id}/audit")
+    public ResponseEntity<List<AuditEventDTO>> auditLog(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(service.application_audit_log(id));
+    }
+
+    // POST /api/backoffice/application/{id}/request-documents
+    @PostMapping("/application/{id}/request-documents")
+    public ResponseEntity<Void> requestDocuments(@PathVariable("id") Long id,
+                                                   @Valid @RequestBody ApplicationCommentRequest request,
+                                                   @AuthenticationPrincipal CaseWorkerPrincipal principal) {
+        service.application_request_documents(id, request.comment(), principal.email(), principal.name());
+        return ResponseEntity.ok().build();
     }
 }

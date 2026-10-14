@@ -1,87 +1,87 @@
 package se.comerit.resurs.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
+import se.comerit.resurs.dto.bankid.BankIdVerificationResult;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
-import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
-import se.comerit.resurs.persistence.model.Company;
-import se.comerit.resurs.security.PasswordHasher;
+import se.comerit.resurs.util.HMACHasher;
 
-import java.util.Set;
 
+/**
+ * AuthService -> hanterar inloggning för företag och handläggare.
+ *
+ * Ansvarar för: binder ihop BankID-verifieringen (BankIdService) och företagsvalidering (CompanyValidationService)
+ * till ett enda inloggningsbeslut. Den hanterar också handläggarinloggning.
+ *
+ * Inte ansvarig för: hur BankID eller CompanyValidation kommer fram till sina resultat -> deras undantag släpps igenom
+ * obehandlade, samma mönster som i övriga services i projektet.
+ *
+ * Kommentaren stämmer när CompanyValidation har mergat in.
+ */
 
 @Service
 public class AuthService {
-
-
-    // BankID-mock — TODO: ersätt med riktig BankID-integration
-    private static final Set<String> BANKID_APPROVED_ORG_NUMBERS =
-            Set.of("556000-1234", "556000-5678");
-
-    private final CompanyRepository companyRepository;
+    private final CompanyValidationService validationService;
     private final CaseWorkerRepository caseWorkerRepository;
-    private final PasswordHasher passwordHasher;
+    private final PasswordEncoder passwordEncoder;
+    private final BankIdService bankIdService;
+    private final HMACHasher hasher;
 
-    public AuthService(CompanyRepository companyRepository, CaseWorkerRepository caseWorkerRepository, PasswordHasher passwordHasher) {
-        this.companyRepository = companyRepository;
+
+    public AuthService(BankIdService bankIdService, CompanyValidationService validationService, CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
+        this.bankIdService = bankIdService;
+        this.validationService = validationService;
         this.caseWorkerRepository = caseWorkerRepository;
-        this.passwordHasher = passwordHasher;
+        this.passwordEncoder = passwordEncoder;
+        this.hasher = hasher;
     }
 
+    // BankID mock — hardcoded org numbers, real BankID integration skipped -> old comment
+    // TODO: replace with real BankID integration -> old comment
+    public CompanyLoginResponse loginCompany(String orgNumber, String personalNumber) {
+         BankIdVerificationResult verified = bankIdService.verify(personalNumber);
+         CompanyValidationApiDTO company = validationService.validateCompanyExists(orgNumber);
+         validationService.validateSignatory(company, personalNumber);
 
-    // BankID mock — hardcoded org numbers, real BankID integration skipped
-    // TODO: replace with real BankID integration
-    public CompanyLoginResponse loginCompany(String orgNumber) {
-        if (!BANKID_APPROVED_ORG_NUMBERS.contains(orgNumber)) {
-            throw new LoginFailedException(LoginFailureReason.BANKID_REJECTED);
+        return new CompanyLoginResponse(
+                orgNumber,
+                "company",
+                company.companyName(),
+                verified.name()
+        );
+    }
+    // TODO: Ersätt med CompanyValidationService.validateSignatory() när feature/company-validation är mergad
+
+//        bankIdService.verify(personalNumber);
+//        CompanyValidationApiDTO companyValidationApiDTO = companyValidationService.validateCompanyExists(orgNumber);
+//        companyValidationService.validateSignatory(companyValidationApiDTO, personalNumber);
+//
+//
+//            return new CompanyLoginResponse(
+//                    orgNumber,
+//                    "company",
+//                    companyValidationApiDTO.companyName()
+//            );
+
+    public CaseWorkerLoginResponse loginCaseWorker(String email, String password) {
+        CaseWorker worker = caseWorkerRepository.findBySearchKeyEmail(hasher.encode(email))
+                .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
+
+
+        if (!passwordEncoder.matches(password, worker.getPasswordHash())) {
+            throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
         }
-            Company company = companyRepository.findByOrgNumber(orgNumber)
-                    .orElseThrow(() -> new LoginFailedException(LoginFailureReason.COMPANY_NOT_FOUND));
-
-            return new CompanyLoginResponse(
-                    company.getId(),
-                    "company"
-                    , company.getOrg_number(),
-                    company.getCompany_name()
-            );
-        }
-
-        public CaseWorkerLoginResponse loginCaseWorker(String email, String password){
-            CaseWorker worker = caseWorkerRepository.findByEmail(email)
-                    .orElseThrow(() -> new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS));
-
-
-            if (!worker.getPasswordHash().equals(passwordHasher.md5Hash(password))){
-                throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
-            }
-            return new CaseWorkerLoginResponse(
-                    worker.getId(),
-                    "caseWorker",
-                    worker.getName(),
-                    worker.getEmail()
-            );
-        }
-
-        // TODO: parameterize this query and use bcrypt
-
-//    private String md5Hash(String input) {
-//        try {
-//            MessageDigest md = MessageDigest.getInstance("MD5");
-//            byte[] hash = md.digest(input.getBytes());
-//            StringBuilder sb = new StringBuilder();
-//            for (byte b : hash) {
-//                sb.append(String.format("%02x", b));
-//            }
-//            return sb.toString();
-//        } catch (NoSuchAlgorithmException e) {
-//            throw new RuntimeException("MD5 not available", e);
-//        }
-//    }
+        return new CaseWorkerLoginResponse(
+                worker.getId(),
+                "caseWorker",
+                worker.getName(),
+                worker.getEmail()
+        );
+    }
 }
-
-
-

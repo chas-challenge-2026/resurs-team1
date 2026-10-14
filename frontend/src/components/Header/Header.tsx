@@ -1,10 +1,24 @@
 import { useState, type ReactNode } from "react"
 import { getDefaultRedirectPath, getUser, getUserDisplayName } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
+import type { User } from "../../types/user"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
 import s from "./Header.module.css"
 import { useLogout } from "../../hooks/useLogout"
+
+const getReadableRedirectPath = (user: User | null): string => {
+    if (!user) return "Till startsidan"
+
+  switch (user.role) {
+    case 'company':
+      return 'Till översikten'
+    case 'caseWorker':
+      return 'Till ärenden'
+    default:
+      return 'Till startsidan'
+  }
+}
 
 interface HeaderProps {
   /** Stays in the bar on mobile instead of collapsing into the menu. */
@@ -33,11 +47,12 @@ const Header = ({ search, children }: HeaderProps) => {
       <Button variant="ghost" onClick={logout}>Logga ut</Button>
     </>
   )
+
   return (
     <>
       <header className={s.header}>
         <div className={s.inner}>
-          <a className={s.logo} href={getDefaultRedirectPath(user)}>
+          <a className={s.logo} href={getDefaultRedirectPath(user)} aria-label={`Resurs - ${getReadableRedirectPath(user)}`}>
             <img src={logo} alt="Resurs" />
           </a>
 

@@ -5,9 +5,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.UpdateTimestamp;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "applications")
@@ -17,6 +18,9 @@ public class CreditApplication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Using Internal postgres sequence, not letting JPA control it
     private Long id;
+
+    @Version
+    private Integer version;
 
     @ManyToOne
     @JoinColumn(name = "company_id")
@@ -41,13 +45,64 @@ public class CreditApplication {
     @Column(name = "scoring_result")
     private String scoringResult;
 
+    @Column
+    private Integer durationMonths;
+
     @CreationTimestamp
     @Column(name = "createdAt")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
+
+    @Column
+    @Convert(converter = PiiAttributeConverter.class)
+    private String contactName;
+
+    @Column
+    @Convert(converter = PiiAttributeConverter.class)
+    private String contactNumber;
+
+    @Column
+    @Convert(converter = PiiAttributeConverter.class)
+    private String contactEmail;
+
+    @Column(name = "comment")
+    private String comment;
+
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
+    }
+
+    public String getContactName() {
+        return contactName;
+    }
+
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
+    }
 
     //Need version field here for Optimistic Locking
 
@@ -118,19 +173,27 @@ public class CreditApplication {
 
 
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 }

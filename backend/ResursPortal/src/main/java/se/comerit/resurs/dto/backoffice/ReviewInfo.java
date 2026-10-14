@@ -1,15 +1,27 @@
 package se.comerit.resurs.dto.backoffice;
 
+import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+
+/**
+ * ReviewInfo -> en rad i listan över ansökningar som väntar på granskning
+ *
+ * Innehåller det handläggaren behöver se i översikten, innan hen klickar in på en ansökan
+ * för att se allt.
+ *
+ * Representerar bara en förenklad version av en ansökan -> all detaljerad info hämtas
+ * separat via application_details().
+ *
+ */
 
 public record ReviewInfo(
         long id,
-        BigDecimal requested_amount,
+        BigDecimal requestedAmount,
         String purpose,
-        LocalDateTime createdAt,
+        Instant createdAt,
+        ApplicationStatus status,
         String scoringResult,
         String decisionReason,
         String companyName,
@@ -20,6 +32,7 @@ public record ReviewInfo(
                 application.getRequestedAmount(),
                 application.getPurpose(),
                 application.getCreatedAt(),
+                application.getStatus(),
                 application.getScoringResult(),
                 application.getDecisionReason(),
                 application.getCompany().getCompany_name(),

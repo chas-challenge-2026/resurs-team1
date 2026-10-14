@@ -3,8 +3,6 @@ import { render, screen } from "@testing-library/react"
 import Loading from "./Loading"
 
 describe("Loading", () => {
-  // the reduced-motion rule only reveals text that is already there,
-  // so the text has to be in the DOM in every case
   it("always renders the label, announced as a status region", () => {
     render(<Loading />)
 

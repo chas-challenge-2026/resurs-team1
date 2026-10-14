@@ -11,10 +11,6 @@
   cursor: pointer;
 }
 
-.select:hover:not(:disabled) {
-  border-color: var(--color-primary);
-}
-
 .select:disabled {
   opacity: 0.55;
   cursor: not-allowed;

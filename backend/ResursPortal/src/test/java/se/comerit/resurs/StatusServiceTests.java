@@ -22,7 +22,7 @@ import se.comerit.resurs.service.StatusService;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -179,8 +179,8 @@ class StatusServiceTests {
         CreditApplication application =
                 createApplication(ApplicationStatus.UNDER_REVIEW);
 
-        LocalDateTime uploadedAt =
-                LocalDateTime.of(2026, 9, 3, 10, 30);
+        Instant uploadedAt =
+                Instant.parse("2026-09-03T10:30:00Z");
 
         Document annualReport = new Document();
         annualReport.setApplication(application);
@@ -298,8 +298,8 @@ class StatusServiceTests {
         );
         application.setPurpose("Working capital");
         application.setStatus(status);
-        application.setCreatedAt(LocalDateTime.now());
-        application.setUpdatedAt(LocalDateTime.now());
+        application.setCreatedAt(Instant.now());
+        application.setUpdatedAt(Instant.now());
 
         return applicationRepository.saveAndFlush(application);
     }
@@ -314,7 +314,7 @@ class StatusServiceTests {
         document.setApplication(application);
         document.setFilename(filename);
         document.setDoc_type("TEST_DOCUMENT");
-        document.setUploadedAt(LocalDateTime.now());
+        document.setUploadedAt(Instant.now());
 
         return document;
     }

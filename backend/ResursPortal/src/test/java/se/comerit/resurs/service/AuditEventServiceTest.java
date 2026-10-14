@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
+import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
@@ -34,13 +36,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tester för AuditService — den enda vägen in i audit_events.
- *
+ * <p>
  * Anropar servicen direkt i stället för via de services som utlöser händelserna,
  * så att postens innehåll testas på ett ställe oavsett vem som skriver den.
  */
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
+@Transactional
 class AuditEventServiceTest {
 
     private static final String ORG_NUMBER_PREFIX = "TEST-";
@@ -328,4 +331,97 @@ class AuditEventServiceTest {
         assertThat(events).hasSize(1);
         return events.get(0);
     }
+
+    // Kontrollerar att en kommentar med citattecken, radbrytning och backslash sparas som goltig JSON
+    @Test
+    void manualDecision_commentWithSpecialCharacters_isStoredAsValidJson() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+        application.setStatus(ApplicationStatus.REJECTED);
+        String comment = "Se \"bilagan\"\nny rad och C:\\bilagor";
+
+        auditService.manualDecision(application, WORKER_EMAIL, WORKER_NAME,
+                ApplicationStatus.UNDER_REVIEW, comment);
+
+        assertThat(dataOf(onlyEventFor(application))).containsEntry("comment", comment);
+    }
+
+    // Kontrollerar att ett syfte med "citattecken" sparas som giltig JSON
+    @Test
+    void applicationCreated_purposeWithQuote_isStoredAsValidJson() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+        application.setPurpose("Köpa \"lastbil\"");
+
+        auditService.applicationCreated(application);
+
+        assertThat(dataOf(onlyEventFor(application))).containsEntry("purpose", "Köpa \"lastbil\"");
+    }
+
+    // Kontrollerar att commentAdded sparar kommentaren och handläggarens namn i auditloggen
+    @Test
+    void commentAdded_recordsCommentAndWorkerName() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+
+        auditService.commentAdded(application, WORKER_EMAIL, WORKER_NAME, "Du saknar underlag");
+
+        AuditEvent event = onlyEventFor(application);
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.COMMENT_ADDED);
+        assertThat(event.getActor()).isEqualTo(WORKER_EMAIL);
+        assertThat(dataOf(event))
+                .containsEntry("actorType", "CASE_WORKER")
+                .containsEntry("workerName", WORKER_NAME)
+                .containsEntry("comment", "Du saknar underlag");
+    }
+
+    // Kontrollerar att kommentarer från beslut och vanliga kommentarer hämtas i ordning, och att beslut utan kommentar hoppas över
+    @Test
+    void findComments_returnsCommentsInOrderAndSkipsDecisionsWithoutComment() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+
+        auditService.commentAdded(application, WORKER_EMAIL, WORKER_NAME, "Första");
+        application.setStatus(ApplicationStatus.REJECTED);
+        auditService.manualDecision(application, WORKER_EMAIL, WORKER_NAME, ApplicationStatus.UNDER_REVIEW, "Andra");
+        auditService.manualDecision(application, WORKER_EMAIL, WORKER_NAME, ApplicationStatus.REJECTED, null);
+
+        assertThat(auditService.findComments(application.getId()))
+                .extracting(ApplicationCommentDTO::text)
+                .containsExactly("Första", "Andra");
+    }
+
+    //------------
+
+    // Kontrollerar att documentsRequested sparar texten, handläggarens namn och föregående status i auditloggen
+    @Test
+    void documentsRequested_recordsCommentWorkerNameAndPreviousStatus() {
+        CreditApplication application = savedApplication(ApplicationStatus.PENDING_DOCS);
+
+        auditService.documentsRequested(application, WORKER_EMAIL, WORKER_NAME,
+                ApplicationStatus.UNDER_REVIEW, "Skicka kontoutdrag");
+
+        AuditEvent event = onlyEventFor(application);
+
+        assertThat(event.getAction()).isEqualTo(AuditAction.DOCUMENTS_REQUESTED);
+        assertThat(event.getActor()).isEqualTo(WORKER_EMAIL);
+        assertThat(dataOf(event))
+                .containsEntry("actorType", "CASE_WORKER")
+                .containsEntry("workerName", WORKER_NAME)
+                .containsEntry("previousStatus", "UNDER_REVIEW")
+                .containsEntry("comment", "Skicka kontoutdrag");
+    }
+
+    // Kontrollerar att texten från en begäran om komplettering syns i kommentarshistoriken, i rätt ordning
+    @Test
+    void findComments_includesDocumentsRequested() {
+        CreditApplication application = savedApplication(ApplicationStatus.UNDER_REVIEW);
+
+        auditService.commentAdded(application, WORKER_EMAIL, WORKER_NAME, "Första");
+        application.setStatus(ApplicationStatus.PENDING_DOCS);
+        auditService.documentsRequested(application, WORKER_EMAIL, WORKER_NAME,
+                ApplicationStatus.UNDER_REVIEW, "Skicka kontoutdrag");
+
+        assertThat(auditService.findComments(application.getId()))
+                .extracting(ApplicationCommentDTO::text)
+                .containsExactly("Första", "Skicka kontoutdrag");
+    }
+
 }

@@ -1,0 +1,91 @@
+.card {
+  padding: 0;
+  gap: 0;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+}
+
+.item + .item {
+  border-top: 1px solid var(--border);
+}
+
+.panel {
+  background-color: var(--bg-main);
+}
+
+.panelPrimary {
+  background-color: var(--color-primary-light);
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+.value {
+  font-weight: 500;
+}
+
+.amount,
+.duration {
+  font-size: var(--font-size-title);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.neutral {
+  color: var(--color-text-main);
+}
+
+.primary {
+  color: var(--color-primary);
+}
+
+@media (min-width: 768px) {
+  .summary {
+    flex-direction: row;
+  }
+
+  .item + .item {
+    border-top: none;
+    border-left: 1px solid var(--border);
+  }
+
+  /* amount gets the most room, duration only takes what its number needs */
+  .amountItem {
+    flex: 3;
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .durationItem {
+    flex: none;
+  }
+
+  .purposeItem {
+    flex: 2;
+    min-width: 0;
+  }
+}
+
+/* make line between sökt belopp and months more gentle since they belong togeather*/
+.item + .durationItem {
+  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
