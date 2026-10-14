@@ -54,6 +54,11 @@ const goToReview = () => {
   fireEvent.click(nextButton())
 }
 
+const clickCheckBox = () => {
+  const checkbox = screen.getByRole("checkbox", {name: /jag intygar/i})
+  fireEvent.click(checkbox)
+}
+
 describe("ApplicationPage", () => {
   beforeEach(() => vi.clearAllMocks())
 
@@ -102,6 +107,7 @@ describe("ApplicationPage", () => {
   it("sends the form as the nested payload the backend wants", async () => {
     vi.mocked(postApplication).mockResolvedValue({} as never)
     goToReview()
+    clickCheckBox()
 
     fireEvent.click(nextButton())
 
@@ -120,32 +126,42 @@ describe("ApplicationPage", () => {
     )
   })
 
+  it("disable submit button if checkbox is not checked", async () => {
+    goToReview()
+    expect(nextButton().disabled).toBe(true)
+  })
+
   it("disables the submit button while sending", async () => {
     // never resolves, so the request stays pending
     vi.mocked(postApplication).mockReturnValue(new Promise(() => {}))
     goToReview()
 
+    clickCheckBox()
     fireEvent.click(nextButton())
 
     await waitFor(() => expect(nextButton().textContent).toBe("Skickar..."))
     expect(nextButton().disabled).toBe(true)
   })
 
-  it("shows the receipt when the application is sent", async () => {
-    vi.mocked(postApplication).mockResolvedValue({} as never)
+  it("redirects the user when the application is sent", async () => {
+    const mockId = 1
+    vi.mocked(postApplication).mockResolvedValue({id: mockId} as never)
     goToReview()
-
+    clickCheckBox()
+    
     fireEvent.click(nextButton())
-
-    expect(await screen.findByText(/Tack, vi har tagit emot/)).toBeTruthy()
-    fireEvent.click(screen.getByRole("button", { name: /Mina ansökningar/ }))
-    expect(navigate).toHaveBeenCalledWith("/mina-ansokningar")
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(`/mina-ansokningar/${mockId}`, {
+        replace: true,
+      })
+    })
   })
 
   it("shows an error when the application fails", async () => {
     vi.mocked(postApplication).mockRejectedValue(new Error("500"))
     goToReview()
 
+    clickCheckBox()
     fireEvent.click(nextButton())
 
     expect(await screen.findByRole("alert")).toBeTruthy()
