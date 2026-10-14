@@ -37,6 +37,18 @@
 }
 
 /* Manage Case view */
+.splitColumns {
+  display: grid;
+  gap: var(--space-base);
+  align-items: start; 
+}
+
+@media (min-width: 768px) {
+  .splitColumns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .actionsWrapper {
   display: flex;
   gap: var(--space-sm);

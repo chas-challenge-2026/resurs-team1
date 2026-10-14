@@ -1,8 +1,8 @@
 .preFilled {
   display: flex;
   align-items: center;
-  background-color: #f4f6f8;
-  border-color: #f4f6f8 !important;
+  background-color: var(--bg-subtle-grey);
+  border-color: var(--bg-subtle-grey) !important;
 }
 
 .preFilled p {
@@ -16,7 +16,7 @@
 .infoBox {
   margin-top: var(--space-sm);
   padding: var(--space-sm);
-  background-color: #f4f6f8;
+  background-color: var(--bg-subtle-grey);
   border-radius: var(--radius-sm);
 }
 

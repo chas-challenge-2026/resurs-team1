@@ -1,0 +1,36 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* line on left side to seperate events better */
+.item {
+  padding-left: var(--space-sm);
+  border-left: 3px solid var(--color-primary);
+}
+
+.timeAndActor {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.action {
+  font-weight: 600;
+}
+
+.detail {
+  font-size: var(--font-size-sm);
+}
+
+/* make comments keep the line breaks the caseworker typed */
+.comment {
+  margin-top: var(--space-xs);
+  padding: var(--space-sm);
+  background-color: var(--bg-subtle-grey);
+  border-radius: var(--radius-sm);
+  white-space: pre-line;
+}

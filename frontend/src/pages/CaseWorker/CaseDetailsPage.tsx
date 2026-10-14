@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
 import { getMetric } from "../../utils/scoringConverter"
 import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
+import { useAuditLog } from "../../hooks/useAudit"
 import type { Decision } from "../../api/applicationApi"
 import type { ScoringStatus, BadgeConfig } from "../../types/scoring"
 import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
@@ -17,6 +18,7 @@ import Loading from "../../components/Loading/Loading"
 import NotFoundPage from "../NotFound/NotFoundPage"
 import s from "./CaseDetailsPage.module.css"
 import InputError from "../../components/InputError/InputError"
+import Timeline from "../../components/Timeline/Timeline"
 import { toast } from "sonner"
 
 type viewOptions = "overview" | "manageCase"
@@ -52,6 +54,7 @@ const CaseDetailsPage = () => {
 
   const [comment, setComment] = useState("")
   const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
+  const { data: auditLog } = useAuditLog(applicationId)
   const decide = useDecideApplication()
   const request = useRequestInformation()
 
@@ -133,17 +136,6 @@ const CaseDetailsPage = () => {
               <DataListItem label="E-postadress" value={data.contactDetails.email} />
               <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
             </DataList>
-          </Card>
-
-          <Card>
-            <h3 className="subtitle">Dokument</h3>
-            {data.documents && data.documents.length > 0 ? (
-              data.documents.map((document) => (
-                <AttachedFile key={document.id} document={document} />
-              ))
-            ) : (
-              <p>Inga uppladdade dokument</p>
-            )}
           </Card>
 
           {data.scoringResult && (
@@ -290,7 +282,25 @@ const CaseDetailsPage = () => {
             )}
             </>
           )}
-          {/* TODO: Add view for requests and corresponding attachments */}
+          <div className={s.splitColumns}>
+            {auditLog && (
+              <Card as="section">
+                <h3 className="subtitle">Händelser</h3>
+                <Timeline events={auditLog} />
+              </Card>
+            )}
+
+            <Card>
+              <h3 className="subtitle">Dokument</h3>
+              {data.documents && data.documents.length > 0 ? (
+                data.documents.map((document) => (
+                  <AttachedFile key={document.id} document={document} />
+                ))
+              ) : (
+                <p>Inga uppladdade dokument</p>
+              )}
+            </Card>
+          </div>
         </section>
       }
     </>
