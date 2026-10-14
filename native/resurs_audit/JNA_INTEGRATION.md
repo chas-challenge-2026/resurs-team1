@@ -4,6 +4,34 @@ This is the integration handoff for Java and deployment teams. The native
 library exposes a small C-linkage ABI from [wrapper.h](wrapper.h); C++-specific
 details are documented separately in [README.md](README.md).
 
+## Implementation summary
+
+Implement the Java integration in this order:
+
+1. Create the unsigned audit-entry object. Include `sequenceNumber`,
+   `previousHash`, and every application field that must be protected. Do not
+   include `currentHash` or `signature`.
+2. Canonicalize the complete object with an RFC 8785 implementation. Sorting
+   the JSON properties alone is not sufficient.
+3. Convert the canonical result to a UTF-8 `byte[]`. If the canonicalization
+   library already returns bytes, use them directly.
+4. Call `wrapper_hash_and_sign` with the canonical bytes and the private key.
+   Store the returned `currentHash` and `signature` with the audit entry.
+5. For the first entry, use 32 zero bytes as `previousHash`. For every later
+   entry, use the preceding entry's `currentHash`.
+6. Preserve the exact canonical bytes, or preserve immutable source values
+   from which Java can reproduce exactly the same bytes during verification.
+7. To verify the log, load the complete chain beginning with sequence number 1
+   and order it by ascending `sequenceNumber`.
+8. Build the JNA `AuditEntry` array with the canonical bytes and stored values,
+   then call `wrapper_verify_chain` with the public key.
+9. Treat result code `0` as success and every other result code as failure.
+
+Java owns JSON construction, RFC 8785 canonicalization, UTF-8 conversion,
+storage, and chain ordering. Native owns hashing, signing, and verification;
+it does not parse or modify the JSON. The following sections provide the exact
+JNA mappings, buffer sizes, and result codes.
+
 ## Library names and packaged files
 
 | Platform | File | JNA load name |
