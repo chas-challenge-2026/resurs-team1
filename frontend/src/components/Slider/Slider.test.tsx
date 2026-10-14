@@ -1,8 +1,32 @@
-import { describe, it, expect } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi } from "vitest"
+import { fireEvent, render, screen } from "@testing-library/react"
 import Slider from "./Slider"
 
 describe("Slider", () => {
+  
+  it("clamps value to maximum allowed value on blur if typed input exceeds max", () => {
+    const handleChange = vi.fn()
+
+    render(
+      <Slider
+        name="amount"
+        label="Belopp"
+        value={3000000}
+        min={0}
+        max={5000000}
+        onChange={handleChange}
+      />
+    )
+
+    const inputField = screen.getByRole("textbox") as HTMLInputElement
+
+    fireEvent.change(inputField, { target: { value: "6000000" } })
+    fireEvent.blur(inputField)
+
+    expect(inputField.value).toMatch(/5\s000\s000(\s?kr)?/)
+    expect(handleChange).toHaveBeenCalledWith(5000000)
+  })
+
   it("displays the same value in input field as it holds in the range input", () => {
     render(
       <Slider
