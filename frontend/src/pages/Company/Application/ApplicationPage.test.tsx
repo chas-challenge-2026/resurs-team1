@@ -51,6 +51,7 @@ const goToReview = () => {
   fireEvent.click(nextButton())
   fillStep2()
   fireEvent.click(nextButton())
+  fireEvent.click(nextButton())
 }
 
 describe("ApplicationPage", () => {
