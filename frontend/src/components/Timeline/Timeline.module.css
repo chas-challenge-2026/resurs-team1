@@ -30,7 +30,7 @@
 .comment {
   margin-top: var(--space-xs);
   padding: var(--space-sm);
-  background-color: var(--bg-main);
+  background-color: var(--bg-subtle-grey);
   border-radius: var(--radius-sm);
   white-space: pre-line;
 }
