@@ -52,6 +52,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
     Math.max(0, ((value - min) / (max - min)) * 100)
   )
 
+  const labelId = `${name}-label`
   const inputId = `${name}-slider`
   const textInputId = `${name}-input`
   const errorId = `${name}-error`
@@ -84,7 +85,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
   return (
     <div className={s.container}>
       {label && (
-        <label htmlFor={inputId}>
+        <label id={labelId} htmlFor={textInputId}>
           {label}
         </label>
       )}
@@ -99,6 +100,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
           onChange={handleInputChange}
           onBlur={handleBlur}
           size={inputValue.length > 1 ? inputValue.length - 1 : 1}
+          aria-labelledby={labelId}
           className={`input-base ${s.numberInput}`}
         />
         <span className={s.unitSuffix}>{unit}</span>
@@ -115,6 +117,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
         onChange={(e) => onChange(Number(e.target.value))}
         className={s.rangeInput}
         style={trackStyle}
+        aria-labelledby={labelId}
         aria-valuetext={formatCurrency(value, unit)}
         aria-invalid={!!error}
         aria-describedby={error ? errorId : undefined}
