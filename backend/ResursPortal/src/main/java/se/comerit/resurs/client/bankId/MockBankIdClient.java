@@ -1,5 +1,6 @@
 package se.comerit.resurs.client.bankId;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import se.comerit.resurs.dto.bankid.BankIdVerificationResult;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Optional;
  *
  */
 @Component
+@ConditionalOnProperty(prefix = "bankid", name = "client", havingValue = "mock")
 public class MockBankIdClient implements BankIdClient {
     private static final Map<String, String> APPROVED_IDENTITIES = Map.of(
             "750312-1234", "Anders Karlsson",
