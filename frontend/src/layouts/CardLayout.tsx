@@ -1,13 +1,13 @@
 import { Outlet } from "react-router-dom"
 import { FiSearch } from "react-icons/fi"
-import { getUser } from "../utils/auth"
 import Header from "../components/Header/Header"
 import Input from "../components/Input/Input"
 import s from "./CardLayout.module.css"
+import { useUser } from "../hooks/useUser"
 
 const CardLayout = () => {
 
-  const user = getUser()
+  const { data: user } = useUser()
   // case search is a caseworker tool, companies never see it
   const isCaseWorker = user?.role === "caseWorker";
 

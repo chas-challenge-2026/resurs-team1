@@ -1,12 +1,21 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import * as authUtils from "../../utils/auth";
+import type { UseQueryResult } from "@tanstack/react-query";
+import type { User } from "../../types/user";
 import ProtectedRoute from "./ProtectedRoute";
+import * as useUser from "../../hooks/useUser";
 
 describe("ProtectedRoute", () => {
   it("allows access to caseWorker user to caseWorker paths", () => {
-    vi.spyOn(authUtils, "getUser").mockReturnValue({ userId: 1, role: "caseWorker", name: "Karin Handläggare", email: "karin@resurs.se" })
+    vi.spyOn(useUser, "useUser").mockReturnValue({ 
+      data: {
+        userId: 1,
+        role: "caseWorker",
+        name: "Karin Handläggare",
+        email: "karin@resurs.se"
+      }
+    } as unknown as UseQueryResult<User, Error>)
 
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>
@@ -26,7 +35,14 @@ describe("ProtectedRoute", () => {
   })
 
   it("send logged in user with wrong role to Not Found", () => {
-    vi.spyOn(authUtils, "getUser").mockReturnValue({ userId: 1, role: "caseWorker", name: "Karin Handläggare", email: "karin@resurs.se" })
+    vi.spyOn(useUser, "useUser").mockReturnValue({ 
+      data: {
+        userId: 1,
+        role: "caseWorker",
+        name: "Karin Handläggare",
+        email: "karin@resurs.se"
+      }
+    } as unknown as UseQueryResult<User, Error>)
 
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>
@@ -46,7 +62,7 @@ describe("ProtectedRoute", () => {
   })
 
   it("redirect unauthorized user to /", () => {
-    vi.spyOn(authUtils, "getUser").mockReturnValue(null)
+    vi.spyOn(useUser, "useUser").mockReturnValue({data: undefined} as unknown as UseQueryResult<User, Error> )
 
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>

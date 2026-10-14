@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider, type UseQueryOptions } from "@tanstack/react-query"
 import { postApplication } from "../../../api/applicationApi"
 import ApplicationPage from "./ApplicationPage"
+import type { User } from "../../../types/user"
 
 const navigate = vi.fn()
 
@@ -15,13 +16,15 @@ vi.mock("../../../api/applicationApi", () => ({
 }))
 
 // the page prefills org number and company name from the logged in user
-vi.mock("../../../utils/auth", () => ({
-  getUser: () => ({
-    userId: 1,
-    role: "company",
-    orgNumber: "556000-1234",
-    companyName: "Malmö Fastigheter AB",
-  }),
+vi.mock("../../../hooks/useUser", () => ({
+  useUser: () => ({
+    data: {
+      userId: 1,
+      role: "company",
+      orgNumber: "556000-1234",
+      companyName: "Malmö Fastigheter AB",
+    }
+  } as unknown as UseQueryOptions<User, Error>),
 }))
 
 const renderPage = () =>
@@ -107,8 +110,8 @@ describe("ApplicationPage", () => {
   it("sends the form as the nested payload the backend wants", async () => {
     vi.mocked(postApplication).mockResolvedValue({} as never)
     goToReview()
-    clickCheckBox()
 
+    clickCheckBox()
     fireEvent.click(nextButton())
 
     await waitFor(() =>

@@ -1,14 +1,15 @@
 import { useState, type ReactNode } from "react"
-import { getDefaultRedirectPath, getUser, getUserDisplayName } from "../../utils/auth"
+import { getDefaultRedirectPath, getUserDisplayName } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import type { User } from "../../types/user"
 import Button from "../Button/Button"
 import logo from "../../assets/branding/resurs-wordmark.png"
 import s from "./Header.module.css"
 import { useLogout } from "../../hooks/useLogout"
+import { useUser } from "../../hooks/useUser"
 
-const getReadableRedirectPath = (user: User | null): string => {
-    if (!user) return "Till startsidan"
+const getReadableRedirectPath = (user: User | undefined): string => {
+  if (!user) return "Till startsidan"
 
   switch (user.role) {
     case 'company':
@@ -29,7 +30,7 @@ interface HeaderProps {
 const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
 
-  const user = getUser()
+  const { data: user } = useUser()
   const { logout } = useLogout()
 
   // agents get the role badge, companies are identified by their own name

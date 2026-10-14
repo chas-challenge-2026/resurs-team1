@@ -129,7 +129,7 @@ describe("LoginPage", () => {
       userId: 1,
       role: "company",
       orgNumber: ORG_NUMBER,
-      companyName: "Fasen Elteknik AB",
+      displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",
     })
 
@@ -152,7 +152,7 @@ describe("LoginPage", () => {
       userId: 1,
       role: "company",
       orgNumber: ORG_NUMBER,
-      companyName: "Fasen Elteknik AB",
+      displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",
     })
 

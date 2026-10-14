@@ -4,17 +4,17 @@ import ApplicationWizard, { type ApplicationFormData} from "../../../components/
 import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
-import { getUser } from "../../../utils/auth"
 import { useApplications, useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
 import Loading from "../../../components/Loading/Loading"
+import { useUser } from "../../../hooks/useUser"
 
 const TOTAL_STEPS = 4
 const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
 
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
-  const user = getUser()
+  const { data: user } = useUser()
   const submitApplication = useSubmitApplication()
 
   //grab recent application to get a name for autofill
@@ -25,8 +25,8 @@ const ApplicationFormPage = () => {
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
     orgNumber: user?.role === "company" ? user.orgNumber : "",
-    companyName: user?.role === "company" ? user.companyName : "",
-    contactName:  user?.name || "",
+    companyName: user?.role === "company" ? user.displayName : "",
+    contactName: "",
     email: "",
     phoneNumber: "",
     purpose: "",
@@ -44,7 +44,7 @@ const ApplicationFormPage = () => {
   if (!hasAutofilled && recentApplications.isSuccess) {
     setHasAutofilled(true)
     handleChange({
-      contactName: recentContactDetails?.name || user?.name || "",
+      contactName: recentContactDetails?.name || "",
       email: recentContactDetails?.email || "",
       phoneNumber: recentContactDetails?.phoneNumber || "",
     })

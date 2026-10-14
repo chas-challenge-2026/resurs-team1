@@ -1,4 +1,4 @@
-import type { CaseWorkerUser, CompanyUser } from "../types/user"
+import type { CaseWorkerUser, CompanyUser, User } from "../types/user"
 import api from "./client"
 
 export interface CompanyLoginPayload {
@@ -23,6 +23,11 @@ export const loginCaseWorker = async (payload: CaseworkerLoginPayload): Promise<
   return response.data
 }
 
-export const logout = async ():Promise<void> => {
+export const logoutUser = async ():Promise<void> => {
   await api.post("/auth/logout")
+}
+
+export const getMe = async ():Promise<User> => {
+  const response = await api.get<User>("/auth/me")
+  return response.data
 }
