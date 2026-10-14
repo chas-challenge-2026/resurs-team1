@@ -75,16 +75,17 @@ describe("LoginPage", () => {
     expect(personalNumberField.value).toBe("750312")
   })
 
-  it("rejects a short org number without calling the api", () => {
+  it("rejects a short org number and personal number directly and keeps submit button disabled", () => {
     const { orgNumberField, personalNumberField, button } = renderPage()
 
     fireEvent.change(orgNumberField, { target: { value: "556000" } })
+    fireEvent.blur(orgNumberField)
     fireEvent.change(personalNumberField, {target: {value: "750312"}})
-    fireEvent.click(button)
+    fireEvent.blur(personalNumberField)
 
     expect(screen.getByText(/Organisationsnumret måste innehålla 10 siffror/)).toBeTruthy()
     expect(screen.getByText(/Personnumret måste innehålla 10 siffror/)).toBeTruthy()
-    expect(loginCompany).not.toHaveBeenCalled()
+    expect(button.disabled).toBe(true)
   })
 
   it("disables the button while the fields are empty", () => {
