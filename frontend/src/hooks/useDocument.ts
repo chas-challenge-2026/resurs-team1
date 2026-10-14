@@ -38,8 +38,12 @@ export const useUploadDocument = () => {
     mutationFn: (params: DocumentUploadPayload) => postDocument(params),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["documents", variables.applicationId]
+        queryKey: ["documents", variables.applicationId],
       })
-    }
+
+      queryClient.invalidateQueries({
+        queryKey: ["applications", variables.applicationId],
+      })
+    },
   })
 }
