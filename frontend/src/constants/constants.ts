@@ -1,5 +1,6 @@
 import { FiAlertCircle, FiClock, FiCheckCircle, FiXCircle } from "react-icons/fi"
-import type { ActorType, ApplicationStatus, AuditActions, PurposeValue } from "../api/applicationApi"
+import type { ApplicationStatus, PurposeValue } from "../api/applicationApi"
+import type { ActorType, AuditActions } from "../api/auditApi"
 import type { IconType } from "react-icons"
 import type { DropdownOption } from "../components/Dropdown/Dropdown"
 import type { ButtonGroupOption } from "../components/ButtonGroup/ButtonGroup"

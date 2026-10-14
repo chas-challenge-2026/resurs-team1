@@ -1,4 +1,4 @@
-import type { AuditEvent } from "../../api/applicationApi"
+import type { AuditEvent } from "../../api/auditApi"
 import { ACTOR_LABELS, AUDIT_ACTION_LABELS, STATUS_LABELS } from "../../constants/constants"
 import s from "./Timeline.module.css"
 

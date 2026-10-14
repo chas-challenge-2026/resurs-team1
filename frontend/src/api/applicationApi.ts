@@ -145,32 +145,6 @@ export interface DetailedApplication {
   documents: ApplicationDocument[]
 }
 
-//taken from AuditAction.java
-export type AuditActions = 
-  | "APPLICATION_CREATED"
-  | "SCORING_RUN"
-  | "DOCUMENT_UPLOADED"
-  | "MANUAL_DECISION"
-  | "COMMENT_ADDED"
-  | "DOCUMENTS_REQUESTED"
-
-// plain strings in AuditService.java, not an enum
-export type ActorType = "COMPANY" | "SYSTEM" | "CASE_WORKER"
-
-export interface AuditEvent {
-  sequenceNumber: number,
-  occurredAt: string,
-  action: AuditActions,
-  actor: string,
-  data: {
-    actorType: ActorType
-    workerName?: string
-    newStatus?: ApplicationStatus
-    comment?: string
-    filename?: string
-  }
-}
-
 // so they don't scroll too much + page stays fast
 export const APPLICATIONS_PAGE_SIZE = 5
 
@@ -205,11 +179,6 @@ export const getBackofficeApplicationById = async (id: number): Promise<Applicat
     documents: response.data.appDetails.documents,
     companyFinances: response.data.companyFinances,
   }
-}
-
-export const getAuditLog = async (id: number): Promise<AuditEvent[]> => {
-  const response = await api.get<AuditEvent[]>(`/backoffice/application/${id}/audit`)
-  return response.data
 }
 
 export const postDecision = async (applicationId: number, decision: Decision, comment: string): Promise<void> => {

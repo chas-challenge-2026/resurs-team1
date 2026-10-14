@@ -2,7 +2,8 @@ import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
 import { getMetric } from "../../utils/scoringConverter"
-import { useAuditLog, useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
+import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
+import { useAuditLog } from "../../hooks/useAudit"
 import type { Decision } from "../../api/applicationApi"
 import type { ScoringStatus, BadgeConfig } from "../../types/scoring"
 import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
@@ -284,7 +285,7 @@ const CaseDetailsPage = () => {
           <div className={s.splitColumns}>
             {auditLog && (
               <Card as="section">
-                <h3 className={s.addingTitle}>Händelser</h3>
+                <h3 className="subtitle">Händelser</h3>
                 <Timeline events={auditLog} />
               </Card>
             )}
@@ -300,7 +301,6 @@ const CaseDetailsPage = () => {
               )}
             </Card>
           </div>
-          {/* TODO: Add view for requests and corresponding attachments */}
         </section>
       }
     </>
