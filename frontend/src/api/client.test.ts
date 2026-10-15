@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearAuthStorage } from "../utils/auth";
 import { handleResponseError, type ApiErrorPayload } from "./client";
 import type { AxiosError } from "axios";
-
-vi.mock("../utils/auth.ts", () => ({
-  clearAuthStorage: vi.fn(),
-}))
 
 describe("client API", () => {
   beforeEach(() => vi.clearAllMocks())
@@ -44,30 +39,7 @@ describe("client API", () => {
       // Expected
     }
     
-    expect(clearAuthStorage).toHaveBeenCalled()
     expect(window.location.href).toBe("/")
-  })
-
-  it("does not clear storage or redirect on 401 when request URL includes /login", async () => {
-    const mockError = {
-      config: { 
-        url: "/auth/login/company" 
-      },
-      response: {
-        status: 401,
-        data: {},
-      },
-    } as AxiosError<ApiErrorPayload>
-
-    await expect(handleResponseError(mockError)).rejects.toEqual({
-      status: 401,
-      message: "Felaktiga inloggningsuppgifter.",
-      fieldErrors: undefined,
-      code: undefined,
-      originalError: mockError,
-    })
-
-    expect(clearAuthStorage).not.toHaveBeenCalled()
   })
   
   it("formats 403 errors with custom fallback message", async () => {

@@ -9,11 +9,11 @@ import { DataList, DataListItem } from "../DataList/DataList";
 import Input from "../Input/Input";
 import Slider from "../Slider/Slider";
 import s from "./ApplicationWizard.module.css"
-import { getUser } from "../../utils/auth";
 import type { CompanyUser } from "../../types/user";
 import { useGetFinancial } from "../../hooks/useFinancial";
 import Loading from "../Loading/Loading";
 import Button from "../Button/Button";
+import { useUser } from "../../hooks/useUser";
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -71,8 +71,9 @@ interface ApplicationWizardProps {
  * ```
  */
 const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccepted, onTermsChange }: ApplicationWizardProps) => {
-  const user = getUser() as CompanyUser
   const financials = useGetFinancial()
+  const { data } = useUser()
+  const user = data as CompanyUser
   
   switch (step) {
     case 1:
@@ -196,7 +197,7 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
             </div>
 
             <DataList>
-              <DataListItem label="Företagsnamn" value={user.companyName} />
+              <DataListItem label="Företagsnamn" value={user.displayName} />
               <DataListItem label="Omsättning (senaste räkenskapsåret)" value={formatCurrency(incomeStatement.revenue)} />
               <DataListItem label="Rörelseresultat / EBIT" value={formatCurrency(incomeStatement.operatingResult)} />
               <DataListItem label="Eget kapital" value={formatCurrency(balanceSheet.equity)} />
@@ -244,7 +245,7 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
               <div>
                 <h3 className="subtitle">Ekonomi</h3>
                 <DataList>
-                  <DataListItem label="Företagsnamn" value={user.companyName} />
+                  <DataListItem label="Företagsnamn" value={user.displayName} />
                   <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
                   <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
                 </DataList>

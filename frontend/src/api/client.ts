@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios"
-import { clearAuthStorage } from "../utils/auth"
+import { QueryClient } from "@tanstack/react-query"
 
 export interface ApiErrorPayload {
   status?: number
@@ -16,6 +16,7 @@ const api = axios.create({
 })
 
 export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
+  const queryClient = new QueryClient()
   const status = error.response?.status
   const isLoginRequest = error.config?.url?.includes("/login")
   
@@ -24,8 +25,10 @@ export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
   if (!error.response) {
     fallbackMessage = "Kunde inte ansluta till servern. Kontrollera din internetanslutning."
   } else if (status === 401 && !isLoginRequest) {
-    clearAuthStorage()
-    window.location.href = "/"
+    queryClient.setQueryData(["me"], null)
+    if(window.location.pathname !== "/") {
+      window.location.href = "/"
+    }
     return Promise.reject(error)
   } else if (status === 401 && isLoginRequest) {
     fallbackMessage = "Felaktiga inloggningsuppgifter."
