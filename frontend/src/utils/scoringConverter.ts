@@ -36,7 +36,7 @@ export const parseDecisionReasons = (rawString: string): DecisionDetail[] => {
 
   // Split string at "."
   const sentences = cleaned
-    .split('.')
+    .split(/\.\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
 
