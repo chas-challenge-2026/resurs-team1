@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import { getDefaultRedirectPath, getUserDisplayName } from "../../utils/auth"
+import { getDefaultRedirectPath } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import type { User } from "../../types/user"
 import Button from "../Button/Button"
@@ -42,7 +42,7 @@ const Header = ({ search, children }: HeaderProps) => {
     <>
       <p className={s.user}>
         <span>Inloggad som</span>
-        <strong>{getUserDisplayName(user)}</strong>
+        <strong>{user.displayName}</strong>
       </p>
       <span className={s.divider} />
       <Button variant="ghost" onClick={logout}>Logga ut</Button>
