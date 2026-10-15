@@ -12,6 +12,7 @@ import Loading from "../../../components/Loading/Loading"
 import StatusTag from "../../../components/StatusTag/StatusTag"
 import AttachedFile from "../../../components/AttachedFile/AttachedFile"
 import Button from "../../../components/Button/Button"
+import coin from "../../../assets/mascot-coin.webp"
 import s from "./MyApplicationDetailsPage.module.css"
 import NotFoundPage from "../../NotFound/NotFoundPage"
 import { getCustomerRejectionsSummary } from "../../../utils/scoringConverter"
@@ -100,7 +101,7 @@ const MyApplicationDetailsPage = () => {
 
   return(
     <div className={s.wrapper}>
-      <div>
+      <div className={s.pageHeader}>
         <Link to="/mina-ansokningar" className={s.backButton}>
           <RiArrowLeftLine />
           <span>Till mina ansökningar</span>
@@ -110,6 +111,7 @@ const MyApplicationDetailsPage = () => {
           <StatusTag status={application.status} />
         </div>
         <p className={s.description}>{getPurposeLabel(application.purpose)} · {formatCurrency(application.requestedAmount)} {application.durationMonths && `· ${application.durationMonths} månader`}</p>
+        {application.status === "APPROVED" && <img src={coin} alt="" className={s.mascot} />}
       </div>
 
       {application.status === "APPROVED" &&

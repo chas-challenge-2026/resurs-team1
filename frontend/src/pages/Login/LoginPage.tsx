@@ -8,6 +8,7 @@ import ToggleSwitch from "../../components/ToggleSwitch/ToggleSwitch"
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Loading from "../../components/Loading/Loading";
+import owl from "../../assets/mascot-owl.webp"
 import s from "./LoginPage.module.css"
 import { IoCheckmarkCircle } from "react-icons/io5";
 
@@ -103,9 +104,12 @@ const LoginPage = () => {
           <p className={s.subTitle}>Ansök om krediter och se pågående ärenden</p>
         </section>
 
-        <section className={s.loginSection}>
-          <h2 className="title">Logga in</h2>
-          <p className={s.subTitle}>Välj inloggningsmetod nedan</p>
+         <section className={s.loginSection}>
+          <div className={s.loginHeader}>
+            <h2 className="title">Logga in</h2>
+            <p className={s.subTitle}>Välj inloggningsmetod nedan</p>
+            <img src={owl} alt="" className={s.loginMascot} />
+          </div>
 
           <div className={s.divider} />
           <ToggleSwitch 

@@ -20,6 +20,20 @@
   width: 100%;
 }
 
+.loginHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* mobile only, desktop has the owl in the background tree */
+.loginMascot {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  height: 88px;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -90,7 +104,10 @@
     min-height: calc(100vh - 64px);
     padding: 0 var(--space-base);
     
-    background: linear-gradient(
+    /* sized by height so owl branch always above title */
+    background:
+      url("../../assets/login-background.webp") left -3vh bottom / auto 100% no-repeat,
+      linear-gradient(
       to right,
       var(--bg-main) 0%,
       var(--bg-main) 50%,
@@ -103,6 +120,7 @@
     display: grid;
     grid-template-columns: 3fr 2fr;
     padding: 0;
+    background-color: transparent;
     align-items: stretch;
   }
 
@@ -110,7 +128,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background-color: var(--bg-main);
     padding-left: var(--space-sm);
   }
   
@@ -127,6 +144,14 @@
   }
 
   .divider {
+    display: none;
+  }
+
+  .loginHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .loginMascot {
     display: none;
   }
 }
