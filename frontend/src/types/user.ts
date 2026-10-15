@@ -12,8 +12,7 @@ export interface CompanyUser {
 export interface CaseWorkerUser {
   userId: number;
   role: "caseWorker";
-  name: string;
-  email: string;
+  displayName: string;
 }
 
 export type User = CompanyUser | CaseWorkerUser
