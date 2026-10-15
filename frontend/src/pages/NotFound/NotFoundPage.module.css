@@ -8,3 +8,7 @@
   padding: var(--space-md) var(--space-base);
   gap: var(--space-base);
 }
+
+.mascot {
+  width: 120px;
+}

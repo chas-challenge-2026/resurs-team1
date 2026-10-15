@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import Button from "../../components/Button/Button"
+import owl from "../../assets/mascot-owl.webp"
 import s from "./NotFoundPage.module.css"
 
 interface NotFoundPageProps {
@@ -8,6 +9,7 @@ interface NotFoundPageProps {
   backLinkText?: string
   backLinkUrl?: string
   showRedirectButton?: boolean
+  showMascot?: boolean
 }
 
 const NotFoundPage = ({
@@ -15,13 +17,15 @@ const NotFoundPage = ({
   description = "Sidan du söker finns inte, kontrollera att du skrivit in rätt webbadress. Fungerar det fortfarande inte? Då kan sidan vara borttagen. Försök hitta informationen du söker på någon av de andra sidorna.",
   backLinkText = "Gå till startsidan",
   backLinkUrl = "/",
-  showRedirectButton = true
+  showRedirectButton = true,
+  showMascot = true
 }: NotFoundPageProps) => {
 
   const navigate = useNavigate()
 
   return(
     <div className={s.wrapper}>
+      {showMascot && <img src={owl} alt="" className={s.mascot} />}
       <h2 className="title">{title}</h2>
       <p>{description}</p>
       {showRedirectButton && 

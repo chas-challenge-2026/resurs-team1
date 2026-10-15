@@ -100,6 +100,7 @@ const CaseDetailsPage = () => {
         <NotFoundPage
           description = "Ärendet du söker finns inte, kontrollera att du har skrivit in rätt ärendenummer eller länk. Fungerar det fortfarande inte? Då kan ärendet ha blivit borttaget eller arkiverat. Försök hitta ärendet du söker via ärendelistan."
           showRedirectButton = {false}
+          showMascot = {false}
         />
       )
     }
