@@ -54,9 +54,3 @@ export const format10DigitNumber = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
   return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
 }
-
-export const isValidOrgNumber = (orgNumber: string): boolean => {
-  const trimmed = orgNumber.trim()
-  const orgRegex = /^(16)?\d{6}-\d{4}$/
-  return orgRegex.test(trimmed)
-}
