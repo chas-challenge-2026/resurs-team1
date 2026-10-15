@@ -132,3 +132,10 @@
     flex: 1;
   }
 }
+
+/* fixes cat coliding with text */
+@media (max-width: 1000px) {
+  .actionsContainer {
+    margin-top: var(--space-xl);
+  }
+}
