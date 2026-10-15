@@ -1,7 +1,7 @@
 import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest, getCompanyApplications } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
-import { isValidOrgNumber } from "../utils/formatters"
+import { isValidOrgNumber } from "../utils/validators"
 
 export const useApplications = (page: number) => {
   return useQuery<Application[], ApiErrorPayload>({

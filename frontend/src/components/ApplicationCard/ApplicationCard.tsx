@@ -1,4 +1,5 @@
-import { formatCurrency, formatDate, formatReferenceNumber, getPurposeLabel } from "../../utils/formatters"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber, getPurposeLabel } from "../../utils/domainFormatters"
 import type { Application } from "../../api/applicationApi"
 import { Card, CardBody, CardFooter } from "../Card/Card"
 import StatusTag from "../StatusTag/StatusTag"
