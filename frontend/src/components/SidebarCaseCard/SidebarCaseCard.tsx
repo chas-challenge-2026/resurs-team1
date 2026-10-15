@@ -1,7 +1,8 @@
 import { NavLink } from "react-router-dom"
 import type { CaseListItem } from "../../api/applicationApi"
 import { ICONS, STATUS_LABELS } from "../../constants/constants"
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber } from "../../utils/domainFormatters"
 import s from "./SidebarCaseCard.module.css"
 
 interface SidebarCaseCardProps {
