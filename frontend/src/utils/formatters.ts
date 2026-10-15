@@ -43,7 +43,7 @@ export const formatNumberWithSpaces = (val: string) => {
 export const formatDate = (isoString: string) => {
   if (!isoString) return "-"
   const date = new Date(isoString)
-  return date.toISOString().split("T")[0]
+  return date.toLocaleDateString("sv-SE")
 }
 
 // force the shape
