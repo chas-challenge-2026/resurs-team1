@@ -26,18 +26,37 @@
 }
 
 .actionsContainer {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-base);
+  /* room for the cat, the subtitle runs full width on mobile */
+  margin-top: var(--space-xl);
+}
+
+/* leans on the first card from behind */
+.mascot {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  right: var(--space-lg);
+  height: 64px;
+  pointer-events: none;
 }
 
 .action {
   flex: 1;
+  /* grey top border showed as a light line between the cat and the accent */
+  border-top-color: var(--action-color);
 }
 
 .action:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* lift the cat with the card it leans on, so they lift at the same time */
+.actionsContainer:has(.actionPrimary:hover) .mascot {
+  transform: translateY(-2px);
 }
 
 .action:hover .link {
@@ -100,6 +119,13 @@
 
   .actionsContainer {
     flex-direction: row;
+    margin-top: 0;
+  }
+
+  /* first card now ends at the middle, minus half the gap */
+  .mascot {
+    right: calc(50% + var(--space-base) / 2 + var(--space-lg));
+    height: 88px;
   }
 
   .action {
