@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useParams } from "react-router-dom"
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber } from "../../utils/domainFormatters"
 import { getMetric } from "../../utils/scoringConverter"
 import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
 import { useAuditLog } from "../../hooks/useAudit"

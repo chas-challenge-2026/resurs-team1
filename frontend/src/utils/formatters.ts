@@ -1,5 +1,3 @@
-import { ID_NUMBER_DIGITS, PURPOSE_OPTIONS } from "../constants/constants";
-
 const swedishCurrencyFormatter = new Intl.NumberFormat("sv-SE");
 
 /**
@@ -26,7 +24,7 @@ export const formatNumberWithSpaces = (val: string) => {
 
   if (!cleanValue) return ""
 
-  return new Intl.NumberFormat("sv-SE").format(Number(cleanValue))
+  return swedishCurrencyFormatter.format(Number(cleanValue))
 }
 
 export const formatDate = (isoString: string) => {
@@ -35,22 +33,9 @@ export const formatDate = (isoString: string) => {
   return date.toISOString().split("T")[0]
 }
 
-export const formatReferenceNumber = (id: number) => {
-  return `REF-${id}`
-}
-
-export function formatFilename(filename: string): string {
-  return filename.replace(/^\d+_/, "");
-}
-
-export function getPurposeLabel(purpose: string): string {
-  const option = PURPOSE_OPTIONS.find((opt) => opt.value === purpose);
-  return option ? option.label : purpose;
-}
-
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it
 export const format10DigitNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
+  const digits = value.replace(/\D/g, "").slice(0, 10)
   return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
 }
