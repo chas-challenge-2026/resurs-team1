@@ -18,6 +18,19 @@ export const formatCurrency = (value: number, unit: string = "kr"): string => {
   return unit ? `${formatted} ${unit}`.trim() : formatted;
 }
 
+/**
+ * Strips non-digit characters from an input string and formats the remaining digits 
+ * with thousand separators. Returns an empty string if no digits remain.
+ * Best used for controlled form input fields as the user types.
+ *
+ * @param val - The raw string input from a form or event target.
+ * @returns Formatted number string without units, or "" if input contains no digits.
+ *
+ * @example
+ * formatNumberWithSpaces("3000000") // "3 000 000"
+ * formatNumberWithSpaces("3 000kr") // "3 000"
+ * formatNumberWithSpaces("") // ""
+ */
 export const formatNumberWithSpaces = (val: string) => {
   // Remove non-numbers
   const cleanValue = val.replace(/\D/g, "")
