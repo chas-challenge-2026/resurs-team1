@@ -249,9 +249,11 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             entries[i].currentHash,
             sizeof(entries[i].currentHash));
 
-        // EVP library function returns 1 is successfull and 0 if any error occured. 
+        // EVP library function returns 1 if successfull and signature is valid
+        // 0 if signature is invalid
+        // negative if internal error. 
         // on error, return the index of the audit entry we got error from.
-        if (result == 0)
+        if (result != 1)
         {
             verifyChainResult.result_code = EVP_DIGEST_VERIFY_FAILED;
             verifyChainResult.index = i;
