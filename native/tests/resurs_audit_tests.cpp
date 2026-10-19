@@ -30,8 +30,10 @@ get_public_key(
     assert(
         ::get_public_key(
             privateKeyCopy.data(),
-            publicKey.data()
-        ) == 0
+            privateKeyCopy.size(),
+            publicKey.data(),
+            publicKey.size()
+        ) == AUDIT_KEY_OK
     );
 
     return publicKey;
@@ -676,8 +678,10 @@ void test_rfc_8032_public_key_derivation()
     assert(
         ::get_public_key(
             privateKey.data(),
-            publicKey.data()
-        ) == 0
+            privateKey.size(),
+            publicKey.data(),
+            publicKey.size()
+        ) == AUDIT_KEY_OK
     );
 
     assert(publicKey == KNOWN_ANSWER_PUBLIC_KEY);
