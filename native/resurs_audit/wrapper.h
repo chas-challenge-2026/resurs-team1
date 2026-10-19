@@ -23,7 +23,8 @@ RESURS_AUDIT_API int wrapper_hash_and_sign(const uint8_t* canonicalData, size_t 
 RESURS_AUDIT_API VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength);
 
 RESURS_AUDIT_API void generate_private_key(unsigned char* output_buffer);
-RESURS_AUDIT_API int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
+//RESURS_AUDIT_API int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
+RESURS_AUDIT_API GetPublicKeyResult get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
 
 
 #ifdef __cplusplus

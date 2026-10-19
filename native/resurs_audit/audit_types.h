@@ -64,4 +64,13 @@ struct VerifyChainResult
     uint64_t index;
 };
 
+enum GetPublicKeyResult
+{
+    AUDIT_KEY_OK = 0,
+    AUDIT_KEY_NULL_ARGUMENT = -1,
+    AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE = -2,
+    AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL = -3,
+    AUDIT_KEY_CREATION_FAILED = -4  
+};
+
 #endif

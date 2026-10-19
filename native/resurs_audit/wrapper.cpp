@@ -80,9 +80,23 @@ void generate_private_key(unsigned char *output_buffer)
     std::copy(pKey.begin(), pKey.end(), output_buffer);
 }
 
-// New version, now using custom PkeyPtr to take advantage of RAII 
-int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size)
+// New version, now using custom PkeyPtr to take advantage of RAII so as to not leave the ownership externally and not freeing
+GetPublicKeyResult get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size)
 {
+    if (private_key == nullptr || output_public_key == nullptr)
+    {
+        return AUDIT_KEY_NULL_ARGUMENT;
+    }
+
+    if (private_key_size != resurs::audit::PKEY_BYTES)
+    {
+        return AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE;
+    }
+    if (output_public_key_size < resurs::audit::PKEY_BYTES)
+    {
+        return AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL;
+    }
+
     // The class has this set, but it's private.
     // Since this is the only method that requires it, we declare it locally in this scope again rather than moving the original to public
     using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
@@ -98,7 +112,7 @@ int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned
     
     if (!pkey)
     {
-        return -1;
+        return AUDIT_KEY_CREATION_FAILED;
     }
 
     DigitalSign digSign;
@@ -107,21 +121,5 @@ int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned
 
     std::copy(public_key.begin(), public_key.end(), output_public_key);
 
-    return 0;
+    return AUDIT_KEY_OK;
 }
-
-// int get_public_key(unsigned char *privateKey, unsigned char *output_publicKey)
-// {
-//     EVP_PKEY *pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, privateKey, resurs::audit::PKEY_BYTES);
-
-//     if (pkey == nullptr)
-//         return -1;
-
-//     DigitalSign digSign;
-
-//     std::array<uint8_t, resurs::audit::PKEY_BYTES> publicKey = digSign.get_public_key(pkey);
-
-//     std::copy(publicKey.begin(), publicKey.end(), output_publicKey);
-
-//     return 0;
-// }
