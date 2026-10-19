@@ -258,7 +258,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             return verifyChainResult;
         }
 
-        // Copy source, of destination.size, to destionation
+        // Copy source, of destination.size, to destination
         std::copy_n(entries[i].currentHash, previousEntryCurrentHash.size(), previousEntryCurrentHash.begin());
     }
     verifyChainResult.result_code = VERIFY_CHAIN_ALL_OK;
