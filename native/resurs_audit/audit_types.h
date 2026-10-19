@@ -64,7 +64,7 @@ struct VerifyChainResult
     uint64_t index;
 };
 
-enum GetPublicKeyResult
+enum GetPublicKeyResultCode
 {
     AUDIT_KEY_OK = 0,
     AUDIT_KEY_NULL_ARGUMENT = -1,

@@ -24,7 +24,7 @@ RESURS_AUDIT_API VerifyChainResult wrapper_verify_chain(const AuditEntry *entrie
 
 RESURS_AUDIT_API void generate_private_key(unsigned char* output_buffer);
 //RESURS_AUDIT_API int get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
-RESURS_AUDIT_API GetPublicKeyResult get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
+RESURS_AUDIT_API GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size);
 
 
 #ifdef __cplusplus

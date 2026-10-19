@@ -81,7 +81,7 @@ void generate_private_key(unsigned char *output_buffer)
 }
 
 // New version, now using custom PkeyPtr to take advantage of RAII so as to not leave the ownership externally and not freeing
-GetPublicKeyResult get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size)
+GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size)
 {
     if (private_key == nullptr || output_public_key == nullptr)
     {
