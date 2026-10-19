@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react"
+import { Link } from "react-router-dom"
 import { getDefaultRedirectPath } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import type { User } from "../../types/user"
@@ -53,9 +54,9 @@ const Header = ({ search, children }: HeaderProps) => {
     <>
       <header className={s.header}>
         <div className={s.inner}>
-          <a className={s.logo} href={getDefaultRedirectPath(user)} aria-label={`Resurs - ${getReadableRedirectPath(user)}`}>
+          <Link className={s.logo} to={getDefaultRedirectPath(user)} aria-label={`Resurs - ${getReadableRedirectPath(user)}`}>
             <img src={logo} alt="Resurs" />
-          </a>
+          </Link>
 
           {roleLabel && (
             <>
