@@ -2,6 +2,7 @@ package se.comerit.resurs.service;
 
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.audit.AuditDataFormat;
+import se.comerit.resurs.jna.JNASignatureComponent;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.AuditEventDTO;
@@ -35,7 +36,7 @@ public class AuditService {
 
     public AuditService (AuditEventRepository auditEventRepository,
                          CreditApplicationRepository applicationRepository,
-                         ObjectMapper objectMapper){
+                         ObjectMapper objectMapper, JNASignatureComponent signatureModule){
         this.auditEventRepository = auditEventRepository;
         this.applicationRepository = applicationRepository;
         this.objectMapper = objectMapper;
