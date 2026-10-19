@@ -1,4 +1,5 @@
 ARG UBUNTU_VERSION=24.04
+ARG CMAKE_BUILD_TYPE=Debug
 FROM ubuntu:${UBUNTU_VERSION}
 
 RUN apt-get update \
@@ -9,7 +10,7 @@ WORKDIR /src
 COPY . .
 
 RUN cmake -S . -B /resurs-build \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE={CMAKE_BUILD_TYPE} \
         -DBUILD_TESTING=ON \
         -DRESURS_BUILD_CRYPTO_DEMO=ON \
         -DRESURS_BUILD_AUDIT_DEMO=ON \
