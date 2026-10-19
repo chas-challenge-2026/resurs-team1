@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { Card, CardBody, CardFooter, CardHeader } from "../../../components/Card/Card"
+import cat from "../../../assets/mascot-cat.webp"
 import s from "./CompanyHomePage.module.css"
 import c from "../../../components/Card/Card.module.css"
 
@@ -12,6 +13,7 @@ const CompanyHomePage = () => {
       </div>
 
       <div className={s.actionsContainer}>
+        <img src={cat} alt="" className={s.mascot} />
         <Card as="article" variant="accent" accentColor="var(--color-primary)" className={`${s.action} ${s.actionPrimary}`}>
           <CardHeader>
             <span className={s.label} style={{color: "var(--color-primary)"}}>Ansökan</span>

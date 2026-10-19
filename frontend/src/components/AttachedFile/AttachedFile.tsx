@@ -2,7 +2,8 @@ import { RiCloseLine, RiDownloadLine, RiFileLine } from "react-icons/ri"
 import type { ApplicationDocument } from "../../api/applicationApi"
 import s from "./AttachedFile.module.css"
 import Button from "../Button/Button"
-import { formatDate, formatFilename } from "../../utils/formatters"
+import { formatDate } from "../../utils/formatters"
+import { formatFilename } from "../../utils/domainFormatters"
 import { useDownloadDocument } from "../../hooks/useDocument"
 
 interface AttachedFileProps {
