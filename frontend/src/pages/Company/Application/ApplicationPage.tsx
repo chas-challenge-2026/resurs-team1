@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ApplicationWizard, { type ApplicationFormData} from "../../../components/ApplicationWizard/ApplicationWizard"
-import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
+import { EMAIL_PATTERN } from "../../../constants/constants"
+import { isValidPhone } from "../../../utils/validators"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { useApplications, useSubmitApplication } from "../../../hooks/useApplication"
@@ -56,7 +57,7 @@ const ApplicationFormPage = () => {
       : step === 2
         ? values.contactName !== "" &&
           EMAIL_PATTERN.test(values.email) &&
-          PHONE_PATTERN.test(values.phoneNumber)
+          isValidPhone(values.phoneNumber)
         : true
 
   const handleSubmit = () => {
