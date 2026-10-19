@@ -17,7 +17,9 @@ int main(void)
 
     generate_private_key(private_key);
 
-    get_public_key(private_key, public_key);
+    // Old version
+    //get_public_key(private_key, public_key);
+    get_public_key(private_key, sizeof(private_key), public_key, sizeof(public_key));
 
     std::cout << "Private key: " << std::endl;
     print_hex(private_key, KEY_SIZE);
