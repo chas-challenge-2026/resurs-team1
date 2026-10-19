@@ -4,7 +4,6 @@
 #include <iostream>
 #include <cstdint>
 
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,8 +34,6 @@ struct AuditEntry
     uint8_t previousHash[resurs::audit::SHA256_HASH_BYTES];
     uint8_t currentHash[resurs::audit::SHA256_HASH_BYTES];
         
-    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousHash;
-    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> currentHash;
     uint64_t sequenceNumber;
 };
 
@@ -66,23 +63,5 @@ struct VerifyChainResult
     VerifyChainResultCode result_code;
     uint64_t index;
 };
-
-/*
-struct AuditEntryChain
-{
-    std::vector<AuditEntry> entries;
-    
-};
-*/
-
-/* exemmple på wrappern
-int verify_audit_chain(
-    const AuditVerifyEntry* entries,
-    size_t entryCount,
-    EVP_PKEY* publicKey
-);
-
-
-*/
 
 #endif
