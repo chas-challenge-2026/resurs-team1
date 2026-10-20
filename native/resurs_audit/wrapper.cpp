@@ -7,20 +7,15 @@ namespace {
     int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
     {
         DigitalSign digSign;
-
         std::vector<uint8_t> cData(canonicalData, canonicalData + canonicalDateLength);
-
         std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> result = digSign.hash(cData);
 
         if (result.size() != resurs::audit::SHA256_HASH_BYTES)
         {
-            //return WRAPPER_HASH_FAILED;
             return -1;
         }
 
         std::copy(result.begin(), result.end(), output_buffer);
-
-        //return WRAPPER_HASH_OK;
         return 0;
     }
 
@@ -28,21 +23,9 @@ namespace {
     DigitalSignResultCode wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
     {
         DigitalSign digSign;
-
         DigitalSignResultCode result = digSign.sign(privateKey, privateKeyLength, input_buffer, output_buffer);
-
         return result;
-        // if (result != SIGN_ALL_OK)
-        // {
-        //     return DigitalSignResultCode;
-        //     //return WRAPPER_SIGN_FAILED;
-        //     //return -1;
-        // }
-
-        // return WRAPPER_SIGN_OK;
-        // //return 0;
     }
-
 }
 
 // ----------- Exposed functions -----------
@@ -57,10 +40,12 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
     {
         return HASH_AND_SIGN_INVALID_ARGUMENT;
     }
+
     if (canonicalDataLength == 0)
     {
         return HASH_AND_SIGN_CANONICAL_DATA_EMPTY;
     }
+
     if (privateKeyLength != static_cast<int>(resurs::audit::PKEY_BYTES)
     || output_hash_buffer_size != static_cast<int>(resurs::audit::SHA256_HASH_BYTES)
     || output_signature_buffer_size != static_cast<int>(resurs::audit::DIGITAL_SIGNATURE_BYTES))
@@ -76,7 +61,6 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
         {
             printf("hash fail");
             return HASH_AND_SIGN_HASHING_FAILED;
-            //return hash_result;
         }
     
         DigitalSignResultCode signature_result = wrapper_sign(privateKey, privateKeyLength, output_hash_buffer, output_signature_buffer);
@@ -102,24 +86,14 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
             }
         }
         return HASH_AND_SIGN_ALL_OK;
-
-        // if (signature_result != SIGN_ALL_OK)
-        // {
-        //     printf("signature fail");
-        //     //return signature_result;
-        // }
-    
-        //return 0;
     }
     catch (std::runtime_error&)
     {
         return HASH_AND_SIGN_INTERNAL_ERROR;
-        //return -1;
     }
     catch (...)
     {
         return HASH_AND_SIGN_INTERNAL_ERROR;
-        //return -1;
     }
 }
 
@@ -167,9 +141,7 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
 
     try {
         DigitalSign digSign;
-
         VerifyChainResult result = digSign.verify_chain(entries, entryCount, publicKey, PublicKeyLength);
-        
         return result;
     }
     catch (std::runtime_error&)
@@ -218,14 +190,6 @@ GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, 
     }
 }
 
-// void generate_private_key(unsigned char *output_buffer)
-// {
-//     DigitalSign digSign;
-
-//     std::array<unsigned char, resurs::audit::PKEY_BYTES> pKey = digSign.generate_private_key();
-
-//     std::copy(pKey.begin(), pKey.end(), output_buffer);
-// }
 
 // New version, now using custom PkeyPtr to take advantage of RAII so as to not leave the ownership externally and not freeing
 GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size) noexcept
@@ -264,12 +228,9 @@ GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private
             return AUDIT_KEY_CREATION_FAILED;
         }
         
-        DigitalSign digSign;
-        
-        const auto public_key = digSign.get_public_key(pkey.get());
-        
-        std::copy(public_key.begin(), public_key.end(), output_public_key);
-        
+        DigitalSign digSign;        
+        const auto public_key = digSign.get_public_key(pkey.get());        
+        std::copy(public_key.begin(), public_key.end(), output_public_key);        
         return AUDIT_KEY_OK;
     }
     catch (const std::runtime_error &) {
