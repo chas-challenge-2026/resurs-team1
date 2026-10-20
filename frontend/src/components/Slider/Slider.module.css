@@ -16,6 +16,9 @@
   font-weight: 600;
   height: 48px;
   border-style: dashed !important;
+  font-variant-numeric: tabular-nums;
+  /* Reserve room for the absolutely positioned unit suffix */
+  padding-right: calc(var(--space-sm) + 2ch);
 }
 
 .unitSuffix {

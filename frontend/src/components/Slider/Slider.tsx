@@ -99,7 +99,8 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          size={inputValue.length > 1 ? inputValue.length - 1 : 1}
+          // Text width in ch (digits are 1ch with tabular-nums, spaces ~0.5ch) plus padding, suffix room and border
+          style={{ width: `calc(${Math.max(inputValue.replace(/\D/g, "").length + (inputValue.split(" ").length - 1) * 0.5, 1)}ch + 2 * var(--space-sm) + 2ch + 4px)` }}
           aria-labelledby={labelId}
           className={`input-base ${s.numberInput}`}
         />
