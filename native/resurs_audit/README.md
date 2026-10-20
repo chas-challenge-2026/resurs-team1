@@ -29,6 +29,18 @@ The functions have C linkage for stable symbol names. The current headers and
 data definitions use C++ constructs, so direct native consumers must compile
 as C++17; the headers are not currently C-source compatible.
 
+| Function | Purpose | Success result |
+|---|---|---:|
+| `generate_private_key(output, output_length)` | Generate a raw 32-byte Ed25519 private key. | `0` |
+| `get_public_key(private_key, private_key_length, output, output_length)` | Derive a raw 32-byte Ed25519 public key. | `0` |
+| `wrapper_hash_and_sign(canonical_data, canonical_data_length, private_key, private_key_length, hash_output, hash_output_length, signature_output, signature_output_length)` | SHA-256 hash canonical bytes and sign that hash with Ed25519. | `0` |
+| `wrapper_verify_chain(entries, entry_count, public_key, public_key_length)` | Validate an ordered complete audit chain and every signature. | `VerifyChainResult{0, 0}` |
+
+All four exported functions are declared `noexcept` and contain their own
+validation and exception handling. Expected failures are returned as result
+codes rather than allowing a C++ exception to cross the native/JNA boundary.
+Callers must treat outputs as invalid after any non-zero result.
+
 ## Audit entry contract
 
 The verifier receives a contiguous, ordered array of entries:
@@ -113,24 +125,75 @@ private key, a writable 32-byte hash output, and a writable 64-byte signature
 output. On success, Java persists the resulting hash and signature together
 with the values needed to reproduce the exact canonical entry.
 
-## Verification result codes
+The private-key length must be exactly 32 bytes, the hash output length exactly
+32 bytes, and the signature output length exactly 64 bytes. All pointers must
+be non-null and canonical data must contain at least one byte. The hash can be
+written before a subsequent signing failure, so neither output may be consumed
+unless the complete operation returns `HASH_AND_SIGN_ALL_OK`.
+
+## Public result codes
+
+### Private-key generation
+
+| Value | Name | Meaning |
+|---:|---|---|
+| `0` | `AUDIT_PRIVATE_KEY_OK` | A private key was generated. |
+| `-1` | `AUDIT_INVALID_ARGUMENT` | The output pointer is null. |
+| `-2` | `AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL` | The output buffer is smaller than 32 bytes. |
+| `-3` | `AUDIT_PRIVATE_KEY_INTERNAL_ERROR` | Native key generation failed internally. |
+
+### Public-key derivation
+
+| Value | Name | Meaning |
+|---:|---|---|
+| `0` | `AUDIT_KEY_OK` | A public key was derived. |
+| `-1` | `AUDIT_KEY_NULL_ARGUMENT` | A required pointer is null. |
+| `-2` | `AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE` | The private-key length is not exactly 32 bytes. |
+| `-3` | `AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL` | The output buffer is smaller than 32 bytes. |
+| `-4` | `AUDIT_KEY_CREATION_FAILED` | OpenSSL could not create an Ed25519 key from the supplied bytes. |
+| `-5` | `AUDIT_KEY_INTERNAL_ERROR` | Public-key derivation failed internally. |
+
+### Hashing and signing
+
+| Value | Name | Meaning |
+|---:|---|---|
+| `0` | `HASH_AND_SIGN_ALL_OK` | Both outputs are valid. |
+| `-1` | `HASH_AND_SIGN_INVALID_ARGUMENT` | A required pointer is null. |
+| `-2` | `HASH_AND_SIGN_CANONICAL_DATA_EMPTY` | Canonical-data length is zero. |
+| `-3` | `HASH_AND_SIGN_INVALID_BUFFER_SIZE` | A key or output-buffer length is invalid. |
+| `-4` | `HASH_AND_SIGN_HASHING_FAILED` | Hashing failed. |
+| `-5` | `HASH_AND_SIGN_SIGNING_INIT_FAILED` | OpenSSL signing initialization failed. |
+| `-6` | `HASH_AND_SIGN_SIGNING_SIGNATURE_LENGTH_FAILED` | OpenSSL could not determine the signature length. |
+| `-7` | `HASH_AND_SIGN_SIGNING_EVP_DIGEST_SIGNING_FAILED` | OpenSSL signing failed. |
+| `-8` | `HASH_AND_SIGN_SIGNING_FAILED_TO_CONVERT_TO_PRIVATE_KEY` | The private key could not be converted. |
+| `-9` | `HASH_AND_SIGN_SIGNING_INTERNAL_ERROR` | Signing returned an unexpected result. |
+| `-10` | `HASH_AND_SIGN_INTERNAL_ERROR` | An exception or other internal failure was contained. |
+
+### Chain verification
 
 | Value | Name | Meaning | `index` valid? |
 |---:|---|---|---|
 | `0` | `VERIFY_CHAIN_ALL_OK` | Every entry passed verification. | No |
-| `-1` | `PREVIOUS_HASH_MISSMATCH` | The previous-hash link is invalid. | Yes |
-| `-2` | `SEQUENCE_NUMBER_MISSMATCH` | The sequence is not `1, 2, 3, ...`. | Yes |
-| `-3` | `CURRENT_HASH_MISSMATCH` | Canonical data does not match `currentHash`. | Yes |
-| `-4` | `EVP_DIGEST_VERIFY_INIT_FAILED` | OpenSSL could not initialize verification. | Yes |
-| `-5` | `EVP_DIGEST_VERIFY_FAILED` | The Ed25519 signature is invalid. | Yes |
-| `-6` | `VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY` | The public key could not be converted. | No |
+| `-1` | `VERIFY_CHAIN_INVALID_ARGUMENT` | The entries or public-key pointer is null. | No |
+| `-2` | `VERIFY_CHAIN_ENTRY_COUNT_EMPTY` | The entry count is zero. | No |
+| `-3` | `VERIFY_CHAIN_INVALID_PUBLIC_KEY_SIZE` | The public-key length is not exactly 32 bytes. | No |
+| `-4` | `VERIFY_CHAIN_CANONICAL_DATA_EMPTY` | An entry has a null canonical-data pointer. | Yes |
+| `-5` | `VERIFY_CHAIN_CANONICAL_DATA_LENGTH_EMPTY` | An entry has a zero canonical-data length. | Yes |
+| `-6` | `PREVIOUS_HASH_MISSMATCH` | The previous-hash link is invalid. | Yes |
+| `-7` | `SEQUENCE_NUMBER_MISSMATCH` | The sequence is not `1, 2, 3, ...`. | Yes |
+| `-8` | `CURRENT_HASH_MISSMATCH` | Canonical data does not match `currentHash`. | Yes |
+| `-9` | `EVP_DIGEST_VERIFY_INIT_FAILED` | OpenSSL could not initialize verification. | Yes |
+| `-10` | `EVP_DIGEST_VERIFY_FAILED` | The Ed25519 signature is invalid or verification failed. | Yes |
+| `-11` | `VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY` | The public key could not be converted. | No |
+| `-12` | `VERIFY_CHAIN_RESULT_INTERNAL_ERROR` | An exception or other internal failure was contained. | No |
 
 The `MISSMATCH` spelling is part of the current native interface. Coordinate
 with consumers before renaming it.
 
 `VerifyChainResult.index` is zero-based and identifies a position in the
 supplied array, not a sequence number. Read it only for entry-specific failures
-`-1` through `-5`.
+`-4` through `-10`. Native initializes it to zero for all other results, but
+that zero does not identify a failing entry.
 
 ## Key and output sizes
 
@@ -146,8 +209,18 @@ every input and output buffer and must allocate the required size.
 
 ## Build and test
 
-Run tests in a Debug build because the current tests use C++ `assert`, which is
-disabled by `NDEBUG` in Release builds:
+The audit tests use always-active requirements, so their checks and native
+calls run in both Debug and Release builds. Use Debug for the normal development
+test pass and Release as an additional distribution-build check:
+
+From the repository root, the supported Docker test script builds and tests all
+native modules on both Ubuntu 24.04 and Ubuntu 22.04:
+
+```bash
+bash native/test-linux.sh
+```
+
+For one local Linux build instead:
 
 ```bash
 cmake -S native -B build/audit-debug \
@@ -155,16 +228,39 @@ cmake -S native -B build/audit-debug \
   -DBUILD_TESTING=ON \
   -DRESURS_BUILD_AUDIT_DEMO=ON
 cmake --build build/audit-debug \
-  --target resurs_audit resurs_audit_tests resurs_audit_demo \
+  --target resurs_audit resurs_audit_tests resurs_audit_symbol_tests \
+           resurs_audit_demo \
   --parallel
 ctest --test-dir build/audit-debug \
   -R resurs_audit_tests \
   --output-on-failure
 ```
 
-Build distribution binaries separately with `CMAKE_BUILD_TYPE=Release` and
-`BUILD_TESTING=OFF`. Linux builds have been verified in Ubuntu 22.04 and 24.04
-containers, and Windows builds with MSVC x64.
+Build distribution binaries separately with `CMAKE_BUILD_TYPE=Release` after
+the Debug tests pass. A direct CMake distribution build may use
+`BUILD_TESTING=OFF`; the Dockerfile keeps tests enabled while producing the
+library. Linux builds have been verified in Ubuntu 22.04 and 24.04 containers,
+and Windows builds with MSVC x64.
+
+When one Linux binary must run on both supported Ubuntu releases, build the
+distribution `.so` in Ubuntu 22.04:
+
+```bash
+docker build --no-cache \
+  --build-arg UBUNTU_VERSION=22.04 \
+  --build-arg CMAKE_BUILD_TYPE=Release \
+  -t resurs-audit-release-ubuntu-22 \
+  ./native
+container_id="$(docker create resurs-audit-release-ubuntu-22)"
+docker cp \
+  "${container_id}:/resurs-build/libresurs_audit.so" \
+  native/resurs_audit/prebuilt/linux-x86-64/libresurs_audit.so
+docker rm "${container_id}"
+```
+
+Build the Windows x86-64 DLL from an x64 Visual Studio developer prompt, using
+the Visual Studio generator installed on that machine and the vcpkg toolchain.
+Run the Debug tests before copying the Release DLL into `prebuilt/`.
 
 Inspect the Linux exports with:
 
@@ -196,6 +292,12 @@ release must not be assumed to work on an older runtime. Platform-specific
 files in `artifacts/` are intermediate build outputs and are not distribution
 files.
 
+The prebuilt files are part of the public integration contract. Rebuild and
+replace both platform files after changing any exported parameter, result type,
+enum value, structure field, or structure layout. Update the JNA declarations
+in the same change. Mixing an old binary with new JNA declarations can pass
+arguments in the wrong positions and can crash the process.
+
 ## C/C++ implementation details (native team only)
 
 This section is for native C/C++ development; Java/JNA consumers do not call
@@ -206,6 +308,10 @@ these implementation types directly.
 - Internal `wrapper_hash` and `wrapper_sign` helpers have internal linkage.
 - The tests call only the four public functions so they exercise the same
   boundary used by JNA.
+- The validation tests cover null pointers, zero lengths, undersized and
+  oversized exact-length buffers, and deterministic failure indexes.
+- The exported-symbol test dynamically loads the completed library and checks
+  that all four supported JNA entry points can be resolved by name.
 - Known-answer tests use the RFC 8032 test key and a deterministic
   SHA-256-then-Ed25519 result for canonical bytes `abc`.
 - Tests cover modified data, hash, signature, previous hash, invalid sequence

@@ -144,4 +144,15 @@ if(BUILD_TESTING)
     add_test(NAME resurs_crypto_symbol_tests
         COMMAND resurs_crypto_symbol_tests $<TARGET_FILE:resurs_crypto>)
 
+    add_executable(resurs_audit_symbol_tests
+        tests/resurs_audit_symbol_tests.cpp)
+    target_link_libraries(resurs_audit_symbol_tests PRIVATE ${CMAKE_DL_LIBS})
+    if(MSVC)
+        target_compile_options(resurs_audit_symbol_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_audit_symbol_tests PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME resurs_audit_symbol_tests
+        COMMAND resurs_audit_symbol_tests $<TARGET_FILE:resurs_audit>)
+
 endif()

@@ -1,6 +1,8 @@
 ARG UBUNTU_VERSION=24.04
 FROM ubuntu:${UBUNTU_VERSION}
 
+ARG CMAKE_BUILD_TYPE=Debug
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential cmake libssl-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -9,7 +11,7 @@ WORKDIR /src
 COPY . .
 
 RUN cmake -S . -B /resurs-build \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DBUILD_TESTING=ON \
         -DRESURS_BUILD_CRYPTO_DEMO=ON \
         -DRESURS_BUILD_AUDIT_DEMO=ON \
@@ -20,6 +22,7 @@ RUN cmake -S . -B /resurs-build \
                  resurs_audit_demo \
                  resurs_audit_tests \
                  resurs_crypto_symbol_tests \
+                 resurs_audit_symbol_tests \
         --parallel \
     && ctest --test-dir /resurs-build --output-on-failure
 
