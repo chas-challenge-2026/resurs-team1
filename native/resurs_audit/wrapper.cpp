@@ -47,7 +47,7 @@ namespace {
 
 // ----------- Exposed functions -----------
 
-HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, size_t output_hash_buffer_size,  uint8_t *output_signature_buffer, size_t output_signature_buffer_size)
+HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, size_t output_hash_buffer_size,  uint8_t *output_signature_buffer, size_t output_signature_buffer_size) noexcept
 {
     // validation
     if (canonicalData == nullptr ||
@@ -123,7 +123,7 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
     }
 }
 
-VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength)
+VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength) noexcept
 {
     if (entries == nullptr || publicKey == nullptr)
     {
@@ -189,7 +189,7 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
 }
 
 
-GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, size_t output_buffer_length)
+GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, size_t output_buffer_length) noexcept
 {
     if (output_buffer == nullptr)
     {
