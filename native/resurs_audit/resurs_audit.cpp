@@ -194,7 +194,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
     VerifyChainResult verifyChainResult {VERIFY_CHAIN_ALL_OK, 0};
 
     std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{0};
-    memset(previousEntryCurrentHash.data(), 0, sizeof(previousEntryCurrentHash.data()));
+    //memset(previousEntryCurrentHash.begin(), 0, sizeof(previousEntryCurrentHash));
     
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(publicKey, publicKeyLength);
     if(pKeyPtr == nullptr)

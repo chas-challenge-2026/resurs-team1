@@ -129,18 +129,21 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
     {
         VerifyChainResult result;
         result.result_code = VERIFY_CHAIN_INVALID_ARGUMENT;
+        result.index = 0;
         return result;
     }
     if (entryCount == 0)
     {
         VerifyChainResult result;
         result.result_code = VERIFY_CHAIN_ENTRY_COUNT_EMPTY;
+        result.index = 0;
         return result;
     }
     if (PublicKeyLength != static_cast<int>(resurs::audit::PKEY_BYTES))
     {
         VerifyChainResult result;
         result.result_code = VERIFY_CHAIN_INVALID_PUBLIC_KEY_SIZE;
+        result.index = 0;
         return result;
     }
 

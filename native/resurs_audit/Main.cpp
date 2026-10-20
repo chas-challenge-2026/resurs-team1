@@ -22,10 +22,10 @@ int main(void)
     //get_public_key(private_key, public_key);
     get_public_key(private_key, sizeof(private_key), public_key, sizeof(public_key));
 
-    std::cout << "Private key: " << std::endl;
-    print_hex(private_key, KEY_SIZE);
-    std::cout << "Public key: " << std::endl;
-    print_hex(public_key, KEY_SIZE);
+    // std::cout << "Private key: " << std::endl;
+    // print_hex(private_key, KEY_SIZE);
+    // std::cout << "Public key: " << std::endl;
+    // print_hex(public_key, KEY_SIZE);
 
     const uint8_t canonical_data[] =
         "{\"event\":\"application-created\",\"sequence\":1}";
