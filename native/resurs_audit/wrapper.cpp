@@ -47,9 +47,26 @@ namespace {
 
 // ----------- Exposed functions -----------
 
-int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, uint8_t *output_signature_buffer)
+HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, size_t output_hash_buffer_size,  uint8_t *output_signature_buffer, size_t output_signature_buffer_size)
 {
     // validation
+    if (canonicalData == nullptr ||
+        privateKey == nullptr ||
+        output_hash_buffer == nullptr ||
+        output_signature_buffer == nullptr)
+    {
+        return HASH_AND_SIGN_INVALID_ARGUMENT;
+    }
+    if (canonicalDataLength == 0)
+    {
+        return HASH_AND_SIGN_CANONICAL_DATA_EMPTY;
+    }
+    if (privateKeyLength != static_cast<int>(resurs::audit::PKEY_BYTES)
+    || output_hash_buffer_size != static_cast<int>(resurs::audit::SHA256_HASH_BYTES)
+    || output_signature_buffer_size != static_cast<int>(resurs::audit::DIGITAL_SIGNATURE_BYTES))
+    {
+        return HASH_AND_SIGN_INVALID_BUFFER_SIZE;
+    }
 
     // code
     try {
@@ -72,13 +89,13 @@ int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLeng
                     return HASH_AND_SIGN_SIGNING_INIT_FAILED;
                     break;
                 case(EVP_DIGEST_SIGN_SIGNATURE_LENGTH_FAILED): 
-                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    return HASH_AND_SIGN_SIGNING_SIGNATURE_LENGTH_FAILED;
                     break;
                 case(EVP_DIGEST_SIGN_SIGNING_FAILED): 
-                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    return HASH_AND_SIGN_SIGNING_EVP_DIGEST_SIGNING_FAILED;
                     break;
                 case(SIGN_FAILED_TO_CONVERT_PRIVATE_KEY): 
-                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    return HASH_AND_SIGN_SIGNING_FAILED_TO_CONVERT_TO_PRIVATE_KEY;
                     break;
                 default:
                     return HASH_AND_SIGN_SIGNING_INTERNAL_ERROR;
@@ -108,11 +125,26 @@ int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLeng
 
 VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength)
 {
-    DigitalSign digSign;
+    try {
 
-    VerifyChainResult result = digSign.verify_chain(entries, entryCount, publicKey, PublicKeyLength);
-
-    return result;
+        DigitalSign digSign;
+        
+        VerifyChainResult result = digSign.verify_chain(entries, entryCount, publicKey, PublicKeyLength);
+        
+        return result;
+    }
+    catch (std::runtime_error&)
+    {
+        VerifyChainResult result;
+        result.result_code = VERIFY_CHAIN_RESULT_INTERNAL_ERROR;
+        return result;
+    }
+    catch (...)
+    {
+        VerifyChainResult result;
+        result.result_code = VERIFY_CHAIN_RESULT_INTERNAL_ERROR;
+        return result;
+    }
 }
 
 
@@ -122,6 +154,7 @@ GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, 
     {
         return AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL;
     }
+
     try {
 
         DigitalSign digSign;

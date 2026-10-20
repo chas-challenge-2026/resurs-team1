@@ -19,7 +19,8 @@ extern "C" {
 #endif
 
 // Exposed functions
-RESURS_AUDIT_API int wrapper_hash_and_sign(const uint8_t* canonicalData, size_t canonicalDataLength, const uint8_t* privateKey, size_t privateKeyLength, uint8_t* output_hash_buffer, uint8_t* output_signature_buffer);
+//RESURS_AUDIT_API int wrapper_hash_and_sign(const uint8_t* canonicalData, size_t canonicalDataLength, const uint8_t* privateKey, size_t privateKeyLength, uint8_t* output_hash_buffer, uint8_t* output_signature_buffer);
+RESURS_AUDIT_API HashAndSignResultCode wrapper_hash_and_sign(const uint8_t* canonicalData, size_t canonicalDataLength, const uint8_t* privateKey, size_t privateKeyLength, uint8_t* output_hash_buffer, size_t output_hash_buffer_length, uint8_t* output_signature_buffer, size_t output_signature_buffer_length);
 RESURS_AUDIT_API VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength);
 
 //RESURS_AUDIT_API void generate_private_key(unsigned char* output_buffer);

@@ -130,7 +130,9 @@ void test_hash_is_deterministic()
         privateKey.data(),
         privateKey.size(),
         hash1,
-        signature1
+        sizeof(hash1),
+        signature1,
+        sizeof(signature1)
     );
 
     int result2 = wrapper_hash_and_sign(
@@ -139,7 +141,9 @@ void test_hash_is_deterministic()
         privateKey.data(),
         privateKey.size(),
         hash2,
-        signature2
+        sizeof(hash2),
+        signature2,
+        sizeof(signature2)
     );
 
     assert(result1 == 0);
@@ -183,7 +187,9 @@ void test_different_data_produces_different_hash()
             privateKey.data(),
             privateKey.size(),
             hash1,
-            signature1
+            sizeof(hash1),
+            signature1,
+            sizeof(signature2)
         ) == 0
     );
 
@@ -194,7 +200,9 @@ void test_different_data_produces_different_hash()
             privateKey.data(),
             privateKey.size(),
             hash2,
-            signature2
+            sizeof(hash2),
+            signature2,
+            sizeof(signature2)
         ) == 0
     );
 
@@ -234,7 +242,9 @@ void test_hash_and_sign()
         privateKey.data(),
         privateKey.size(),
         hash,
-        signature
+        sizeof(hash),
+        signature,
+        sizeof(signature)
     );
 
     assert(result == 0);
@@ -291,7 +301,9 @@ void test_signature_verification()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -340,7 +352,9 @@ void test_modified_data_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -398,7 +412,9 @@ void test_modified_signature_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -456,7 +472,9 @@ void test_invalid_previous_hash_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -529,7 +547,9 @@ void test_valid_two_entry_chain()
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
-            entries[0].signature
+            sizeof(entries[0].currentHash),
+            entries[0].signature,
+            sizeof(entries[0].signature)
         ) == 0
     );
 
@@ -556,7 +576,9 @@ void test_valid_two_entry_chain()
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,
-            entries[1].signature
+            sizeof(entries[1].currentHash),
+            entries[1].signature,
+            sizeof(entries[1].signature)
         ) == 0
     );
 
@@ -615,7 +637,9 @@ void test_modified_previous_hash_in_chain()
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
-            entries[0].signature
+            sizeof(entries[0].currentHash),
+            entries[0].signature,
+            sizeof(entries[0].signature)
         ) == 0
     );
 
@@ -638,7 +662,10 @@ void test_modified_previous_hash_in_chain()
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,
-            entries[1].signature
+            sizeof(entries[1].currentHash),
+            entries[1].signature,
+            sizeof(entries[1].signature)
+
         ) == 0
     );
 
@@ -701,7 +728,9 @@ void test_known_answer_hash_and_signature()
             privateKey.data(),
             privateKey.size(),
             hash.data(),
-            signature.data()
+            sizeof(hash),
+            signature.data(),
+            sizeof(signature)
         ) == 0
     );
 

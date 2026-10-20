@@ -50,7 +50,9 @@ int main(void)
             private_key,
             KEY_SIZE,
             output_hash_buffer,
-            output_signature_buffer) != 0)
+            sizeof(output_hash_buffer),
+            output_signature_buffer,
+            sizeof(output_signature_buffer)) != 0)
     {
         fprintf(stderr, "wrapper_hash_and_sign error");
         return 1;
