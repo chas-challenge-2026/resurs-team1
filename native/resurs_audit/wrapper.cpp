@@ -125,10 +125,46 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
 
 VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength)
 {
-    try {
+    if (entries == nullptr || publicKey == nullptr)
+    {
+        VerifyChainResult result;
+        result.result_code = VERIFY_CHAIN_INVALID_ARGUMENT;
+        return result;
+    }
+    if (entryCount == 0)
+    {
+        VerifyChainResult result;
+        result.result_code = VERIFY_CHAIN_ENTRY_COUNT_EMPTY;
+        return result;
+    }
+    if (PublicKeyLength != static_cast<int>(resurs::audit::PKEY_BYTES))
+    {
+        VerifyChainResult result;
+        result.result_code = VERIFY_CHAIN_INVALID_PUBLIC_KEY_SIZE;
+        return result;
+    }
 
+    for (int i = 0; i < entryCount; i++)
+    {
+        if (entries[i].canonicalData == nullptr)
+        {
+            VerifyChainResult result;
+            result.result_code = VERIFY_CHAIN_CANONICAL_DATA_EMPTY;
+            result.index = i;
+            return result;
+        } 
+        if (entries[i].canonicalDataLength <= 0)
+        {
+            VerifyChainResult result;
+            result.result_code = VERIFY_CHAIN_CANONICAL_DATA_LENGTH_EMPTY;
+            result.index = i;
+            return result;
+        }
+    }    
+
+    try {
         DigitalSign digSign;
-        
+
         VerifyChainResult result = digSign.verify_chain(entries, entryCount, publicKey, PublicKeyLength);
         
         return result;
@@ -137,12 +173,14 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
     {
         VerifyChainResult result;
         result.result_code = VERIFY_CHAIN_RESULT_INTERNAL_ERROR;
+        result.index = 0;
         return result;
     }
     catch (...)
     {
         VerifyChainResult result;
         result.result_code = VERIFY_CHAIN_RESULT_INTERNAL_ERROR;
+        result.index = 0;
         return result;
     }
 }
@@ -150,17 +188,19 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
 
 GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, size_t output_buffer_length)
 {
+    if (output_buffer == nullptr)
+    {
+        return AUDIT_INVALID_ARGUMENT;
+    }
+
     if (output_buffer_length < resurs::audit::PKEY_BYTES)
     {
         return AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL;
     }
 
     try {
-
-        DigitalSign digSign;
-        
+        DigitalSign digSign;        
         std::array<unsigned char, resurs::audit::PKEY_BYTES> pKey = digSign.generate_private_key();
-        
         std::copy(pKey.begin(), pKey.end(), output_buffer);
 
         return AUDIT_PRIVATE_KEY_OK;
@@ -202,8 +242,7 @@ GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private
     }
 
 
-    try {
-        
+    try {        
         // The class has this set, but it's private.
         // Since this is the only method that requires it, we declare it locally in this scope again rather than moving the original to public
         using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
@@ -217,18 +256,18 @@ GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private
                 &EVP_PKEY_free
             );
             
-            if (!pkey)
-            {
-                return AUDIT_KEY_CREATION_FAILED;
-            }
-            
-            DigitalSign digSign;
-            
-            const auto public_key = digSign.get_public_key(pkey.get());
-            
-            std::copy(public_key.begin(), public_key.end(), output_public_key);
-            
-            return AUDIT_KEY_OK;
+        if (!pkey)
+        {
+            return AUDIT_KEY_CREATION_FAILED;
+        }
+        
+        DigitalSign digSign;
+        
+        const auto public_key = digSign.get_public_key(pkey.get());
+        
+        std::copy(public_key.begin(), public_key.end(), output_public_key);
+        
+        return AUDIT_KEY_OK;
     }
     catch (const std::runtime_error &) {
         return AUDIT_KEY_INTERNAL_ERROR;

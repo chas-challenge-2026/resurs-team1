@@ -188,7 +188,10 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash(const st
 
 VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength)
 {
-    VerifyChainResult verifyChainResult;
+    // result code and current is returned in case something goes wrong.
+    // But index is not set on either happy path or when an error occurs during pkey convertion
+    // We init it with index 0 to ensure we don't get any old bytes or confusing data on the index field.
+    VerifyChainResult verifyChainResult {VERIFY_CHAIN_ALL_OK, 0};
 
     std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{0};
     memset(previousEntryCurrentHash.data(), 0, sizeof(previousEntryCurrentHash.data()));
@@ -206,7 +209,6 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
         {
             verifyChainResult.result_code = PREVIOUS_HASH_MISSMATCH;
             verifyChainResult.index = i;
-
             return verifyChainResult;
         }
 
