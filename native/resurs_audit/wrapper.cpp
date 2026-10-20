@@ -14,26 +14,33 @@ namespace {
 
         if (result.size() != resurs::audit::SHA256_HASH_BYTES)
         {
+            //return WRAPPER_HASH_FAILED;
             return -1;
         }
 
         std::copy(result.begin(), result.end(), output_buffer);
 
+        //return WRAPPER_HASH_OK;
         return 0;
     }
 
-    int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
+    //int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
+    DigitalSignResultCode wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
     {
         DigitalSign digSign;
 
         DigitalSignResultCode result = digSign.sign(privateKey, privateKeyLength, input_buffer, output_buffer);
 
-        if (result != SIGN_ALL_OK)
-        {
-            return -1;
-        }
+        return result;
+        // if (result != SIGN_ALL_OK)
+        // {
+        //     return DigitalSignResultCode;
+        //     //return WRAPPER_SIGN_FAILED;
+        //     //return -1;
+        // }
 
-        return 0;
+        // return WRAPPER_SIGN_OK;
+        // //return 0;
     }
 
 }
@@ -42,23 +49,61 @@ namespace {
 
 int wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, uint8_t *output_signature_buffer)
 {
-    int hash_result = wrapper_hash(canonicalData, canonicalDataLength, output_hash_buffer);
+    // validation
 
-    if (hash_result != 0)
-    {
-        printf("hash fail");
-        return hash_result;
+    // code
+    try {
+        int hash_result = wrapper_hash(canonicalData, canonicalDataLength, output_hash_buffer);
+    
+        if (hash_result != 0)
+        {
+            printf("hash fail");
+            return HASH_AND_SIGN_HASHING_FAILED;
+            //return hash_result;
+        }
+    
+        DigitalSignResultCode signature_result = wrapper_sign(privateKey, privateKeyLength, output_hash_buffer, output_signature_buffer);
+        
+        if (signature_result != SIGN_ALL_OK)
+        {
+            switch (signature_result)
+            {
+                case(EVP_DIGEST_SIGN_INIT_FAILED): 
+                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    break;
+                case(EVP_DIGEST_SIGN_SIGNATURE_LENGTH_FAILED): 
+                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    break;
+                case(EVP_DIGEST_SIGN_SIGNING_FAILED): 
+                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    break;
+                case(SIGN_FAILED_TO_CONVERT_PRIVATE_KEY): 
+                    return HASH_AND_SIGN_SIGNING_INIT_FAILED;
+                    break;
+                default:
+                    return HASH_AND_SIGN_SIGNING_INTERNAL_ERROR;
+            }
+        }
+        return HASH_AND_SIGN_ALL_OK;
+
+        // if (signature_result != SIGN_ALL_OK)
+        // {
+        //     printf("signature fail");
+        //     //return signature_result;
+        // }
+    
+        //return 0;
     }
-
-    int signature_result = wrapper_sign(privateKey, privateKeyLength, output_hash_buffer, output_signature_buffer);
-
-    if (signature_result != 0)
+    catch (std::runtime_error&)
     {
-        printf("signature fail");
-        return signature_result;
+        return HASH_AND_SIGN_INTERNAL_ERROR;
+        //return -1;
     }
-
-    return 0;
+    catch (...)
+    {
+        return HASH_AND_SIGN_INTERNAL_ERROR;
+        //return -1;
+    }
 }
 
 VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t PublicKeyLength)
@@ -71,17 +116,43 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
 }
 
 
-void generate_private_key(unsigned char *output_buffer)
+GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, size_t output_buffer_length)
 {
-    DigitalSign digSign;
+    if (output_buffer_length < resurs::audit::PKEY_BYTES)
+    {
+        return AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL;
+    }
+    try {
 
-    std::array<unsigned char, resurs::audit::PKEY_BYTES> pKey = digSign.generate_private_key();
+        DigitalSign digSign;
+        
+        std::array<unsigned char, resurs::audit::PKEY_BYTES> pKey = digSign.generate_private_key();
+        
+        std::copy(pKey.begin(), pKey.end(), output_buffer);
 
-    std::copy(pKey.begin(), pKey.end(), output_buffer);
+        return AUDIT_PRIVATE_KEY_OK;
+    }
+    catch (std::runtime_error&)
+    {
+        return AUDIT_PRIVATE_KEY_INTERNAL_ERROR;
+    }
+    catch (...)
+    {
+        return AUDIT_PRIVATE_KEY_INTERNAL_ERROR;
+    }
 }
 
+// void generate_private_key(unsigned char *output_buffer)
+// {
+//     DigitalSign digSign;
+
+//     std::array<unsigned char, resurs::audit::PKEY_BYTES> pKey = digSign.generate_private_key();
+
+//     std::copy(pKey.begin(), pKey.end(), output_buffer);
+// }
+
 // New version, now using custom PkeyPtr to take advantage of RAII so as to not leave the ownership externally and not freeing
-GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size)
+GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size) noexcept
 {
     if (private_key == nullptr || output_public_key == nullptr)
     {
@@ -97,29 +168,40 @@ GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private
         return AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL;
     }
 
-    // The class has this set, but it's private.
-    // Since this is the only method that requires it, we declare it locally in this scope again rather than moving the original to public
-    using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
 
-    PkeyPtr pkey(
-        EVP_PKEY_new_raw_private_key(
-            EVP_PKEY_ED25519,
-            nullptr,
-            private_key,
-            resurs::audit::PKEY_BYTES),
-        &EVP_PKEY_free
-    );
-    
-    if (!pkey)
-    {
-        return AUDIT_KEY_CREATION_FAILED;
+    try {
+        
+        // The class has this set, but it's private.
+        // Since this is the only method that requires it, we declare it locally in this scope again rather than moving the original to public
+        using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
+        
+        PkeyPtr pkey(
+            EVP_PKEY_new_raw_private_key(
+                EVP_PKEY_ED25519,
+                nullptr,
+                private_key,
+                resurs::audit::PKEY_BYTES),
+                &EVP_PKEY_free
+            );
+            
+            if (!pkey)
+            {
+                return AUDIT_KEY_CREATION_FAILED;
+            }
+            
+            DigitalSign digSign;
+            
+            const auto public_key = digSign.get_public_key(pkey.get());
+            
+            std::copy(public_key.begin(), public_key.end(), output_public_key);
+            
+            return AUDIT_KEY_OK;
     }
-
-    DigitalSign digSign;
-
-    const auto public_key = digSign.get_public_key(pkey.get());
-
-    std::copy(public_key.begin(), public_key.end(), output_public_key);
-
-    return AUDIT_KEY_OK;
+    catch (const std::runtime_error &) {
+        return AUDIT_KEY_INTERNAL_ERROR;
+    }
+    catch (...)
+    {
+        return AUDIT_KEY_INTERNAL_ERROR;
+    }
 }

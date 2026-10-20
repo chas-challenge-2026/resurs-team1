@@ -15,7 +15,8 @@ int main(void)
 
     unsigned char public_key[KEY_SIZE] = {0};
 
-    generate_private_key(private_key);
+    //generate_private_key(private_key);
+    generate_private_key(private_key, sizeof(private_key));
 
     // Old version
     //get_public_key(private_key, public_key);

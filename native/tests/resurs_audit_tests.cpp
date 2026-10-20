@@ -16,7 +16,7 @@ std::array<uint8_t, resurs::audit::PKEY_BYTES>
 get_private_key()
 {
     std::array<uint8_t, resurs::audit::PKEY_BYTES> privateKey{};
-    generate_private_key(privateKey.data());
+    generate_private_key(privateKey.data(), sizeof(privateKey));
     return privateKey;
 }
 
