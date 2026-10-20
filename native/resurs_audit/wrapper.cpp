@@ -147,7 +147,7 @@ VerifyChainResult wrapper_verify_chain(const AuditEntry *entries, size_t entryCo
         return result;
     }
 
-    for (int i = 0; i < entryCount; i++)
+    for (size_t i = 0; i < entryCount; i++)
     {
         if (entries[i].canonicalData == nullptr)
         {
