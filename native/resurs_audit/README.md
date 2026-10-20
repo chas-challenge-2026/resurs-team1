@@ -209,8 +209,9 @@ every input and output buffer and must allocate the required size.
 
 ## Build and test
 
-Run tests in a Debug build because the current tests use C++ `assert`, which is
-disabled by `NDEBUG` in Release builds:
+The audit tests use always-active requirements, so their checks and native
+calls run in both Debug and Release builds. Use Debug for the normal development
+test pass and Release as an additional distribution-build check:
 
 From the repository root, the supported Docker test script builds and tests all
 native modules on both Ubuntu 24.04 and Ubuntu 22.04:
@@ -227,7 +228,8 @@ cmake -S native -B build/audit-debug \
   -DBUILD_TESTING=ON \
   -DRESURS_BUILD_AUDIT_DEMO=ON
 cmake --build build/audit-debug \
-  --target resurs_audit resurs_audit_tests resurs_audit_demo \
+  --target resurs_audit resurs_audit_tests resurs_audit_symbol_tests \
+           resurs_audit_demo \
   --parallel
 ctest --test-dir build/audit-debug \
   -R resurs_audit_tests \
@@ -306,6 +308,10 @@ these implementation types directly.
 - Internal `wrapper_hash` and `wrapper_sign` helpers have internal linkage.
 - The tests call only the four public functions so they exercise the same
   boundary used by JNA.
+- The validation tests cover null pointers, zero lengths, undersized and
+  oversized exact-length buffers, and deterministic failure indexes.
+- The exported-symbol test dynamically loads the completed library and checks
+  that all four supported JNA entry points can be resolved by name.
 - Known-answer tests use the RFC 8032 test key and a deterministic
   SHA-256-then-Ed25519 result for canonical bytes `abc`.
 - Tests cover modified data, hash, signature, previous hash, invalid sequence

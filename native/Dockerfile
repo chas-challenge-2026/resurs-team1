@@ -22,6 +22,7 @@ RUN cmake -S . -B /resurs-build \
                  resurs_audit_demo \
                  resurs_audit_tests \
                  resurs_crypto_symbol_tests \
+                 resurs_audit_symbol_tests \
         --parallel \
     && ctest --test-dir /resurs-build --output-on-failure
 

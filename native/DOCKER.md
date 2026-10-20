@@ -34,9 +34,9 @@ Command Prompt, Bash, Git Bash, and WSL without shell-specific continuation
 characters.
 
 Both builds compile `libresurs_crypto.so`, `libresurs_audit.so`, both demo
-programs, both behavior-test suites, and the crypto exported-symbol test. CTest
-runs automatically during the image build, so `docker build` fails if any
-registered test fails.
+programs, both behavior-test suites, and both exported-symbol tests. CTest runs
+automatically during the image build, so `docker build` fails if any registered
+test fails.
 
 Rebuild without using the Docker cache:
 
@@ -83,12 +83,17 @@ The expected result for each image is:
 resurs_crypto_tests          Passed
 resurs_audit_tests           Passed
 resurs_crypto_symbol_tests   Passed
+resurs_audit_symbol_tests    Passed
 100% tests passed
 ```
 
 `resurs_crypto_symbol_tests` dynamically loads the completed `.so` file and
 resolves `aes_256_gcm_encrypt` and `aes_256_gcm_decrypt` by name. This verifies
 the same exported-symbol boundary that JNA uses.
+
+`resurs_audit_symbol_tests` performs the equivalent check for
+`generate_private_key`, `get_public_key`, `wrapper_hash_and_sign`, and
+`wrapper_verify_chain`.
 
 To run only the crypto behavior tests:
 
