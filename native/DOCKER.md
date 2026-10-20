@@ -33,9 +33,10 @@ These commands are intentionally shown on one line so they work in PowerShell,
 Command Prompt, Bash, Git Bash, and WSL without shell-specific continuation
 characters.
 
-Both builds compile `libresurs_crypto.so`, the demo program, the crypto test
-suite, and the exported-symbol test. CTest runs automatically during the image
-build, so `docker build` fails if either test fails.
+Both builds compile `libresurs_crypto.so`, `libresurs_audit.so`, both demo
+programs, both behavior-test suites, and the crypto exported-symbol test. CTest
+runs automatically during the image build, so `docker build` fails if any
+registered test fails.
 
 Rebuild without using the Docker cache:
 
@@ -61,7 +62,13 @@ docker run --rm resurs-crypto-ubuntu-24
 docker run --rm resurs-crypto-jammy
 ```
 
-This runs the executable built from `resurs_crypto/main.cpp`.
+This runs the audit demo built from `resurs_audit/Main.cpp`, which is the
+Dockerfile's default command. To run the crypto demo explicitly:
+
+```bash
+docker run --rm resurs-crypto-ubuntu-24 /resurs-build/resurs_crypto_demo
+docker run --rm resurs-crypto-jammy /resurs-build/resurs_crypto_demo
+```
 
 ## Run all tests again
 
@@ -74,6 +81,7 @@ The expected result for each image is:
 
 ```text
 resurs_crypto_tests          Passed
+resurs_audit_tests           Passed
 resurs_crypto_symbol_tests   Passed
 100% tests passed
 ```
@@ -89,6 +97,13 @@ docker run --rm resurs-crypto-ubuntu-24 /resurs-build/resurs_crypto_tests
 docker run --rm resurs-crypto-jammy /resurs-build/resurs_crypto_tests
 ```
 
+To run only the audit behavior tests:
+
+```bash
+docker run --rm resurs-crypto-ubuntu-24 /resurs-build/resurs_audit_tests
+docker run --rm resurs-crypto-jammy /resurs-build/resurs_audit_tests
+```
+
 ## Open a shell in the image
 
 ```bash
@@ -96,7 +111,8 @@ docker run --rm -it --entrypoint /bin/bash resurs-crypto-ubuntu-24
 ```
 
 The build artifacts are located in `/resurs-build` inside the container. The
-Linux shared library is `/resurs-build/libresurs_crypto.so`.
+Linux shared libraries are `/resurs-build/libresurs_crypto.so` and
+`/resurs-build/libresurs_audit.so`.
 
 ## Runtime compatibility
 
