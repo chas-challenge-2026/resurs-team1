@@ -17,7 +17,7 @@ cd frontend
 npm install   # första gången
 npm run dev
 ```
-Öppna [http://127.0.0.1:5173](http://127.0.0.1:5173). Ändringar syns direkt, `/api` skickas vidare till backend på 8083.
+Öppna [http://localhost:5173](http://localhost:5173). Ändringar syns direkt, `/api` skickas vidare till backend på 8083.
 
 ### Deploy
 Push till `develop` → stage, push till `main` → prod. Allt byggs automatiskt. Se `DRIFT.md`.
