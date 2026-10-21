@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios"
-import { QueryClient } from "@tanstack/react-query"
+import { queryClient } from "../main"
 
 export interface ApiErrorPayload {
   status?: number
@@ -16,7 +16,6 @@ const api = axios.create({
 })
 
 export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
-  const queryClient = new QueryClient()
   const status = error.response?.status
   const isLoginRequest = error.config?.url?.includes("/login")
   

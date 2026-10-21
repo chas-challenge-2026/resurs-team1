@@ -1,5 +1,6 @@
-import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { type QueryKey, keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query"
 import { getApplicationById, getApplications, postApplication, getBackofficeApplicationById, postDecision, type Application, type ApplicationStatus, type CaseListItem, type DecidedApplication, type Decision, type NewApplicationPayload, type PagedResult, type ReviewApplication, getReviewPage, getDecidedPage, getApplicationDetails, type DetailedApplication, postRequest, getCompanyApplications } from "../api/applicationApi"
+import { queryClient } from "../main"
 import type { ApiErrorPayload } from "../api/client"
 import { isValidOrgNumber } from "../utils/validators"
 
@@ -38,8 +39,6 @@ export const useApplication = (id: number | undefined) => {
 }
 
 export const useSubmitApplication = () => {
-  const queryClient = useQueryClient()
-
   return useMutation<Application, ApiErrorPayload, NewApplicationPayload>({
     mutationFn: (payload) => postApplication(payload),
     meta: { preventGlobalToast: true}, // the page shows its own error under the button
@@ -50,8 +49,6 @@ export const useSubmitApplication = () => {
 }
 
 export const useDecideApplication = () => {
-  const queryClient = useQueryClient()
-
   return useMutation<void, ApiErrorPayload, { id: number, decision: Decision, comment: string }>({
     mutationFn: ({ id, decision, comment }) => postDecision(id, decision, comment),
     meta: { preventGlobalToast: true },
@@ -62,8 +59,6 @@ export const useDecideApplication = () => {
 }
 
 export const useRequestInformation = () => {
-  const queryClient = useQueryClient()
-
   return useMutation<void, ApiErrorPayload, { id: number, comment: string }>({
     mutationFn: ({ id, comment }) => postRequest(id, comment),
     onSuccess: () => {
