@@ -9,20 +9,39 @@
   display: inline-flex;
   align-items: center;
   width: fit-content;
-}
-
-.numberInput {
-  font-size: 1.25rem;
-  font-weight: 600;
+  overflow: hidden;
   height: 48px;
   border-style: dashed !important;
 }
 
+.inputWrapper:focus-within {
+  border-color: var(--color-primary);
+}
+
+.hiddenSizer,
+.numberInput,
 .unitSuffix {
   font-size: 1.25rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+}
+
+.hiddenSizer {
+  visibility: hidden;
+  white-space: pre;
+  height: 0;
+}
+
+.numberInput {
   position: absolute;
-  right: var(--space-sm);
+  border: none;
+  outline: none;
+  background-color: transparent;
+  margin: 0;
+}
+
+.unitSuffix {
   pointer-events: none;
 }
 
@@ -90,9 +109,16 @@
 }
 
 @media (min-width: 768px) {
+  .hiddenSizer {
+    padding-right: var(--space-base);
+  }
+
+  .inputWrapper {
+    height: 60px;
+  }
+
   .numberInput {
     font-size: 1.5rem;
-    height: 60px;
   }
 
   .unitSuffix {
