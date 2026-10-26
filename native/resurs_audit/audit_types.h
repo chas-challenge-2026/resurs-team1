@@ -1,5 +1,9 @@
 #ifndef RESURS_AUDIT_TYPES_H
 #define RESURS_AUDIT_TYPES_H
+/**
+ * @file
+ * @brief Audit byte sizes, borrowed entry data, and operation-specific results.
+ */
 
 #include <iostream>
 #include <cstdint>
@@ -8,6 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstring>
+/**
+ * Print length readable bytes as lowercase hexadecimal values followed by a newline.
+ * Borrows data without changing it; a non-null pointer is required when length > 0.
+ * Intended for diagnostics and demos, not for logging private keys or sensitive data.
+ */
 static void print_hex(const uint8_t *data, size_t length)
 {
     for (size_t i = 0; i < length; ++i)
@@ -20,23 +29,40 @@ static void print_hex(const uint8_t *data, size_t length)
 
 namespace resurs::audit
 {
+    /// Raw SHA-256 digest size used for currentHash and previousHash.
     inline constexpr std::size_t SHA256_HASH_BYTES = 32;
+    /// Raw Ed25519 private-key or public-key size; excludes any PEM/DER encoding.
     inline constexpr std::size_t PKEY_BYTES = 32;
+    /// Raw Ed25519 signature size when signing the 32-byte currentHash.
     inline constexpr std::size_t DIGITAL_SIGNATURE_BYTES = 64;
 }
 
+/**
+ * One audit-chain entry passed by native callers or through a contiguous JNA array.
+ *
+ * The canonicalData allocation remains caller-owned and must stay alive and
+ * unchanged during verification. Arrays are stored inline; this struct does not
+ * allocate or free the canonical bytes. Field order and widths are part of the ABI.
+ */
 struct AuditEntry
 {
+    /// Exact RFC 8785-canonicalized UTF-8 bytes; native code does not parse the JSON.
     const uint8_t *canonicalData;
+    /// Readable byte count at canonicalData, not a null-terminated string length.
     size_t canonicalDataLength;
 
+    /// Ed25519 signature over currentHash, using the application's signing key.
     uint8_t signature[resurs::audit::DIGITAL_SIGNATURE_BYTES];
+    /// Previous entry's currentHash, or 32 zero bytes for the first entry.
     uint8_t previousHash[resurs::audit::SHA256_HASH_BYTES];
+    /// SHA-256 of canonicalData; excludes the currentHash and signature fields.
     uint8_t currentHash[resurs::audit::SHA256_HASH_BYTES];
         
+    /// One-based position in the complete chain, starting at 1 without gaps.
     uint64_t sequenceNumber;
 };
 
+/** Internal signing results, translated to HashAndSignResultCode by the C wrapper. */
 enum DigitalSignResultCode
 {
     SIGN_ALL_OK = 0,
@@ -46,6 +72,11 @@ enum DigitalSignResultCode
     SIGN_FAILED_TO_CONVERT_PRIVATE_KEY = -4
 };
 
+/**
+ * Chain-verification results: zero means valid and negative values identify errors.
+ * Argument and internal-error values are produced by the wrapper; chain checks
+ * and public-key import errors are produced by DigitalSign::verify_chain.
+ */
 enum VerifyChainResultCode
 {
     VERIFY_CHAIN_ALL_OK = 0,
@@ -64,12 +95,16 @@ enum VerifyChainResultCode
     VERIFY_CHAIN_RESULT_INTERNAL_ERROR = -12
 };
 
+/** Verification status and the location of an entry-specific failure. */
 struct VerifyChainResult
 {
+    /// Always check this field before interpreting index; zero means success.
     VerifyChainResultCode result_code;
+    /// Zero-based failing-entry index for entry errors; otherwise initialized to 0.
     uint64_t index;
 };
 
+/** C-wrapper public-key extraction results; zero means the output is usable. */
 enum GetPublicKeyResultCode
 {
     AUDIT_KEY_OK = 0,
@@ -80,6 +115,7 @@ enum GetPublicKeyResultCode
     AUDIT_KEY_INTERNAL_ERROR = -5
 };
 
+/** C-wrapper private-key generation results; zero means the output is usable. */
 enum GeneratePrivateKeyResultCode
 {
     AUDIT_PRIVATE_KEY_OK = 0,
@@ -88,6 +124,10 @@ enum GeneratePrivateKeyResultCode
     AUDIT_PRIVATE_KEY_INTERNAL_ERROR = -3
 };
 
+/**
+ * C-wrapper hash-and-sign results, including validation and mapped signing failures.
+ * Both output buffers are usable only when HASH_AND_SIGN_ALL_OK is returned.
+ */
 enum HashAndSignResultCode
 {
     HASH_AND_SIGN_ALL_OK = 0,

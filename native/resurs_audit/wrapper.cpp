@@ -2,8 +2,15 @@
 #include "resurs_audit.h"
 #include "audit_types.h"
 
-// ----------- Internal functions in anonymous namespace so it wont get exported  -----------
+// Internal helpers have translation-unit scope and are not part of the exported ABI.
 namespace {
+    /**
+     * Copy canonical bytes into an owned vector, hash them, and write a 32-byte digest.
+     * The exported caller validates non-null pointers, readable input length, and
+     * output capacity before calling. No JSON normalization is performed here.
+     * Returns 0 on success or -1 for an unexpected digest size. Exceptions propagate
+     * to wrapper_hash_and_sign, which converts them into a public error result.
+     */
     int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
     {
         DigitalSign digSign;
@@ -19,7 +26,13 @@ namespace {
         return 0;
     }
 
-    //int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
+    /**
+     * Sign a 32-byte hash using a borrowed raw 32-byte Ed25519 private key.
+     * The exported caller validates the input pointers, key length, and 64-byte
+     * output capacity. A local DigitalSign owns the OpenSSL context and imported key.
+     * Returns an internal signing result for the exported caller to translate;
+     * exceptions propagate to that caller's exception boundary.
+     */
     DigitalSignResultCode wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
     {
         DigitalSign digSign;
