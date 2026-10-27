@@ -14,7 +14,7 @@ name: resurs
 
 services:
   db:
-    image: postgres:12
+    image: postgres:16
     environment:
       POSTGRES_DB: resurs
       POSTGRES_USER: resurs
