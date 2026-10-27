@@ -86,10 +86,6 @@ public class JNASignatureComponent  {
                 case -10 : throw new JnaSigningException("a JNA Signature component Failed");
 
             }
-
-
-
-
             return new SignatureOutput(newHash,newSignature);
         }
 
