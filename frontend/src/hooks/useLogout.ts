@@ -1,9 +1,8 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { queryClient } from "../main";
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../api/authApi";
 
 const useLogout = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
 
   const logout = async () => {

@@ -6,8 +6,8 @@ import type { CaseWorkerUser, CompanyUser } from "../types/user"
 import type { ApiErrorPayload } from "../api/client"
 
 const useCompanyLogin = () => {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   return useMutation<CompanyUser, ApiErrorPayload, CompanyLoginPayload>({
     mutationFn: (payload) => loginCompany(payload),
@@ -25,8 +25,8 @@ const useCompanyLogin = () => {
 }
 
 const useCaseWorkerLogin = () => {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   return useMutation<CaseWorkerUser, ApiErrorPayload, CaseworkerLoginPayload>({
     mutationFn: (payload) => loginCaseWorker(payload),

@@ -30,8 +30,8 @@ services:
 
   app:
     build:
-      context: ../backend/ResursPortal
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: backend/ResursPortal/Dockerfile
     expose:
       - "8083"
     environment:
