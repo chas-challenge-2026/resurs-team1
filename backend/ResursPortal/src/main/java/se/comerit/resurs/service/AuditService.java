@@ -3,6 +3,7 @@ package se.comerit.resurs.service;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.audit.AuditDataFormat;
 import se.comerit.resurs.dto.audit.ChainVerificationResponse;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.AuditEventDTO;
@@ -52,7 +53,7 @@ public class AuditService {
         if (previousEvent.isEmpty()){
             newEvent.setPreviousHash(new byte[32]); // 32 zero bytes to mark first link in chain
         } else {
-            newEvent.setPreviousHash(newEvent.getCurrentHash()); //if previous auditevent in chain exists,  use its current hash
+            newEvent.setPreviousHash(previousEvent.get().getCurrentHash()); //if previous auditevent in chain exists,  use its current hash
         }
 
         signingService.hashAndSign(newEvent);
@@ -118,7 +119,7 @@ public class AuditService {
     }
 
     private Optional<ApplicationCommentDTO> toComment(AuditEvent event) {
-        AuditDataFormat.CommentEntry entry = objectMapper.readValue(event.getData(),
+        AuditDataFormat.CommentEntry entry = objectMapper.treeToValue(event.getData(),
                 AuditDataFormat.CommentEntry.class);
 
         return Optional.ofNullable(entry.comment())

@@ -1,12 +1,13 @@
 package se.comerit.resurs.jna;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.BaseTSD;
 import org.erdtman.jcs.JsonCanonicalizer;
 import org.springframework.stereotype.Component;
 import se.comerit.resurs.dto.audit.AuditEventSignaturePayloadDTO;
 import se.comerit.resurs.persistence.model.AuditEvent;
+import tools.jackson.databind.ObjectMapper;
 
 
 import java.nio.charset.StandardCharsets;
@@ -23,8 +24,10 @@ public class NativeAuditMapper {
     }
 
     public NativeAuditEntryStruct toStruct(AuditEvent event) {
+
+
         try {
-            var payload = new AuditEventSignaturePayloadDTO(event);
+            AuditEventSignaturePayloadDTO payload = new AuditEventSignaturePayloadDTO(event);
 
             String json = objectMapper.writeValueAsString(payload);
             String canonicalJson =
@@ -56,7 +59,7 @@ public class NativeAuditMapper {
 
             if (event.getSignature() != null) {
                 byte[] signature =
-                        Base64.getDecoder().decode(event.getSignature());
+                        event.getSignature();
 
                 if (signature.length != 64) {
                     throw new IllegalArgumentException(
@@ -74,4 +77,22 @@ public class NativeAuditMapper {
                     "Failed to map audit event " + event.getEventId(), e);
         }
     }
+
+    public void toTargetStruct(AuditEvent event, NativeAuditEntryStruct targetStruct){
+        NativeAuditEntryStruct mapped = this.toStruct(event);
+
+        targetStruct.canonicalData = mapped.canonicalData;
+        targetStruct.currentHash = mapped.currentHash;
+        targetStruct.previousHash = mapped.previousHash;
+        targetStruct.signature = mapped.signature;
+        targetStruct.sequenceNumber = mapped.sequenceNumber;
+        targetStruct.canonicalDataLength = mapped.canonicalDataLength;
+        targetStruct.setCanonicalDataMemory(mapped.getCanonicalDataMemory());
+
+        targetStruct.write();
+
+    }
+
+
+
 }

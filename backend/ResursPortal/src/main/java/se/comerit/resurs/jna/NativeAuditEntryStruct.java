@@ -31,6 +31,10 @@ public class NativeAuditEntryStruct extends Structure implements AutoCloseable {
         this.canonicalData = memory;
     }
 
+    public Memory getCanonicalDataMemory(){
+        return this.canonicalDataMemory;
+    };
+
     @Override
     public void close() {
         if (canonicalDataMemory != null) {
@@ -39,5 +43,6 @@ public class NativeAuditEntryStruct extends Structure implements AutoCloseable {
             canonicalData = null;
         }
     }
+
 
 }

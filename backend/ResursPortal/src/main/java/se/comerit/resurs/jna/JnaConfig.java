@@ -19,7 +19,7 @@ public class JnaConfig {
     @Bean
     NativeSignatureInterface signatureLibraryInstance(){
         return Native.load(
-                "return_audit",
+                "resurs_audit",
                 NativeSignatureInterface.class);
     }
 
