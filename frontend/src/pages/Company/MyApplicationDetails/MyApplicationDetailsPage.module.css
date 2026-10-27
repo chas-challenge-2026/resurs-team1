@@ -42,6 +42,27 @@
   flex-shrink: 0;
 }
 
+.pageHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+
+.pageHeader > * {
+  grid-column: 1;
+}
+
+/* stands on the cards top edge */
+.mascot {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: end;
+  height: 80px;
+  margin-bottom: calc(-1 * var(--space-base) - 6px);
+  position: relative;
+  z-index: 1;
+}
+
 .infoTitle {
   font-weight: 500;
 }

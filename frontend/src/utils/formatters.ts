@@ -1,5 +1,3 @@
-import { ID_NUMBER_DIGITS, PURPOSE_OPTIONS } from "../constants/constants";
-
 const swedishCurrencyFormatter = new Intl.NumberFormat("sv-SE");
 
 /**
@@ -20,43 +18,37 @@ export const formatCurrency = (value: number, unit: string = "kr"): string => {
   return unit ? `${formatted} ${unit}`.trim() : formatted;
 }
 
+/**
+ * Strips non-digit characters from an input string and formats the remaining digits 
+ * with thousand separators. Returns an empty string if no digits remain.
+ * Best used for controlled form input fields as the user types.
+ *
+ * @param val - The raw string input from a form or event target.
+ * @returns Formatted number string without units, or "" if input contains no digits.
+ *
+ * @example
+ * formatNumberWithSpaces("3000000") // "3 000 000"
+ * formatNumberWithSpaces("3 000kr") // "3 000"
+ * formatNumberWithSpaces("") // ""
+ */
 export const formatNumberWithSpaces = (val: string) => {
   // Remove non-numbers
   const cleanValue = val.replace(/\D/g, "")
 
   if (!cleanValue) return ""
 
-  return new Intl.NumberFormat("sv-SE").format(Number(cleanValue))
+  return swedishCurrencyFormatter.format(Number(cleanValue))
 }
 
 export const formatDate = (isoString: string) => {
   if (!isoString) return "-"
   const date = new Date(isoString)
-  return date.toISOString().split("T")[0]
-}
-
-export const formatReferenceNumber = (id: number) => {
-  return `REF-${id}`
-}
-
-export function formatFilename(filename: string): string {
-  return filename.replace(/^\d+_/, "");
-}
-
-export function getPurposeLabel(purpose: string): string {
-  const option = PURPOSE_OPTIONS.find((opt) => opt.value === purpose);
-  return option ? option.label : purpose;
+  return date.toLocaleDateString("sv-SE")
 }
 
 // force the shape
 // the "-" waits for a digit to follow it, otherwise backspace can never delete it
 export const format10DigitNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, ID_NUMBER_DIGITS)
+  const digits = value.replace(/\D/g, "").slice(0, 10)
   return digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits // add "-"
-}
-
-export const isValidOrgNumber = (orgNumber: string): boolean => {
-  const trimmed = orgNumber.trim()
-  const orgRegex = /^(16)?\d{6}-\d{4}$/
-  return orgRegex.test(trimmed)
 }

@@ -7,6 +7,8 @@ export const useUser = () => {
     queryKey: ["me"],
     queryFn: getMe,
     retry: false,
+    // without this it refetches in a loop
+    retryOnMount: false,
     staleTime: 1000 * 60 * 5,
   })
 }

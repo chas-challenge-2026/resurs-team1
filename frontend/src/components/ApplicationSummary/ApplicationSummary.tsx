@@ -1,5 +1,6 @@
 import type { Application } from "../../api/applicationApi"
-import { formatCurrency, getPurposeLabel } from "../../utils/formatters"
+import { formatCurrency } from "../../utils/formatters"
+import { getPurposeLabel } from "../../utils/domainFormatters"
 import { Card } from "../Card/Card"
 import s from "./ApplicationSummary.module.css"
 

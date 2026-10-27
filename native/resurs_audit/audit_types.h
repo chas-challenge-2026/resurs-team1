@@ -4,7 +4,6 @@
 #include <iostream>
 #include <cstdint>
 
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -35,8 +34,6 @@ struct AuditEntry
     uint8_t previousHash[resurs::audit::SHA256_HASH_BYTES];
     uint8_t currentHash[resurs::audit::SHA256_HASH_BYTES];
         
-    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousHash;
-    //std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> currentHash;
     uint64_t sequenceNumber;
 };
 
@@ -52,13 +49,19 @@ enum DigitalSignResultCode
 enum VerifyChainResultCode
 {
     VERIFY_CHAIN_ALL_OK = 0,
-    PREVIOUS_HASH_MISSMATCH = -1,
-    SEQUENCE_NUMBER_MISSMATCH = -2,
-    CURRENT_HASH_MISSMATCH = -3,
-    EVP_DIGEST_VERIFY_INIT_FAILED = -4,
-    EVP_DIGEST_VERIFY_FAILED = -5,
-    VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY = -6
+    VERIFY_CHAIN_INVALID_ARGUMENT = -1,
+    VERIFY_CHAIN_ENTRY_COUNT_EMPTY = -2,
+    VERIFY_CHAIN_INVALID_PUBLIC_KEY_SIZE = -3,
+    VERIFY_CHAIN_CANONICAL_DATA_EMPTY = -4,
+    VERIFY_CHAIN_CANONICAL_DATA_LENGTH_EMPTY = -5,
 
+    PREVIOUS_HASH_MISSMATCH = -6,
+    SEQUENCE_NUMBER_MISSMATCH = -7,
+    CURRENT_HASH_MISSMATCH = -8,
+    EVP_DIGEST_VERIFY_INIT_FAILED = -9,
+    EVP_DIGEST_VERIFY_FAILED = -10,
+    VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY = -11,
+    VERIFY_CHAIN_RESULT_INTERNAL_ERROR = -12
 };
 
 struct VerifyChainResult
@@ -67,22 +70,42 @@ struct VerifyChainResult
     uint64_t index;
 };
 
-/*
-struct AuditEntryChain
+enum GetPublicKeyResultCode
 {
-    std::vector<AuditEntry> entries;
-    
+    AUDIT_KEY_OK = 0,
+    AUDIT_KEY_NULL_ARGUMENT = -1,
+    AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE = -2,
+    AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL = -3,
+    AUDIT_KEY_CREATION_FAILED = -4,
+    AUDIT_KEY_INTERNAL_ERROR = -5
 };
-*/
 
-/* exemmple på wrappern
-int verify_audit_chain(
-    const AuditVerifyEntry* entries,
-    size_t entryCount,
-    EVP_PKEY* publicKey
-);
+enum GeneratePrivateKeyResultCode
+{
+    AUDIT_PRIVATE_KEY_OK = 0,
+    AUDIT_INVALID_ARGUMENT = -1,
+    AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL = -2,
+    AUDIT_PRIVATE_KEY_INTERNAL_ERROR = -3
+};
 
+enum HashAndSignResultCode
+{
+    HASH_AND_SIGN_ALL_OK = 0,
 
-*/
+    // validation errors
+    HASH_AND_SIGN_INVALID_ARGUMENT = -1,
+    HASH_AND_SIGN_CANONICAL_DATA_EMPTY = -2,
+    HASH_AND_SIGN_INVALID_BUFFER_SIZE = -3,
 
+    // hash
+    HASH_AND_SIGN_HASHING_FAILED = -4,
+    // DigitalSign
+    HASH_AND_SIGN_SIGNING_INIT_FAILED = -5,
+    HASH_AND_SIGN_SIGNING_SIGNATURE_LENGTH_FAILED = -6,
+    HASH_AND_SIGN_SIGNING_EVP_DIGEST_SIGNING_FAILED = -7,
+    HASH_AND_SIGN_SIGNING_FAILED_TO_CONVERT_TO_PRIVATE_KEY = -8,
+    HASH_AND_SIGN_SIGNING_INTERNAL_ERROR = -9,
+
+    HASH_AND_SIGN_INTERNAL_ERROR = -10
+};
 #endif

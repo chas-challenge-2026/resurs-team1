@@ -37,6 +37,7 @@ native/vcpkg_installed/
 
 # Local Windows build
 build/windows/
+build-windows/
 
 # Local native development build
 native/build-devcontainer/

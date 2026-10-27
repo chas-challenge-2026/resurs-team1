@@ -53,9 +53,7 @@ export const REPAYMENT_OPTIONS: ButtonGroupOption<number>[] = [
 
 // stricter than the browser's own rule, which accepts a domain without a dot
 export const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/
-
-// loose on purpose: swedish numbers are written with spaces, dashes and +46
-export const PHONE_PATTERN = /^[\d\s+()-]{6,20}$/
+// phone pattern is now a functio using google api instead to support all countries
 
 export const LOAN_MIN = 50000
 export const LOAN_MAX = 10000000

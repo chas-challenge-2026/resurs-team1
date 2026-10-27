@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -29,6 +30,9 @@ public class SecurityConfig {
                        .csrfTokenRequestHandler(csrfTokenRequestHandler()))
 
                .authorizeHttpRequests(auth -> auth
+                       .requestMatchers("/", "/index.html", "/assets/**", "/*.png", "/*.ico", "/*.webp", "/*.svg").permitAll()
+                       .requestMatchers(RegexRequestMatcher.regexMatcher("^(?!/api/).*")).permitAll()
+                       
                        .requestMatchers("/api/auth/login/**", "/api/auth/logout").permitAll()
                        .requestMatchers("/error").permitAll()
                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()

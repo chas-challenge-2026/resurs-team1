@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useParams } from "react-router-dom"
-import { formatCurrency, formatDate, formatReferenceNumber } from "../../utils/formatters"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber } from "../../utils/domainFormatters"
 import { getMetric } from "../../utils/scoringConverter"
 import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
 import { useAuditLog } from "../../hooks/useAudit"
@@ -100,6 +101,7 @@ const CaseDetailsPage = () => {
         <NotFoundPage
           description = "Ärendet du söker finns inte, kontrollera att du har skrivit in rätt ärendenummer eller länk. Fungerar det fortfarande inte? Då kan ärendet ha blivit borttaget eller arkiverat. Försök hitta ärendet du söker via ärendelistan."
           showRedirectButton = {false}
+          showMascot = {false}
         />
       )
     }
