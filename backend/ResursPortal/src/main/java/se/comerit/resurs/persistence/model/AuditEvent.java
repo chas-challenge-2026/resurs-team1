@@ -39,10 +39,10 @@ public class AuditEvent {
     private String data;
 
     @Column(name = "previous_hash", length = 64)
-    private String previousHash;
+    private byte[] previousHash;
 
     @Column(name = "current_hash", length = 64)
-    private String currentHash;
+    private byte[] currentHash;
 
     private static final int SCHEMA_VERSION = 1;
 
@@ -53,7 +53,7 @@ public class AuditEvent {
     private String signingKeyId;
 
     @Column(name = "signature", length = 512)
-    private String signature;
+    private byte[] signature;
 
     protected AuditEvent() {
     }
@@ -62,7 +62,7 @@ public class AuditEvent {
 
     public AuditEvent(CreditApplication application, long sequenceNumber, AuditAction action,
                       String actor, String data,
-                      String previousHash, String currentHash, String signingKeyId, String signature) {
+                      byte[] previousHash, byte[] currentHash, String signingKeyId, byte[] signature) {
         this.eventId = UUID.randomUUID();
         this.application = application;
         this.sequenceNumber = sequenceNumber;
@@ -84,11 +84,11 @@ public class AuditEvent {
     public AuditAction getAction() { return action; }
     public String getActor() { return actor; }
     public String getData() { return data; }
-    public String getPreviousHash() { return previousHash; }
-    public String getCurrentHash() {return currentHash;}
+    public byte[] getPreviousHash() { return previousHash; }
+    public byte[] getCurrentHash() {return currentHash;}
     public int getSchemaVersion() { return schemaVersion; }
     public String getSigningKeyId() { return signingKeyId; }
-    public String getSignature() { return signature; }
+    public byte[] getSignature() { return signature; }
 }
 
 

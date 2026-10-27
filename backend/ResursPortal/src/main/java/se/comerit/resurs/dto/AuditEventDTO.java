@@ -14,11 +14,11 @@ public record AuditEventDTO(UUID eventId,
                             AuditAction action,
                             String actor,
                             @JsonRawValue String data,
-                            String previousHash,
-                            String currentHash,
+                            byte[] previousHash,
+                            byte[] currentHash,
                             int schemaVersion,
                             String signingKeyId,
-                            String signature) {
+                            byte[] signature) {
     public AuditEventDTO(AuditEvent event) {
         this(event.getEventId(), event.getApplication().getId(), event.getSequenceNumber(), event.getOccurredAt(),
                 event.getAction(), event.getActor(), event.getData(), event.getPreviousHash(),event.getCurrentHash(), event.getSchemaVersion(), event.getSigningKeyId(), event.getSignature());
