@@ -30,15 +30,23 @@ public class JNASignatureComponent  {
         public byte[] generatePrivateKey() {
 
             byte[] privateKey = new byte[32];
-            signatureLibrary.generate_private_key(privateKey,new BaseTSD.SIZE_T(privateKey.length));
+            int statuscode = signatureLibrary.generate_private_key(privateKey,new BaseTSD.SIZE_T(privateKey.length));
+            if(statuscode != 0) {
+                throw new RuntimeException("could not generate a key");
+            }
             return privateKey;
         }
 
         public byte[] getPublicKey(byte[] privateKey){
             byte[] publicKey = new byte[32];
-            signatureLibrary.get_public_key(
+            int statuscode = signatureLibrary.get_public_key(
                     privateKey,new BaseTSD.SIZE_T(privateKey.length),
                     publicKey,new BaseTSD.SIZE_T(publicKey.length));
+
+            if (statuscode != 0){
+                throw new RuntimeException("could not generate public keypair");
+            }
+
             return publicKey;
         }
 
@@ -64,6 +72,22 @@ public class JNASignatureComponent  {
             if(statusCode != 0){
                 throw new JnaSigningException("a JNA Signature component Failed");
             }
+
+            switch (statusCode){
+                case -1 : throw new JnaSigningException("a buffer was null");
+                case -2 : throw new JnaSigningException("no data to sign");
+                case -3 : throw new JnaSigningException("invalid buffer size");
+                case -4 : throw new JnaSigningException("a JNA Signature component Failed");
+                case -5 : throw new JnaSigningException("a JNA Signature component Failed");
+                case -6 : throw new JnaSigningException("a JNA Signature component Failed");
+                case -7 : throw new JnaSigningException("a JNA Signature component Failed");
+                case -8 : throw new JnaSigningException("non-valid key");
+                case -9 : throw new JnaSigningException("Internal Error");
+                case -10 : throw new JnaSigningException("a JNA Signature component Failed");
+
+            }
+
+
 
 
             return new SignatureOutput(newHash,newSignature);

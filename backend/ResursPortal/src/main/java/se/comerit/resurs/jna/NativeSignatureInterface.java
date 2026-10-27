@@ -6,7 +6,7 @@ import com.sun.jna.platform.win32.BaseTSD.SIZE_T;
 public interface NativeSignatureInterface extends Library {
 
 
-    void generate_private_key(byte[] outputPrivateKey, SIZE_T  privateKeyLength);
+    int generate_private_key(byte[] outputPrivateKey, SIZE_T  privateKeyLength);
 
     int get_public_key(
             byte[] privateKey,
