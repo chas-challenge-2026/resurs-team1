@@ -43,14 +43,10 @@ public class AuditService {
     //       (JNA, se v2-targets.md punkt 4). null tills den är på plats.
     private static final byte[] NOT_SIGNED_YET = null;
 
-    private String toJson(Object data) {
-        return objectMapper.writeValueAsString(data);
-    }
-
     private void saveEvent(CreditApplication application, AuditAction action, String actor, Object data) {
 
         AuditEvent newEvent = new AuditEvent(application, nextSequenceNumber(application.getId()),
-                action, actor, toJson(data), NOT_SIGNED_YET, NOT_SIGNED_YET, null, NOT_SIGNED_YET);
+                action, actor, objectMapper.valueToTree(data), NOT_SIGNED_YET, NOT_SIGNED_YET, null, NOT_SIGNED_YET);
 
         Optional<AuditEvent> previousEvent = auditEventRepository.findFirstByApplicationIdOrderBySequenceNumberDesc(application.getId());
         if (previousEvent.isEmpty()){

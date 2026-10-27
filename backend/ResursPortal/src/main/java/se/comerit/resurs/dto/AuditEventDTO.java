@@ -1,8 +1,8 @@
 package se.comerit.resurs.dto;
 
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.model.AuditEvent;
+import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -13,7 +13,7 @@ public record AuditEventDTO(UUID eventId,
                             Instant occurredAt,
                             AuditAction action,
                             String actor,
-                            @JsonRawValue String data,
+                            JsonNode data,
                             byte[] previousHash,
                             byte[] currentHash,
                             int schemaVersion,

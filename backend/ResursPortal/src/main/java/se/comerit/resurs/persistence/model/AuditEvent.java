@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.comerit.resurs.enums.AuditAction;
+import tools.jackson.databind.JsonNode;
 
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -36,7 +38,7 @@ public class AuditEvent {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "jsonb")
-    private String data;
+    private JsonNode data;
 
     @Column(name = "previous_hash", length = 64)
     private byte[] previousHash;
@@ -61,7 +63,7 @@ public class AuditEvent {
 
 
     public AuditEvent(CreditApplication application, long sequenceNumber, AuditAction action,
-                      String actor, String data,
+                      String actor, JsonNode data,
                       byte[] previousHash, byte[] currentHash, String signingKeyId, byte[] signature) {
         this.eventId = UUID.randomUUID();
         this.application = application;
@@ -74,7 +76,7 @@ public class AuditEvent {
         this.currentHash = currentHash;
         this.signingKeyId = signingKeyId;
         this.signature = signature;
-        this.occurredAt = Instant.now();
+        this.occurredAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public UUID getEventId() { return eventId; }
@@ -83,7 +85,7 @@ public class AuditEvent {
     public Instant getOccurredAt() { return occurredAt; }
     public AuditAction getAction() { return action; }
     public String getActor() { return actor; }
-    public String getData() { return data; }
+    public JsonNode getData() { return data; }
     public byte[] getPreviousHash() { return previousHash; }
     public byte[] getCurrentHash() {return currentHash;}
     public int getSchemaVersion() { return schemaVersion; }

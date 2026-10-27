@@ -1,7 +1,8 @@
 package se.comerit.resurs.dto.audit;
 
-import com.fasterxml.jackson.databind.JsonNode;
+
 import se.comerit.resurs.persistence.model.AuditEvent;
+import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,7 +15,7 @@ public record AuditEventSignaturePayloadDTO(
         Instant occurredAt,
         String action,
         String actor,
-        String data,
+        JsonNode data,
         byte[] previousHash
 ) {
 

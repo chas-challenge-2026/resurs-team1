@@ -58,7 +58,8 @@ public class JNASignatureComponent  {
             String json = jsonMapper.writeValueAsString(new AuditEventSignaturePayloadDTO(event));
 
             String payload = new JsonCanonicalizer(json).getEncodedString();
-            byte[] canonicalData = payload.getBytes();
+            byte[] canonicalData = payload.getBytes(StandardCharsets.UTF_8);
+
 
             //Status codes for exceptions
 
@@ -90,8 +91,19 @@ public class JNASignatureComponent  {
         }
 
     public VerifyChainResult verifyChain(List<AuditEvent> auditEvents) {
-        NativeAuditEntryStruct[] entries = auditEvents.stream().map(nativeAuditMapper::toStruct)
-                .toArray(NativeAuditEntryStruct[]::new);
+
+        if (auditEvents.isEmpty()) {
+            throw new NoSuchElementException("No audits for ID");
+        }
+
+        NativeAuditEntryStruct[] entries =
+                (NativeAuditEntryStruct[]) new NativeAuditEntryStruct()
+                        .toArray(auditEvents.size());
+
+        for (int i = 0; i < auditEvents.size(); i++) {
+            nativeAuditMapper.toTargetStruct(auditEvents.get(i), entries[i]);
+        }
+
 
         try {
             byte[] publicKey = getPublicKey(encryptionKey.hashKeyBytes());

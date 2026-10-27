@@ -317,7 +317,7 @@ class AuditEventServiceTest {
      */
     private Map<String, Object> dataOf(AuditEvent event) {
         try {
-            return objectMapper.readValue(event.getData(), new TypeReference<>() {
+            return objectMapper.treeToValue(event.getData(), new TypeReference<>() {
             });
         } catch (JacksonException e) {
             throw new IllegalStateException("Ogiltig JSON i audit_events.data", e);
