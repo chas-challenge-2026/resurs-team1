@@ -6,6 +6,34 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <string>
+
+
+namespace {
+
+void require_test(
+    bool condition,
+    const char* expression,
+    int line)
+{
+    if (!condition)
+    {
+        throw std::runtime_error(
+            "line " + std::to_string(line) +
+            ": requirement failed: " + expression
+        );
+    }
+}
+
+} // namespace
+
+
+// Standard assert is disabled by NDEBUG in Release builds. Keep these checks
+// and all function calls inside them active in every build configuration.
+#undef assert
+#define assert(condition) \
+    require_test(static_cast<bool>(condition), #condition, __LINE__)
 
 
 // ============================================================
@@ -16,7 +44,12 @@ std::array<uint8_t, resurs::audit::PKEY_BYTES>
 get_private_key()
 {
     std::array<uint8_t, resurs::audit::PKEY_BYTES> privateKey{};
-    generate_private_key(privateKey.data());
+    assert(
+        generate_private_key(
+            privateKey.data(),
+            privateKey.size()
+        ) == AUDIT_PRIVATE_KEY_OK
+    );
     return privateKey;
 }
 
@@ -30,8 +63,10 @@ get_public_key(
     assert(
         ::get_public_key(
             privateKeyCopy.data(),
-            publicKey.data()
-        ) == 0
+            privateKeyCopy.size(),
+            publicKey.data(),
+            publicKey.size()
+        ) == AUDIT_KEY_OK
     );
 
     return publicKey;
@@ -106,6 +141,293 @@ AuditEntry make_known_answer_entry(const uint8_t* canonicalData)
 
 
 // ============================================================
+// PUBLIC BOUNDARY VALIDATION TESTS
+// ============================================================
+
+void test_generate_private_key_validation()
+{
+    std::array<uint8_t, resurs::audit::PKEY_BYTES> output{};
+    std::array<uint8_t, resurs::audit::PKEY_BYTES + 1> largerOutput{};
+
+    assert(
+        generate_private_key(nullptr, output.size()) ==
+        AUDIT_INVALID_ARGUMENT
+    );
+    assert(
+        generate_private_key(output.data(), output.size() - 1) ==
+        AUDIT_PRIVATE_KEY_BUFFER_TOO_SMALL
+    );
+    assert(
+        generate_private_key(output.data(), output.size()) ==
+        AUDIT_PRIVATE_KEY_OK
+    );
+    assert(
+        generate_private_key(largerOutput.data(), largerOutput.size()) ==
+        AUDIT_PRIVATE_KEY_OK
+    );
+}
+
+
+void test_get_public_key_validation()
+{
+    auto privateKey = KNOWN_ANSWER_PRIVATE_KEY;
+    std::array<uint8_t, resurs::audit::PKEY_BYTES> output{};
+    std::array<uint8_t, resurs::audit::PKEY_BYTES + 1> largerOutput{};
+
+    assert(
+        ::get_public_key(
+            nullptr,
+            privateKey.size(),
+            output.data(),
+            output.size()
+        ) == AUDIT_KEY_NULL_ARGUMENT
+    );
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            privateKey.size(),
+            nullptr,
+            output.size()
+        ) == AUDIT_KEY_NULL_ARGUMENT
+    );
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            privateKey.size() - 1,
+            output.data(),
+            output.size()
+        ) == AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE
+    );
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            privateKey.size() + 1,
+            output.data(),
+            output.size()
+        ) == AUDIT_KEY_INVALID_PRIVATE_KEY_SIZE
+    );
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            privateKey.size(),
+            output.data(),
+            output.size() - 1
+        ) == AUDIT_KEY_OUTPUT_BUFFER_TOO_SMALL
+    );
+    assert(
+        ::get_public_key(
+            privateKey.data(),
+            privateKey.size(),
+            largerOutput.data(),
+            largerOutput.size()
+        ) == AUDIT_KEY_OK
+    );
+}
+
+
+void test_hash_and_sign_validation()
+{
+    auto privateKey = KNOWN_ANSWER_PRIVATE_KEY;
+    const auto* canonicalData = KNOWN_ANSWER_CANONICAL_DATA.data();
+    const size_t canonicalDataLength = KNOWN_ANSWER_CANONICAL_DATA.size();
+    std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hash{};
+    std::array<uint8_t, resurs::audit::DIGITAL_SIGNATURE_BYTES> signature{};
+
+    assert(
+        wrapper_hash_and_sign(
+            nullptr,
+            canonicalDataLength,
+            privateKey.data(),
+            privateKey.size(),
+            hash.data(),
+            hash.size(),
+            signature.data(),
+            signature.size()
+        ) == HASH_AND_SIGN_INVALID_ARGUMENT
+    );
+    assert(
+        wrapper_hash_and_sign(
+            canonicalData,
+            canonicalDataLength,
+            nullptr,
+            privateKey.size(),
+            hash.data(),
+            hash.size(),
+            signature.data(),
+            signature.size()
+        ) == HASH_AND_SIGN_INVALID_ARGUMENT
+    );
+    assert(
+        wrapper_hash_and_sign(
+            canonicalData,
+            canonicalDataLength,
+            privateKey.data(),
+            privateKey.size(),
+            nullptr,
+            hash.size(),
+            signature.data(),
+            signature.size()
+        ) == HASH_AND_SIGN_INVALID_ARGUMENT
+    );
+    assert(
+        wrapper_hash_and_sign(
+            canonicalData,
+            canonicalDataLength,
+            privateKey.data(),
+            privateKey.size(),
+            hash.data(),
+            hash.size(),
+            nullptr,
+            signature.size()
+        ) == HASH_AND_SIGN_INVALID_ARGUMENT
+    );
+    assert(
+        wrapper_hash_and_sign(
+            canonicalData,
+            0,
+            privateKey.data(),
+            privateKey.size(),
+            hash.data(),
+            hash.size(),
+            signature.data(),
+            signature.size()
+        ) == HASH_AND_SIGN_CANONICAL_DATA_EMPTY
+    );
+
+    for (size_t invalidPrivateKeyLength : {
+            privateKey.size() - 1,
+            privateKey.size() + 1})
+    {
+        assert(
+            wrapper_hash_and_sign(
+                canonicalData,
+                canonicalDataLength,
+                privateKey.data(),
+                invalidPrivateKeyLength,
+                hash.data(),
+                hash.size(),
+                signature.data(),
+                signature.size()
+            ) == HASH_AND_SIGN_INVALID_BUFFER_SIZE
+        );
+    }
+
+    for (size_t invalidHashLength : {hash.size() - 1, hash.size() + 1})
+    {
+        assert(
+            wrapper_hash_and_sign(
+                canonicalData,
+                canonicalDataLength,
+                privateKey.data(),
+                privateKey.size(),
+                hash.data(),
+                invalidHashLength,
+                signature.data(),
+                signature.size()
+            ) == HASH_AND_SIGN_INVALID_BUFFER_SIZE
+        );
+    }
+
+    for (size_t invalidSignatureLength : {
+            signature.size() - 1,
+            signature.size() + 1})
+    {
+        assert(
+            wrapper_hash_and_sign(
+                canonicalData,
+                canonicalDataLength,
+                privateKey.data(),
+                privateKey.size(),
+                hash.data(),
+                hash.size(),
+                signature.data(),
+                invalidSignatureLength
+            ) == HASH_AND_SIGN_INVALID_BUFFER_SIZE
+        );
+    }
+}
+
+
+void test_verify_chain_argument_validation()
+{
+    AuditEntry entry = make_known_answer_entry(
+        KNOWN_ANSWER_CANONICAL_DATA.data()
+    );
+
+    VerifyChainResult result = wrapper_verify_chain(
+        nullptr,
+        1,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+    assert(result.result_code == VERIFY_CHAIN_INVALID_ARGUMENT);
+    assert(result.index == 0);
+
+    result = wrapper_verify_chain(
+        &entry,
+        1,
+        nullptr,
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+    assert(result.result_code == VERIFY_CHAIN_INVALID_ARGUMENT);
+    assert(result.index == 0);
+
+    result = wrapper_verify_chain(
+        &entry,
+        0,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+    assert(result.result_code == VERIFY_CHAIN_ENTRY_COUNT_EMPTY);
+    assert(result.index == 0);
+
+    for (size_t invalidPublicKeyLength : {
+            KNOWN_ANSWER_PUBLIC_KEY.size() - 1,
+            KNOWN_ANSWER_PUBLIC_KEY.size() + 1})
+    {
+        result = wrapper_verify_chain(
+            &entry,
+            1,
+            KNOWN_ANSWER_PUBLIC_KEY.data(),
+            invalidPublicKeyLength
+        );
+        assert(result.result_code == VERIFY_CHAIN_INVALID_PUBLIC_KEY_SIZE);
+        assert(result.index == 0);
+    }
+}
+
+
+void test_verify_chain_entry_validation_reports_index()
+{
+    AuditEntry entries[2] = {
+        make_known_answer_entry(KNOWN_ANSWER_CANONICAL_DATA.data()),
+        make_known_answer_entry(KNOWN_ANSWER_CANONICAL_DATA.data())
+    };
+
+    entries[1].canonicalData = nullptr;
+    VerifyChainResult result = wrapper_verify_chain(
+        entries,
+        2,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+    assert(result.result_code == VERIFY_CHAIN_CANONICAL_DATA_EMPTY);
+    assert(result.index == 1);
+
+    entries[1].canonicalData = KNOWN_ANSWER_CANONICAL_DATA.data();
+    entries[1].canonicalDataLength = 0;
+    result = wrapper_verify_chain(
+        entries,
+        2,
+        KNOWN_ANSWER_PUBLIC_KEY.data(),
+        KNOWN_ANSWER_PUBLIC_KEY.size()
+    );
+    assert(result.result_code == VERIFY_CHAIN_CANONICAL_DATA_LENGTH_EMPTY);
+    assert(result.index == 1);
+}
+
+
+// ============================================================
 // TEST 1
 // ============================================================
 
@@ -128,7 +450,9 @@ void test_hash_is_deterministic()
         privateKey.data(),
         privateKey.size(),
         hash1,
-        signature1
+        sizeof(hash1),
+        signature1,
+        sizeof(signature1)
     );
 
     int result2 = wrapper_hash_and_sign(
@@ -137,7 +461,9 @@ void test_hash_is_deterministic()
         privateKey.data(),
         privateKey.size(),
         hash2,
-        signature2
+        sizeof(hash2),
+        signature2,
+        sizeof(signature2)
     );
 
     assert(result1 == 0);
@@ -181,7 +507,9 @@ void test_different_data_produces_different_hash()
             privateKey.data(),
             privateKey.size(),
             hash1,
-            signature1
+            sizeof(hash1),
+            signature1,
+            sizeof(signature2)
         ) == 0
     );
 
@@ -192,7 +520,9 @@ void test_different_data_produces_different_hash()
             privateKey.data(),
             privateKey.size(),
             hash2,
-            signature2
+            sizeof(hash2),
+            signature2,
+            sizeof(signature2)
         ) == 0
     );
 
@@ -232,7 +562,9 @@ void test_hash_and_sign()
         privateKey.data(),
         privateKey.size(),
         hash,
-        signature
+        sizeof(hash),
+        signature,
+        sizeof(signature)
     );
 
     assert(result == 0);
@@ -289,7 +621,9 @@ void test_signature_verification()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -338,7 +672,9 @@ void test_modified_data_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -396,7 +732,9 @@ void test_modified_signature_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -454,7 +792,9 @@ void test_invalid_previous_hash_is_detected()
             privateKey.data(),
             privateKey.size(),
             entry.currentHash,
-            entry.signature
+            sizeof(entry.currentHash),
+            entry.signature,
+            sizeof(entry.signature)
         ) == 0
     );
 
@@ -527,7 +867,9 @@ void test_valid_two_entry_chain()
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
-            entries[0].signature
+            sizeof(entries[0].currentHash),
+            entries[0].signature,
+            sizeof(entries[0].signature)
         ) == 0
     );
 
@@ -554,7 +896,9 @@ void test_valid_two_entry_chain()
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,
-            entries[1].signature
+            sizeof(entries[1].currentHash),
+            entries[1].signature,
+            sizeof(entries[1].signature)
         ) == 0
     );
 
@@ -613,7 +957,9 @@ void test_modified_previous_hash_in_chain()
             privateKey.data(),
             privateKey.size(),
             entries[0].currentHash,
-            entries[0].signature
+            sizeof(entries[0].currentHash),
+            entries[0].signature,
+            sizeof(entries[0].signature)
         ) == 0
     );
 
@@ -636,7 +982,10 @@ void test_modified_previous_hash_in_chain()
             privateKey.data(),
             privateKey.size(),
             entries[1].currentHash,
-            entries[1].signature
+            sizeof(entries[1].currentHash),
+            entries[1].signature,
+            sizeof(entries[1].signature)
+
         ) == 0
     );
 
@@ -676,8 +1025,10 @@ void test_rfc_8032_public_key_derivation()
     assert(
         ::get_public_key(
             privateKey.data(),
-            publicKey.data()
-        ) == 0
+            privateKey.size(),
+            publicKey.data(),
+            publicKey.size()
+        ) == AUDIT_KEY_OK
     );
 
     assert(publicKey == KNOWN_ANSWER_PUBLIC_KEY);
@@ -697,7 +1048,9 @@ void test_known_answer_hash_and_signature()
             privateKey.data(),
             privateKey.size(),
             hash.data(),
-            signature.data()
+            sizeof(hash),
+            signature.data(),
+            sizeof(signature)
         ) == 0
     );
 
@@ -865,6 +1218,17 @@ int main()
 
             passed++;
         }
+        catch (const std::exception& error)
+        {
+            std::cout
+                << "[FAIL] "
+                << name
+                << ": "
+                << error.what()
+                << '\n';
+
+            failed++;
+        }
         catch (...)
         {
             std::cout
@@ -876,6 +1240,31 @@ int main()
         }
     };
 
+
+    run_test(
+        "private-key generation validates arguments",
+        test_generate_private_key_validation
+    );
+
+    run_test(
+        "public-key derivation validates arguments",
+        test_get_public_key_validation
+    );
+
+    run_test(
+        "hash and sign validates arguments",
+        test_hash_and_sign_validation
+    );
+
+    run_test(
+        "chain verification validates arguments",
+        test_verify_chain_argument_validation
+    );
+
+    run_test(
+        "chain entry validation reports its index",
+        test_verify_chain_entry_validation_reports_index
+    );
 
     run_test(
         "hash is deterministic",

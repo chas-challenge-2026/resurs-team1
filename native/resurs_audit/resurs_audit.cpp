@@ -188,10 +188,13 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash(const st
 
 VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength)
 {
-    VerifyChainResult verifyChainResult;
+    // result code and current is returned in case something goes wrong.
+    // But index is not set on either happy path or when an error occurs during pkey convertion
+    // We init it with index 0 to ensure we don't get any old bytes or confusing data on the index field.
+    VerifyChainResult verifyChainResult {VERIFY_CHAIN_ALL_OK, 0};
 
     std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{0};
-    memset(previousEntryCurrentHash.data(), 0, sizeof(previousEntryCurrentHash.data()));
+    //memset(previousEntryCurrentHash.begin(), 0, sizeof(previousEntryCurrentHash));
     
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(publicKey, publicKeyLength);
     if(pKeyPtr == nullptr)
@@ -206,7 +209,6 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
         {
             verifyChainResult.result_code = PREVIOUS_HASH_MISSMATCH;
             verifyChainResult.index = i;
-
             return verifyChainResult;
         }
 
@@ -249,16 +251,18 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             entries[i].currentHash,
             sizeof(entries[i].currentHash));
 
-        // EVP library function returns 1 is successfull and 0 if any error occured. 
+        // EVP library function returns 1 if successfull and signature is valid
+        // 0 if signature is invalid
+        // negative if internal error. 
         // on error, return the index of the audit entry we got error from.
-        if (result == 0)
+        if (result != 1)
         {
             verifyChainResult.result_code = EVP_DIGEST_VERIFY_FAILED;
             verifyChainResult.index = i;
             return verifyChainResult;
         }
 
-        // Copy source, of destination.size, to destionation
+        // Copy source, of destination.size, to destination
         std::copy_n(entries[i].currentHash, previousEntryCurrentHash.size(), previousEntryCurrentHash.begin());
     }
     verifyChainResult.result_code = VERIFY_CHAIN_ALL_OK;
