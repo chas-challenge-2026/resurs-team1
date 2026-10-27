@@ -88,7 +88,28 @@ public class AuditEvent {
     public byte[] getCurrentHash() {return currentHash;}
     public int getSchemaVersion() { return schemaVersion; }
     public String getSigningKeyId() { return signingKeyId; }
-    public byte[] getSignature() { return signature; }
+    public byte[] getSignature(){return signature; }
+
+
+    public void setPreviousHash(byte[] previousHash) {
+        this.previousHash = previousHash;
+    }
+
+    public void setCurrentHash(byte[] currentHash) {
+        this.currentHash = currentHash;
+    }
+
+    public void setSchemaVersion(int schemaVersion) {
+        this.schemaVersion = schemaVersion;
+    }
+
+    public void setSigningKeyId(String signingKeyId) {
+        this.signingKeyId = signingKeyId;
+    }
+
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
+    }
 }
 
 
