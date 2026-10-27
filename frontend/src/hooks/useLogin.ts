@@ -11,12 +11,10 @@ const useCompanyLogin = () => {
 
   return useMutation<CompanyUser, ApiErrorPayload, CompanyLoginPayload>({
     mutationFn: (payload) => loginCompany(payload),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["me"], {
-        ...data,
-        displayName: data.companyName
-      })
-      setTimeout(() => {
+    onSuccess: () => {
+      setTimeout(async () => {
+        // route guards and header read the user from /auth/me, the login response has another shape
+        await queryClient.invalidateQueries({ queryKey: ["me"] })
         navigate("/oversikt")
       }, 1500)
     },
@@ -32,11 +30,8 @@ const useCaseWorkerLogin = () => {
 
   return useMutation<CaseWorkerUser, ApiErrorPayload, CaseworkerLoginPayload>({
     mutationFn: (payload) => loginCaseWorker(payload),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["me"], {
-        ...data,
-        displayName: data.name
-      })
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["me"] })
       navigate("/arenden")
     },
     meta: {
