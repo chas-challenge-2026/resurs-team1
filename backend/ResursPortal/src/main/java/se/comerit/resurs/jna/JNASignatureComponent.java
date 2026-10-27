@@ -30,13 +30,15 @@ public class JNASignatureComponent  {
         public byte[] generatePrivateKey() {
 
             byte[] privateKey = new byte[32];
-            signatureLibrary.generate_private_key(privateKey);
+            signatureLibrary.generate_private_key(privateKey,new BaseTSD.SIZE_T(privateKey.length));
             return privateKey;
         }
 
         public byte[] getPublicKey(byte[] privateKey){
             byte[] publicKey = new byte[32];
-            signatureLibrary.get_public_key(privateKey,publicKey);
+            signatureLibrary.get_public_key(
+                    privateKey,new BaseTSD.SIZE_T(privateKey.length),
+                    publicKey,new BaseTSD.SIZE_T(publicKey.length));
             return publicKey;
         }
 
@@ -55,7 +57,8 @@ public class JNASignatureComponent  {
             int statusCode = signatureLibrary.wrapper_hash_and_sign(
                     canonicalData,new BaseTSD.SIZE_T(canonicalData.length),
                     encryptionKey.hashKeyBytes(),new BaseTSD.SIZE_T(encryptionKey.hashKeyBytes().length),
-                    newHash,newSignature
+                    newHash,new BaseTSD.SIZE_T(newHash.length),
+                    newSignature, new BaseTSD.SIZE_T(newSignature.length)
                     );
 
             if(statusCode != 0){

@@ -6,11 +6,13 @@ import com.sun.jna.platform.win32.BaseTSD.SIZE_T;
 public interface NativeSignatureInterface extends Library {
 
 
-    void generate_private_key(byte[] outputPrivateKey);
+    void generate_private_key(byte[] outputPrivateKey, SIZE_T  privateKeyLength);
 
     int get_public_key(
             byte[] privateKey,
-            byte[] outputPublicKey);
+            SIZE_T  privateKeyLength,
+            byte[] outputPublicKey,
+            SIZE_T  publicKeyLength);
 
     int wrapper_hash_and_sign(
             byte[] canonicalData,
@@ -18,7 +20,9 @@ public interface NativeSignatureInterface extends Library {
             byte[] privateKey,
             SIZE_T  privateKeyLength,
             byte[] outputHash,
-            byte[] outputSignature);
+            SIZE_T  outputHashLength,
+            byte[] outputSignature,
+            SIZE_T outputSignatureLength);
 
     VerifyChainResult wrapper_verify_chain(
             NativeAuditEntryStruct[] entries,
