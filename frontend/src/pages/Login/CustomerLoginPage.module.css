@@ -1,0 +1,9 @@
+/* top circle */
+.wrapper::before {
+  background-color: var(--color-primary-light);
+}
+
+/* bottom circle */
+.wrapper::after {
+  background-color: var(--color-primary);
+}

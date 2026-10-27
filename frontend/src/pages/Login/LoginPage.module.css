@@ -18,6 +18,10 @@
   flex-direction: column;
   gap: var(--space-sm);
   width: 100%;
+  border: none;
+  box-shadow: 
+  2px 30px 60px -30px rgba(11, 79, 74, 0.35),
+  -2px -2px 8px 1px rgba(11, 79, 74, 0.035);
 }
 
 .loginHeader {
@@ -29,9 +33,9 @@
 
 /* mobile only, desktop has the owl in the background tree */
 .loginMascot {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  height: 88px;
+  height: 100px;
+  margin-left: auto;
+  width: fit-content;
 }
 
 .form {
@@ -53,11 +57,36 @@
   font-size: var(--font-size-sm);
 }
 
+.link {
+  color: var(--color-warning-text);
+  font-weight: 500;
+}
+
+.link:hover {
+  text-underline-offset: 3px;
+}
+
 .divider {
   width: 100%;
   height: 1px;
   background-color: var(--border);
   margin: var(--space-md) 0;
+}
+
+.titleRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.badge {
+  background-color: #f7f0eb;
+  color: var(--color-warning-text);
+  font-weight: 500;
+  width: fit-content;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
 }
 
 /* Company Status boxes */
@@ -103,6 +132,9 @@
     width: 100%;
     min-height: calc(100vh - 64px);
     padding: 0 var(--space-base);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
     
     /* sized by height so owl branch always above title */
     background:
@@ -115,6 +147,37 @@
       var(--bg-secondary) 100%
     );
   }
+
+  /* circles around login window */
+  .wrapper::before, .wrapper::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    aspect-ratio: 1;
+    /* wonky corners look custom made, a perfect circle looked stiff */
+    border-radius: 46% 54% 60% 40% / 45% 40% 60% 55%;
+  }
+
+  /* top circle */
+  .wrapper::before {
+    width: min(80vh, 55vw);
+    scale: 1.2;
+    top: 0;
+    right: -100px;
+    /* anchored to the centered content so it stays behind the login card at any width */
+    transform: translateY(-35%);
+  }
+
+  /* bottom circle */
+  .wrapper::after {
+    width: min(70vh, 40vw);
+    /* mnade lighter so it does not draw attention */
+    opacity: 0.85;
+    bottom: -100px;
+    right: -50px;
+    transform: translate(20%, 50%);
+  }
+  
 
   .container {
     display: grid;
@@ -134,9 +197,18 @@
   .loginSection {
     justify-content: center;
     align-self: center;
-    padding-left: var(--space-xl);
-    padding-right: var(--space-sm);
-    margin: 0 auto;
+    gap: var(--space-base);
+  }
+
+  .titleRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .badge {
+    order: 99;
   }
 
   .button {
@@ -152,6 +224,10 @@
   }
 
   .loginMascot {
+    display: none;
+  }
+
+  .hiddenDesktop {
     display: none;
   }
 }
