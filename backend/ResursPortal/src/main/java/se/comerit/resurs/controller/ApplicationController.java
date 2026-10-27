@@ -14,6 +14,7 @@ import se.comerit.resurs.dto.application.*;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
@@ -72,9 +73,12 @@ public class ApplicationController {
         NewApplicationDTO newApplication;
             CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
             CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
+
+
         try {
             CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
                     .orElseThrow();
+
 
             //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
             newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
@@ -84,7 +88,7 @@ public class ApplicationController {
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
         CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails());
-        //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
+        //I moved this to Application service, it does not fetch the log and update it as its uneccessary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
         // INSERT 3: Uppdatera audit log med scoring-resultat

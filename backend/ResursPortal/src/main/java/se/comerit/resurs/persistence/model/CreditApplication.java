@@ -71,6 +71,11 @@ public class CreditApplication {
     @Column(name = "comment")
     private String comment;
 
+    @Column(name = "requires_co_signature", nullable = false)
+    private boolean requiresCoSignature;
+
+
+
 
     public Integer getDurationMonths() {
         return durationMonths;
@@ -195,5 +200,13 @@ public class CreditApplication {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isRequiresCoSignature() {
+        return requiresCoSignature;
+    }
+
+    public void setRequiresCoSignature(boolean requiresCoSignature) {
+        this.requiresCoSignature = requiresCoSignature;
     }
 }

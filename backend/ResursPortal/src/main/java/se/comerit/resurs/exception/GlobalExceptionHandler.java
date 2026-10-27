@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
+import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
 import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
 
 

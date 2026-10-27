@@ -1,5 +1,6 @@
 package se.comerit.resurs.dto;
 
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.model.CreditApplication;
 
@@ -22,6 +23,8 @@ public record CreditApplicationDTO(
         String authorizedSignatory,
         ContactDetails contactDetails,
         String comment
+
+
 
 ) {
     public CreditApplicationDTO(CreditApplication app) {

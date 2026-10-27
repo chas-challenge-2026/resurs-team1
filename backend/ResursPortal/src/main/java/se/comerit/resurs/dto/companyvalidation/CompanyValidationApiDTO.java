@@ -21,5 +21,9 @@ public record CompanyValidationApiDTO(
             @NotBlank String name,
             String position,
             @NotNull SigningRight signingRight
-    ){}
+    ){
+        public boolean requiresCoSigner() {
+            return signingRight == SigningRight.JOINTLY;
+        }
+    }
 }
