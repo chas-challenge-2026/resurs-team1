@@ -91,7 +91,7 @@ class AuthControllerIntegrationTest {
 
         assertThat(me.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(me.getBody()).isNotNull();
-        assertThat(me.getBody().role()).isEqualTo("company");
+        assertThat(me.getBody().roles()).contains("COMPANY");
         assertThat(me.getBody().orgNumber()).isEqualTo(ORG_NUMBER);
         assertThat(me.getBody().displayName()).isEqualTo(COMPANY_NAME);
     }
