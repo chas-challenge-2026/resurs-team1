@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,19 +9,23 @@ import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.caseworker.UpdateCaseWorkerRequest;
 import se.comerit.resurs.exception.EmailAlreadyInUseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
+import se.comerit.resurs.persistence.RoleRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
+import se.comerit.resurs.persistence.model.Role;
 import se.comerit.resurs.util.HMACHasher;
 
 @Service
 public class CaseWorkerService {
 
     private final CaseWorkerRepository caseWorkerRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final HMACHasher hasher;
 
 
-    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
+    public CaseWorkerService(CaseWorkerRepository caseWorkerRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, HMACHasher hasher) {
         this.caseWorkerRepository = caseWorkerRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.hasher = hasher;
     }
@@ -66,4 +71,13 @@ public class CaseWorkerService {
         caseWorkerRepository.findById(id).orElseThrow();
         caseWorkerRepository.deleteById(id);
     }
+
+    @Transactional
+    public void giveRole(String email, String roleName){
+
+        Role roleToAdd = roleRepository.findByName(roleName).orElseThrow();
+        CaseWorker recipient = caseWorkerRepository.findBySearchKeyEmail(hasher.encode(email)).orElseThrow();
+        recipient.getRoles().add(roleToAdd);
+    }
+
 }
