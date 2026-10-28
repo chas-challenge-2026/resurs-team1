@@ -13,9 +13,9 @@
 #include <string.h>
 #include <cstring>
 /**
- * Print length readable bytes as lowercase hexadecimal values followed by a newline.
- * Borrows data without changing it; a non-null pointer is required when length > 0.
- * Intended for diagnostics and demos, not for logging private keys or sensitive data.
+ * Small diagnostic helper that prints readable bytes as lowercase hexadecimal.
+ * It borrows the data without changing it and is intended for demos and local
+ * debugging, never for logging private keys or other sensitive values.
  */
 static void print_hex(const uint8_t *data, size_t length)
 {
@@ -40,9 +40,9 @@ namespace resurs::audit
 /**
  * One audit-chain entry passed by native callers or through a contiguous JNA array.
  *
- * The canonicalData allocation remains caller-owned and must stay alive and
- * unchanged during verification. Arrays are stored inline; this struct does not
- * allocate or free the canonical bytes. Field order and widths are part of the ABI.
+ * AuditEntry borrows canonicalData instead of copying it, so the caller must keep
+ * those bytes alive and unchanged throughout verification. The fixed-size arrays
+ * live inside the struct. Field order and widths are part of the public ABI.
  */
 struct AuditEntry
 {

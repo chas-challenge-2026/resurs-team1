@@ -12,16 +12,13 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const
 {
     EncryptionResult result;
 
-    // Generate a fresh 96-bit IV before initializing this encryption operation.
+    // Every encryption requests a fresh unpredictable IV before initialization, avoiding reuse of the previous operation's IV.
     if (RAND_bytes(result.iv.data(), static_cast<int>(result.iv.size())) != 1)
     {
         throw std::runtime_error("failed to generate IV");
     }
 
-    // Reuse the algorithm fetched by the constructor; initialize with this key and IV.
-
-
-    // AES-GCM's default IV length matches this module's 12-byte IV contract.
+    // The constructor already fetched AES-256-GCM, and its standard 12-byte IV length matches this module's contract.
     if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), aes_key, result.iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set key and IV");
@@ -53,7 +50,7 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const
     totalWritten += written;
     result.ciphertext.resize(totalWritten);
 
-    // Return the tag with the ciphertext and IV; decryption requires all three.
+    // Authentication requires this tag together with the ciphertext and IV, so return all three as one result.
     if (EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_GET_TAG, static_cast<int>(result.tag.size()), result.tag.data()) != 1)
     {
         throw std::runtime_error("failed to retrieve authentication tag");
@@ -71,14 +68,14 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
         throw std::runtime_error("failed to rset cipher context");
     }
 
-    // Guard the fetched algorithm before initializing the decrypt operation.
+    // Construction normally guarantees this. 
+    // Keep the check close to use so a missing algorithm can never reach OpenSSL unnoticed.
     if (cipher == nullptr)
     {
         throw std::runtime_error("cipher not initalized");
     }
 
 
-    // Borrow the caller's key and the original IV for this operation.
     if (EVP_DecryptInit_ex2(ctx.get(), cipher.get(), aes_key, iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set KEY and IV");

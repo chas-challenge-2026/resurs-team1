@@ -46,7 +46,8 @@ struct DecryptionResult
 };
 
 /**
- * Owns an OpenSSL cipher context and the fetched AES-256-GCM algorithm.
+ * Keeps the OpenSSL cipher context and AES-256-GCM algorithm under automatic
+ * ownership, so users of the class do not manage OpenSSL resources directly.
  *
  * An instance can be reused for sequential operations. Its mutable context must
  * not be used concurrently; use separate instances or external synchronization.
@@ -104,11 +105,13 @@ public:
     std::string AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const unsigned char *aes_key, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag);
 
 private:
-    /// Owns a mutable cipher context and releases it with EVP_CIPHER_CTX_free.
+    /// Gives the mutable context one owner.
+    /// EVP_CIPHER_CTX_free is called automatically.
     using CipherCtxPtr = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>;
-    /// Owns the fetched algorithm and releases it with EVP_CIPHER_free.
+    /// Gives the fetched algorithm one owner.
+    /// EVP_CIPHER_free is called automatically.
     using CipherPtr = std::unique_ptr<EVP_CIPHER, decltype(&EVP_CIPHER_free)>;
-    /// Per-instance encryption/decryption state, reused sequentially.
+    /// Reused operation state means one instance must be used sequentially.
     CipherCtxPtr ctx;
     /// Algorithm fetched once during construction and reused for each operation.
     CipherPtr cipher;

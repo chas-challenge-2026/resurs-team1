@@ -16,7 +16,8 @@
 #include "audit_types.h"
 
 /**
- * Owns OpenSSL contexts and generated keys for hashing, signing, and verification.
+ * Keeps the OpenSSL state used for hashing, signing, and verification under
+ * automatic ownership, so callers never need to release these resources manually.
  *
  * Methods share mutable state: reuse an instance sequentially, or synchronize
  * access externally. Separate instances own separate contexts. Borrowed input
@@ -27,13 +28,16 @@
 class DigitalSign
 {
     private:
-        /// Owns a key-generation context and frees it with EVP_PKEY_CTX_free.
+        /// Gives the key-generation context one owner.
+        /// EVP_PKEY_CTX_free is called automatically.
         using PkeyCtxPtr = std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)>;
-        /// Owns a key object and frees it with EVP_PKEY_free.
+        /// Gives an OpenSSL key one owner.
+        /// EVP_PKEY_free is called automatically.
         using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
-        /// Owns a digest/signature context and frees it with EVP_MD_CTX_free.
+        /// Gives the shared context one owner.
+        /// EVP_MD_CTX_free is called automatically.
         using DigestSignCtxPtr = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
-        /// Working state shared by hash, sign, and verify operations.
+        /// Shared working state means one instance must be used sequentially.
         DigestSignCtxPtr ctx;
         /// Key-generation context, replaced on each generate_private_key call.
         PkeyCtxPtr pKeyCtxPtr;
