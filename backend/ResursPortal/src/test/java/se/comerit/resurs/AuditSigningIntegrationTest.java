@@ -3,11 +3,11 @@ package se.comerit.resurs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -22,6 +22,8 @@ import se.comerit.resurs.dto.auth.CaseWorkerLoginResponse;
 import se.comerit.resurs.dto.auth.CompanyLoginRequest;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import se.comerit.resurs.dto.backoffice.ApplicationCommentRequest;
+import se.comerit.resurs.persistence.AuditEventRepository;
+import se.comerit.resurs.persistence.model.AuditEvent;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -30,6 +32,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -37,6 +40,10 @@ class AuditSigningIntegrationTest {
 
 
     private RestTestClient restTestClient;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
 
     @LocalServerPort
     private int port;
@@ -152,6 +159,122 @@ class AuditSigningIntegrationTest {
                         .getResponseBody();
 
         assertEquals(0,validAfterUpdate.code());
+    }
+    @Test
+    void tamperedEventInChainFailsVerification() {
+
+        String token = csrfToken();
+        String sessionToken = loginAsCompany(token,orgNR,persNR);
+
+
+
+        // 1. Create a credit application through your existing API.
+        ApplicationSubmission newApplication = createApplicationBody();
+
+        CreditApplicationDTO savedApplication = restTestClient.post()
+                .uri("/api/application/apply")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(createApplicationBody())
+                .exchange()
+                .returnResult(CreditApplicationDTO.class)
+                .getResponseBody();
+
+
+
+
+        // 2. Verify the initial audit chain.
+        ChainVerificationResponse initialResponse =
+                restTestClient.get()
+                        .uri("/api/audit/{id}", savedApplication.id())
+                        .header("X-XSRF-TOKEN", token)
+                        .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                        .exchange()
+                        .expectStatus().isOk()
+                        .expectBody(ChainVerificationResponse.class)
+                        .returnResult()
+                        .getResponseBody();
+
+        assertThat(initialResponse).isNotNull();
+
+
+
+
+        // 2. login as caseworker + Assert chain as valid
+
+        logout(sessionToken,token);
+        sessionToken = loginAsCaseWorker(token,email,password);
+
+
+
+
+        ChainVerificationResponse validAtCreation =
+                restTestClient.get()
+                        .uri("/api/audit/{id}", savedApplication.id())
+                        .header("X-XSRF-TOKEN", token)
+                        .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                        .exchange()
+                        .expectStatus().isOk()
+                        .expectBody(ChainVerificationResponse.class)
+                        .returnResult()
+                        .getResponseBody();
+
+        assertEquals(0,validAtCreation.code());
+
+
+        // 3. Perform additional actions that create audit entries.
+        restTestClient
+                .post()
+                .uri("/api/backoffice/application/"+savedApplication.id()+"/comment")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationCommentRequest("Skicka kontoutdrag"))
+                .exchange()
+                .expectStatus().isOk();
+
+
+
+        // 4. Verify the chain again.
+        ChainVerificationResponse validAfterUpdate =
+                restTestClient.get()
+                        .uri("/api/audit/{id}", savedApplication.id())
+                        .header("X-XSRF-TOKEN", token)
+                        .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                        .exchange()
+                        .expectStatus().isOk()
+                        .expectBody(ChainVerificationResponse.class)
+                        .returnResult()
+                        .getResponseBody();
+
+        assertEquals(0,validAfterUpdate.code());
+
+
+        // 5. Manually tamper with the database.
+        jdbcTemplate.update("""
+    UPDATE audit_events
+    SET data = '{"actorType":"COMPANY","purpose":"Tampered"}'::jsonb
+    WHERE application_id = ?
+      AND sequence_number = 1
+    """, savedApplication.id());
+
+// 6. Verify that tampering is detected.
+        ChainVerificationResponse tamperedResponse =
+                restTestClient.get()
+                        .uri("/api/audit/{id}", savedApplication.id())
+                        .header("X-XSRF-TOKEN", token)
+                        .header(HttpHeaders.COOKIE, sessionToken + "; XSRF-TOKEN=" + token)
+                        .exchange()
+                        .expectStatus().isOk()
+                        .expectBody(ChainVerificationResponse.class)
+                        .returnResult()
+                        .getResponseBody();
+
+        assertThat(tamperedResponse).isNotNull();
+        assertNotEquals(0, tamperedResponse.code());
+
+
     }
 
     private ApplicationSubmission createApplicationBody() {
