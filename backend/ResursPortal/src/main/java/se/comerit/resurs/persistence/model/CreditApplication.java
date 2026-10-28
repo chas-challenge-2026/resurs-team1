@@ -71,6 +71,9 @@ public class CreditApplication {
     @Column(name = "comment")
     private String comment;
 
+    @Column(name = "signatory_protected_identity", nullable = false)
+    private boolean signatoryProtectedIdentity;
+
 
     public Integer getDurationMonths() {
         return durationMonths;
@@ -195,5 +198,13 @@ public class CreditApplication {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isSignatoryProtectedIdentity() {
+        return signatoryProtectedIdentity;
+    }
+
+    public void setSignatoryProtectedIdentity(boolean signatoryProtectedIdentity) {
+        this.signatoryProtectedIdentity = signatoryProtectedIdentity;
     }
 }
