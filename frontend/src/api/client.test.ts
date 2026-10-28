@@ -20,7 +20,10 @@ describe("client API", () => {
   it("clears auth storage and redirects to '/' on 401 for normal requests", async () => {
     Object.defineProperty(window, "location", {
       writable: true,
-      value: { href: "" },
+      value: {
+        href: "",
+        pathname: "/my-page"
+      },
     })
 
     const mockError = {
