@@ -161,6 +161,7 @@
   /* top circle */
   .wrapper::before {
     width: min(80vh, 55vw);
+    max-width: 50vw;
     scale: 1.2;
     top: 0;
     right: -100px;
