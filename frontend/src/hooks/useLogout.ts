@@ -1,6 +1,6 @@
-import { queryClient } from "../main";
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../api/authApi";
+import { queryClient } from "../api/queryClient";
 
 const useLogout = () => {
   const navigate = useNavigate()

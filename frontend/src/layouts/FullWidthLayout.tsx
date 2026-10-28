@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { Outlet } from "react-router-dom"
 import { FiSearch } from "react-icons/fi"
 import Header from "../components/Header/Header"
