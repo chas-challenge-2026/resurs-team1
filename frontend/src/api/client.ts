@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios"
-import { queryClient } from "../main"
+import { queryClient } from "./queryClient"
+
 
 export interface ApiErrorPayload {
   status?: number
