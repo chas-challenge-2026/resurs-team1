@@ -105,7 +105,7 @@ public class ApplicationController {
     // ============================================================
     // GET /application/{id} — visa enskild ansökan
     // ============================================================
-    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASEWORKER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
                                                                        @AuthenticationPrincipal Object principal) {
@@ -131,7 +131,7 @@ public class ApplicationController {
         return ResponseEntity.ok(apps);
 
     }
-    @PreAuthorize("hasRole('CASE_WORKER')")
+    @PreAuthorize("hasRole('CASEWORKER')")
     @GetMapping("/company")
     public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
             @RequestParam("orgNumber") String orgNumber, Pageable pageable) {
@@ -158,13 +158,13 @@ public class ApplicationController {
     // Kör om scoring på ett ärende, bara handläggare(och i framtiden systemet själv) ska komma åt denna
     // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
     @PostMapping("rescore/{id}")
-    @PreAuthorize("hasRole('CASE_WORKER')")
+    @PreAuthorize("hasRole('CASEWORKER')")
     public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
         return ResponseEntity.ok(appService.rescoreApplication(id));
     }
 
 
-    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASEWORKER')")
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,
                                                                     @AuthenticationPrincipal Object principal) {

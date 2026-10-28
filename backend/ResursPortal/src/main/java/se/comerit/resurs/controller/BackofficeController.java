@@ -40,7 +40,7 @@ import java.util.Optional;
  *  - Ingen e-postnotifiering vid beslut
  *  - Session check copy-pasteat
  */
-@PreAuthorize("hasRole('CASE_WORKER')")
+@PreAuthorize("hasRole('CASEWORKER')")
 @RestController
 @RequestMapping("/api/backoffice")
 public class BackofficeController {
