@@ -250,19 +250,6 @@ class AuditEventServiceTest {
         assertThat(event.getSchemaVersion()).isEqualTo(1);
     }
 
-    @Test
-    void signingFields_areNullUntilSigningModuleExists() {
-        CreditApplication application = savedApplication(ApplicationStatus.PENDING_DOCS);
-
-        auditService.applicationCreated(application);
-
-        AuditEvent event = onlyEventFor(application);
-
-        assertThat(event.getPreviousHash()).isNull();
-        assertThat(event.getSigningKeyId()).isNull();
-        assertThat(event.getSignature()).isNull();
-    }
-
     // ============================================================
     // Läsning
     // ============================================================
