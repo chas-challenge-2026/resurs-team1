@@ -16,6 +16,29 @@ CREATE TABLE case_workers (
     search_key_email bytea UNIQUE
 );
 
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE
+);
+
+CREATE TABLE case_worker_roles(
+    worker_id SERIAL,
+    role_id SERIAL,
+
+    PRIMARY KEY (worker_id,role_id),
+
+    CONSTRAINT fk_case_worker_roles_worker
+        FOREIGN KEY (worker_id)
+        REFERENCES case_workers(id),
+
+    CONSTRAINT fk_case_worker_roles_role
+        FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+
+);
+
+
+
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
     version INT,
@@ -70,6 +93,12 @@ CREATE TABLE audit_events (
 
 CREATE INDEX idx_audit_application_id ON audit_events(application_id);
 CREATE INDEX idx_audit_action ON audit_events(action);
+
+-- Roles within our application
+INSERT INTO roles (id, name)
+VALUES
+    (1, 'ROLE_CERTIFIED'),
+    (2, 'ROLE_ADMIN');
 
 -- Branch Specific medians for use
 INSERT INTO branches (
