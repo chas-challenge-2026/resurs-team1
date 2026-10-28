@@ -40,40 +40,40 @@ public class AuditSigningService {
         String responseText = "";
         Long failedIndex = null;
         switch (results.resultCode){
-            case 0 : responseText = "Chain Verified Passed";
-            case -1 : responseText = "Invalid Argument, Null parameter";
-            case -2 : responseText = "Zero length";
-            case -3 : responseText = "Public key length missmatch";
-            case -4 : {
+            case 0 -> responseText = "Chain Verified Passed";
+            case -1 -> responseText = "Invalid Argument, Null parameter";
+            case -2 -> responseText = "Zero length";
+            case -3 -> responseText = "Public key length missmatch";
+            case -4 -> {
                     responseText = "An entry has a null canonical-data reference.";
                     failedIndex = results.index;
             }
-            case -5 : {
+            case -5 -> {
                 responseText = "An entry has a zero canonical-data length.";
                 failedIndex = results.index;
             }
-            case -6 : {
+            case -6 -> {
                 responseText = "The previous-hash link is invalid.";
                 failedIndex = results.index;
             }
-            case -7 : {
+            case -7 -> {
                 responseText = "The chain does not start at 1 or has a duplicate, gap, or ordering error.";
                 failedIndex = results.index;
             }
-            case -8 : {
+            case -8 -> {
                 responseText = "Canonical bytes do not match the stored current hash.";
                 failedIndex = results.index;
             }
-            case -9 : {
+            case -9 -> {
                 responseText = "OpenSSL could not initialize verification.";
                 failedIndex = results.index;
             }
-            case -10 : {
+            case -10 -> {
                 responseText = "The Ed25519 signature is invalid or verification failed.";
                 failedIndex = results.index;
             }
-            case -11 : responseText = "The public key could not be converted to an OpenSSL Ed25519 key.";
-            case -12 : responseText = "An exception or other internal failure was contained by the native boundary.";
+            case -11 -> responseText = "The public key could not be converted to an OpenSSL Ed25519 key.";
+            case -12 -> responseText = "An exception or other internal failure was contained by the native boundary.";
         }
 
 
