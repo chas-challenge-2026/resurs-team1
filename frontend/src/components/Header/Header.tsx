@@ -32,7 +32,7 @@ const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
 
   const { data: user } = useUser()
-  const { logout } = useLogout()
+  const { logout } = useLogout(user?.role)
 
   // agents get the role badge, companies are identified by their own name
   const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
