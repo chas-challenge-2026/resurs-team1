@@ -2,13 +2,25 @@
 
 B2B-kreditansökningsportal för Resurs Bank. Företag ansöker om kredit, laddar upp årsredovisning, och får ett kreditbeslut baserat på finansiella nyckeltal.
 
-## Snabbstart
+## Starta projektet
 
+### Hela appen (som på stage)
 ```bash
-cd infra && docker compose up
+cd infra && docker compose up --build
 ```
+Öppna [http://localhost:8083](http://localhost:8083). Frontend och backend byggs ihop i Docker, inget byggkommando behövs.
 
-Öppna [http://localhost:8083](http://localhost:8083)
+### Utveckla frontend
+Kör Docker enligt ovan. Första gången: skapa `frontend/.env` utifrån `frontend/.env.example`. Sen i en ny terminal:
+```bash
+cd frontend
+npm install   # första gången
+npm run dev
+```
+Öppna [http://localhost:5173](http://localhost:5173). Ändringar syns direkt, `/api` skickas vidare till backend på 8083.
+
+### Deploy
+Push till `develop` → stage, push till `main` → prod. Allt byggs automatiskt. Se `DRIFT.md`.
 
 ### API-dokumentation
 Swagger UI nås på denna länk: http://localhost:8083/swagger-ui/index.html

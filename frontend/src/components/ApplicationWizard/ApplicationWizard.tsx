@@ -1,5 +1,6 @@
 import { formatCurrency } from "../../utils/formatters";
-import { LOAN_MIN, LOAN_MAX, EMAIL_PATTERN, PHONE_PATTERN } from "../../constants/constants";
+import { LOAN_MIN, LOAN_MAX, EMAIL_PATTERN } from "../../constants/constants";
+import { isValidPhone } from "../../utils/validators";
 import { PURPOSE_OPTIONS } from "../../constants/constants";
 import { REPAYMENT_OPTIONS } from "../../constants/constants";
 import Dropdown from "../Dropdown/Dropdown";
@@ -115,7 +116,7 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
           ? "Kontrollera e-postadressen"
           : undefined
       const phoneError =
-        values.phoneNumber !== "" && !PHONE_PATTERN.test(values.phoneNumber)
+        values.phoneNumber !== "" && !isValidPhone(values.phoneNumber)
           ? "Kontrollera telefonnumret"
           : undefined
 

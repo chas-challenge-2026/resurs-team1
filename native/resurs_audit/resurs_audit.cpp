@@ -5,7 +5,14 @@
 #include <string.h>
 #include <cstring>
 
-// ----------- Internal helper functions to convert details of a private key in C to EVP PkeyPtr. -----------
+/**
+ * @file
+ * @brief SHA-256 and Ed25519 operations using resources owned by DigitalSign.
+ * Method contracts, buffer preconditions, and results are in resurs_audit.h.
+ */
+
+// Raw key bytes are borrowed from the caller. The returned smart pointers take
+// responsibility for the OpenSSL objects created from those bytes.
 
 DigitalSign::PkeyPtr DigitalSign::convert_c_private_key_to_EVP_PKEY_POINTER(const uint8_t *privateKey, size_t privateKeyLength)
 {    
@@ -21,7 +28,6 @@ DigitalSign::PkeyPtr DigitalSign::convert_c_private_key_to_EVP_PKEY_POINTER(cons
 
 DigitalSign::PkeyPtr DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(const uint8_t *publicKey, size_t publicKeyLength)
 {
-    // We create a new key which the ownership is transfered to, and return that key
     return {
         EVP_PKEY_new_raw_public_key_ex(
             nullptr,
@@ -49,6 +55,8 @@ std::array<unsigned char, resurs::audit::PKEY_BYTES> DigitalSign::generate_priva
         throw std::runtime_error("failed to initialize key generation.");
     }
 
+    // OpenSSL creates the key through a raw output pointer. 
+    // Adopt it immediately afterward so every later exit is covered by automatic cleanup.
     EVP_PKEY *pKeyRaw = nullptr;
 
     if (EVP_PKEY_keygen(pKeyCtxPtr.get(), &pKeyRaw) <= 0)
@@ -91,9 +99,8 @@ std::array<uint8_t, resurs::audit::PKEY_BYTES> DigitalSign::get_public_key(EVP_P
 
 DigitalSignResultCode DigitalSign::sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_hash_buffer, uint8_t *output_signature_buffer)
 {
-    // Context is already set in the constructor
-
-    // convert the uint8_t *pkey pointer and the size_t length to an actualy EVP_PKEY pointer we can use.
+    // Keep the imported key local to this operation. 
+    // This prevents OpenSSL ownership from escaping and makes every return path safe.
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_private_key_to_EVP_PKEY_POINTER(privateKey, privateKeyLength);
 
     if(pKeyPtr == nullptr)
@@ -101,7 +108,7 @@ DigitalSignResultCode DigitalSign::sign(const uint8_t *privateKey, size_t privat
         return SIGN_FAILED_TO_CONVERT_PRIVATE_KEY;
     }
 
-    // Init
+    // Ed25519 signs the 32-byte currentHash directly, so no separate digest algorithm is selected in this call.
     if (EVP_DigestSignInit(
             ctx.get(),
             nullptr,
@@ -112,7 +119,7 @@ DigitalSignResultCode DigitalSign::sign(const uint8_t *privateKey, size_t privat
         return EVP_DIGEST_SIGN_INIT_FAILED;
     }    
     
-    // Get the length of the signature based on our algorithm.    
+    // Query the signature size before writing to the caller's 64-byte buffer.
     size_t signatureLength = 0;
 
     if (EVP_DigestSign(
@@ -125,7 +132,7 @@ DigitalSignResultCode DigitalSign::sign(const uint8_t *privateKey, size_t privat
         return EVP_DIGEST_SIGN_SIGNATURE_LENGTH_FAILED;
     }
 
-    // Create the signature
+    // Only a successful second call makes the caller's signature buffer usable.
     if (EVP_DigestSign(
             ctx.get(),
             output_signature_buffer,
@@ -143,9 +150,8 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash(const st
 {
 
     std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> result{};
-    // Context is handled in the constructor
-
-    // Re-use existing context, but reset/clear previous encryption state.
+    // Hashing, signing, and verification share this context. 
+    // Clear the previous operation before switching it back to SHA-256.
     if (EVP_MD_CTX_reset(ctx.get()) != 1)
     {
         throw std::runtime_error("failed to rset cipher context");
@@ -188,10 +194,11 @@ std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> DigitalSign::hash(const st
 
 VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t entryCount, const uint8_t *publicKey, size_t publicKeyLength)
 {
-    VerifyChainResult verifyChainResult;
+    // Entry errors set a zero-based index; success and key-import failure use zero.
+    VerifyChainResult verifyChainResult {VERIFY_CHAIN_ALL_OK, 0};
 
+    // An all-zero value is the expected link before the first chain entry.
     std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> previousEntryCurrentHash{0};
-    memset(previousEntryCurrentHash.data(), 0, sizeof(previousEntryCurrentHash.data()));
     
     DigitalSign::PkeyPtr pKeyPtr = DigitalSign::convert_c_public_key_to_EVP_PKEY_POINTER(publicKey, publicKeyLength);
     if(pKeyPtr == nullptr)
@@ -206,11 +213,10 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
         {
             verifyChainResult.result_code = PREVIOUS_HASH_MISSMATCH;
             verifyChainResult.index = i;
-
             return verifyChainResult;
         }
 
-        // if sequence number does not match the corresponding entry number.
+        // Require a complete chain starting at sequence 1, without gaps or reordering.
         if (entries[i].sequenceNumber != i + 1)
         {
             verifyChainResult.result_code = SEQUENCE_NUMBER_MISSMATCH;
@@ -218,7 +224,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             return verifyChainResult;
         }
 
-        // Verify that the hash itself is valid
+        // Hash the exact supplied bytes; JSON canonicalization belongs to the caller.
         std::vector<uint8_t> canonicalData(entries[i].canonicalData, entries[i].canonicalData + entries[i].canonicalDataLength);
         std::array<uint8_t, resurs::audit::SHA256_HASH_BYTES> hashOfEntry = hash(canonicalData);
         if (!std::equal(hashOfEntry.begin(), hashOfEntry.end(), entries[i].currentHash))
@@ -228,7 +234,7 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             return verifyChainResult;
         }
 
-        // Use public key to verify signature
+        // hash() reset the shared context; initialize Ed25519 verification for this entry.
         if (EVP_DigestVerifyInit(
                 ctx.get(),
                 nullptr,
@@ -241,7 +247,8 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             return verifyChainResult;
         }
 
-        // Verify
+        // currentHash already matched the recomputed digest above. 
+        // A valid signature now binds that digest to the supplied public key.
         int result = EVP_DigestVerify(
             ctx.get(),
             entries[i].signature,
@@ -249,16 +256,16 @@ VerifyChainResult DigitalSign::verify_chain(const AuditEntry *entries, size_t en
             entries[i].currentHash,
             sizeof(entries[i].currentHash));
 
-        // EVP library function returns 1 is successfull and 0 if any error occured. 
-        // on error, return the index of the audit entry we got error from.
-        if (result == 0)
+        // OpenSSL returns 1 only for a valid signature. 
+        // Both 0 (invalid signature) and negative operation errors must reject this entry.
+        if (result != 1)
         {
             verifyChainResult.result_code = EVP_DIGEST_VERIFY_FAILED;
             verifyChainResult.index = i;
             return verifyChainResult;
         }
 
-        // Copy source, of destination.size, to destionation
+        // Carry the verified hash forward as the required link for the next entry.
         std::copy_n(entries[i].currentHash, previousEntryCurrentHash.size(), previousEntryCurrentHash.begin());
     }
     verifyChainResult.result_code = VERIFY_CHAIN_ALL_OK;
