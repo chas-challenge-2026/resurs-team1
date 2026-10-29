@@ -82,7 +82,7 @@ const CaseWorkerLoginPage = () => {
               type="email"
               id="email"
               label="E-postadress *"
-              placeholder="namn.exempel@foretag.se"
+              placeholder="namn@resurs.se"
               error={errors.email}
               value={formData.email}
               onChange={handleChange}
