@@ -61,11 +61,11 @@ CREATE TABLE audit_events (
     action VARCHAR(50) NOT NULL,
     actor VARCHAR(100) NOT NULL,
     data JSONB,
-    previous_hash VARCHAR(64),
-    current_hash VARCHAR(64),
+    previous_hash BYTEA,
+    current_hash BYTEA,
     schema_version INT NOT NULL,
     signing_key_id VARCHAR(64),
-    signature VARCHAR(512),
+    signature BYTEA,
     CONSTRAINT uq_audit_application_sequence UNIQUE (application_id, sequence_number)
 );
 

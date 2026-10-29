@@ -1,5 +1,6 @@
 package se.comerit.resurs.dto.audit;
 
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import se.comerit.resurs.enums.ApplicationStatus;

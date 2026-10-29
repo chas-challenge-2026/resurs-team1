@@ -12,6 +12,7 @@ import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
 import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
+import se.comerit.resurs.exception.jna.JnaSigningException;
 import se.comerit.resurs.exception.spar.SparUnavailableException;
 
 
@@ -188,6 +189,17 @@ public class GlobalExceptionHandler {
                 null
         );
         return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler(JnaSigningException.class)
+    public ResponseEntity<ApiError>handleFailedDigitalSignature(JnaSigningException ex){
+        ApiError body = new ApiError(
+                Instant.now(),
+                "INTERNAL_SERVER_ERROR",
+                "a JNA component failed",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     @ExceptionHandler(SparUnavailableException.class)
     public ResponseEntity<ApiError> handleSparUnavailable(SparUnavailableException ex) {
