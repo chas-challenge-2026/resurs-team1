@@ -108,7 +108,7 @@ jobs:
         id: tests
         run: |
           ctest --test-dir build/native-ci \
-            --output-on-failure --no-tests=error --timeout 120 \
+            --verbose --output-on-failure --no-tests=error --timeout 120 \
             --output-junit "$GITHUB_WORKSPACE/build/native-ci/ctest.xml" \
             2>&1 | tee build/native-ci/logs/tests.log
       - name: Write test summary

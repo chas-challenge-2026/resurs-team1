@@ -31,8 +31,17 @@ have separate concurrency groups and are not superseded by PR updates.
 
 Open the PR's checks or the workflow run in **Actions**. Each Ubuntu job has
 separate dependency, configure, compile and test steps. Its summary lists the
-stage outcomes, CTest suites and durations. The existing four CTest registrations
-are suites containing multiple internal test cases, not four assertions.
+stage outcomes, test modules, durations and counts such as `Passed | 15/15`.
+Expand a module below the table to see the name and result of every individual
+test/check directly in GitHub. No artifact download is needed. The **Run all
+registered native tests** step also prints successful individual results.
+
+The four CTest registrations are test modules. Their counts come from the
+executables' `[PASS]`/`[FAIL]` records and final totals: named tests/groups for
+crypto and audit, and individual export checks for the symbol modules. These
+counts do not count assertions or iterations within a test case. If a module
+crashes before reporting a final total, the summary marks its observed count
+as potentially incomplete. Missing or inconsistent counts are never invented.
 
 Reports and logs are attached as `native-ubuntu-22.04-debug` and
 `native-ubuntu-24.04-debug`, retained for seven days. They include CTest JUnit XML,
@@ -53,7 +62,7 @@ On Ubuntu with `build-essential`, `cmake` (3.21 or newer for JUnit output) and
 ```bash
 cmake -S native -B build/native-ci -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DRESURS_BUILD_CRYPTO_DEMO=ON -DRESURS_BUILD_AUDIT_DEMO=ON
 cmake --build build/native-ci --parallel 2
-ctest --test-dir build/native-ci --output-on-failure --no-tests=error --timeout 120 --output-junit "$PWD/build/native-ci/ctest.xml"
+ctest --test-dir build/native-ci --verbose --output-on-failure --no-tests=error --timeout 120 --output-junit "$PWD/build/native-ci/ctest.xml"
 ```
 
 Windows developers can continue using the existing Docker instructions in
