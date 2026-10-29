@@ -55,25 +55,25 @@
 }
 
 .PENDING_DOCS {
-  --st-base: var(--color-warning);
-  --st-bg: #FBF1DF;
-  --st-fg: var(--color-warning-text);
+  --st-base: var(--badge-warning-border);
+  --st-bg: var(--badge-warning-bg);
+  --st-fg: var(--badge-warning-text);
 }
 
 .UNDER_REVIEW {
-  --st-base: var(--color-secondary);
-  --st-bg: #E9EDF6;
-  --st-fg: var(--color-secondary);
+  --st-base: var(--badge-neutral-text);
+  --st-bg: var(--badge-neutral-bg);
+  --st-fg: var(--badge-neutral-text);
 }
 
 .APPROVED {
-  --st-base: var(--color-primary);
-  --st-bg: var(--color-primary-light);
-  --st-fg: #0E5D57;
+  --st-base: var(--badge-success-border);
+  --st-bg: var(--badge-success-bg);
+  --st-fg: var(--badge-success-text);
 }
 
 .REJECTED {
-  --st-base: var(--color-error);
-  --st-bg: #FAEAE9;
-  --st-fg: #8C1D19;
+  --st-base: var(--badge-error-border);
+  --st-bg: var(--badge-error-bg);
+  --st-fg: var(--badge-error-text);
 }

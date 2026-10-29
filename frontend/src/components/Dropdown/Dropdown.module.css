@@ -6,8 +6,8 @@
 
 .select {
   width: 100%;
-  color: var(--color-text-main);
-  background: var(--bg-secondary);
+  color: var(--text-main);
+  background: var(--input-bg);
   cursor: pointer;
 }
 

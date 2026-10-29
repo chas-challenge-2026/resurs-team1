@@ -59,7 +59,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
 
   // Calculate percentage filled for the dynamic CSS gradient track (clamped between 0 and 100%)
   const trackStyle = {
-    background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${percentage}%, var(--border) ${percentage}%, var(--border) 100%)`
+    background: `linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) ${percentage}%, var(--divider) ${percentage}%, var(--divider) 100%)`
   }
 
 

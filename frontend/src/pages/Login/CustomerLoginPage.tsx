@@ -9,7 +9,6 @@ import Input from "../../components/Input/Input";
 import Loading from "../../components/Loading/Loading";
 import owl from "../../assets/mascot-owl.webp"
 import s from "./LoginPage.module.css"
-import c from "./CustomerLoginPage.module.css"
 
 const INITIAL_FORM = {
   orgNumber: "",
@@ -67,7 +66,7 @@ const CustomerLoginPage = () => {
   }
 
   return(
-    <div className={`${s.wrapper} ${c.wrapper}`}>
+    <div className={s.wrapper}>
       <div className={s.container}>
         <section className={s.hero}>
           <h1>Välkommen till Resurs <br/>Kreditportal</h1>

@@ -16,8 +16,8 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-pill);
   transition: all 0.2s;
-  border: 1px solid var(--border);
-  color: var(--color-text-main);
+  border: 1px solid var(--btn-group-border);
+  color: var(--text-main);
   font-weight: 500;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
   cursor: pointer;
@@ -35,9 +35,9 @@
 }
 
 .isSelected {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--bg-main);
+  background-color: var(--btn-group-active-bg);
+  border-color: var(--btn-group-active-bg);
+  color: var(--btn-group-active-text);
 }
 
 .hiddenInput {
@@ -49,6 +49,6 @@
 
 /* the real input is hidden, so its focus ring goes on the visible button */
 .button:has(.hiddenInput:focus-visible) {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--btn-group-active-bg);
   outline-offset: 2px;
 }

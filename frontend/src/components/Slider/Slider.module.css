@@ -12,10 +12,11 @@
   overflow: hidden;
   height: 48px;
   border-style: dashed !important;
+  padding: 0 var(--space-xs);
 }
 
 .inputWrapper:focus-within {
-  border-color: var(--color-primary);
+  border-color: var(--brand-primary);
 }
 
 .hiddenSizer,
@@ -35,6 +36,8 @@
 
 .numberInput {
   position: absolute;
+  inset: 0; 
+  padding: 0 var(--space-xs);
   border: none;
   outline: none;
   background-color: transparent;
@@ -52,7 +55,7 @@
   font-weight: 600;
   cursor: pointer;
   width: fit-content;
-  border-bottom: 1px dashed var(--color-text-muted);
+  border-bottom: 1px dashed var(--text-muted);
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -71,7 +74,7 @@
   width: 24px;
   height: 24px;
   border-radius: var(--radius-pill);
-  background: #ffffff;
+  background: var(--bg-surface);
   cursor: pointer;
   filter: drop-shadow(rgba(52, 58, 64, 0.5) 0px 2px 8px);
 }
@@ -81,31 +84,31 @@
   width: 24px;
   height: 24px;
   border-radius: var(--radius-pill);
-  background: #ffffff;
+  background: var(--bg-surface);
   filter: drop-shadow(rgba(52, 58, 64, 0.5) 0px 2px 8px);
   cursor: pointer;
 }
 
 .rangeInput:active::-webkit-slider-thumb {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--brand-primary);
 }
 
 .rangeInput:focus-visible::-webkit-slider-thumb {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--brand-primary);
 }
 
 .rangeInput:active::-moz-range-thumb {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--brand-primary);
 }
 
 .rangeInput:focus-visible::-moz-range-thumb {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--brand-primary);
 }
 
 .footerLabels {
   display: flex;
   justify-content: space-between;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 @media (min-width: 768px) {
@@ -115,13 +118,16 @@
 
   .inputWrapper {
     height: 60px;
+    padding: 0 var(--space-base);
   }
 
   .numberInput {
+    padding: 0 var(--space-base);
     font-size: 1.5rem;
   }
 
   .unitSuffix {
     font-size: 1.5rem;
+    padding-right: var(--space-xs);
   }
 }

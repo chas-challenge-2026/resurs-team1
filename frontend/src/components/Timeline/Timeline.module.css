@@ -10,12 +10,12 @@
 /* line on left side to seperate events better */
 .item {
   padding-left: var(--space-sm);
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid var(--timeline-border);
 }
 
 .timeAndActor {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .action {
@@ -30,7 +30,7 @@
 .comment {
   margin-top: var(--space-xs);
   padding: var(--space-sm);
-  background-color: var(--bg-subtle-grey);
+  background-color: var(--timeline-bg);
   border-radius: var(--radius-sm);
   white-space: pre-line;
 }

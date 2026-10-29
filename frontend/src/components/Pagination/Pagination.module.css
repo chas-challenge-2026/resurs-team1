@@ -25,14 +25,14 @@
 }
 
 .pageButton.active {
-  background-color: var(--color-primary);
-  color: #ffffff;
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-weight: 600;
 }
 
 .pageButton:focus-visible,
 .arrowButton:focus-visible {
-  outline: 1px solid var(--color-primary);
+  outline: 1px solid var(--btn-primary-bg);
 }
 
 /* Arrow buttons (< and >) */
@@ -62,7 +62,7 @@
 }
 
 .ellipsis {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   user-select: none;
   letter-spacing: 2px;
 }

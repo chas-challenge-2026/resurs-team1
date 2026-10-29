@@ -1,8 +1,8 @@
 .preFilled {
   display: flex;
   align-items: center;
-  background-color: var(--bg-subtle-grey);
-  border-color: var(--bg-subtle-grey) !important;
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--bg-subtle) !important;
 }
 
 .preFilled p {
@@ -16,24 +16,24 @@
 .infoBox {
   margin-top: var(--space-sm);
   padding: var(--space-sm);
-  background-color: var(--bg-subtle-grey);
+  background-color: var(--bg-subtle);
   border-radius: var(--radius-sm);
 }
 
 .infoBoxTitle {
   font-weight: 600;
   font-size: var(--font-size-sm);
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
 
 .infoBox p {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* borrowed from .formError in login */
 .submitError {
-  color: var(--color-error);
+  color: var(--status-error-text);
   font-size: var(--font-size-sm);
   text-align: end;
 }
@@ -53,7 +53,7 @@
 }
 
 .link {
-  color: var(--color-primary);
+  color: var(--link-text);
 }
 
 .checkboxLabel {
@@ -63,6 +63,6 @@
 }
 
 .checkboxLabel input[type="checkbox"] {
-  accent-color: var(--color-primary);
+  accent-color: var(--brand-primary);
   cursor: pointer;
 }
