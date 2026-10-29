@@ -42,6 +42,8 @@ crypto and audit, and individual export checks for the symbol modules. These
 counts do not count assertions or iterations within a test case. If a module
 crashes before reporting a final total, the summary marks its observed count
 as potentially incomplete. Missing or inconsistent counts are never invented.
+CTest saves up to 1 MiB of output per module for both passing and failing tests,
+so larger suites retain their individual results and final totals in the report.
 
 Reports and logs are attached as `native-ubuntu-22.04-debug` and
 `native-ubuntu-24.04-debug`, retained for seven days. They include CTest JUnit XML,
@@ -62,7 +64,7 @@ On Ubuntu with `build-essential`, `cmake` (3.21 or newer for JUnit output) and
 ```bash
 cmake -S native -B build/native-ci -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DRESURS_BUILD_CRYPTO_DEMO=ON -DRESURS_BUILD_AUDIT_DEMO=ON
 cmake --build build/native-ci --parallel 2
-ctest --test-dir build/native-ci --verbose --output-on-failure --no-tests=error --timeout 120 --output-junit "$PWD/build/native-ci/ctest.xml"
+ctest --test-dir build/native-ci --verbose --output-on-failure --no-tests=error --timeout 120 --test-output-size-passed 1048576 --test-output-size-failed 1048576 --output-junit "$PWD/build/native-ci/ctest.xml"
 ```
 
 Windows developers can continue using the existing Docker instructions in
