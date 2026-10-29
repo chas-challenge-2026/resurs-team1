@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { getDefaultRedirectPath } from "../../utils/auth"
+import { getDefaultRedirectPath, isCaseWorkerUser } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import type { User } from "../../types/user"
 import Button from "../Button/Button"
@@ -11,15 +11,11 @@ import { useUser } from "../../hooks/useUser"
 
 const getReadableRedirectPath = (user: User | undefined): string => {
   if (!user) return "Till startsidan"
+  
+  if(user.roles.includes("COMPANY")) return "Till översikten"
+  if(user.roles.includes("CASEWORKER")) return "Till ärenden"
 
-  switch (user.role) {
-    case 'company':
-      return 'Till översikten'
-    case 'caseWorker':
-      return 'Till ärenden'
-    default:
-      return 'Till startsidan'
-  }
+  return "Till startsidan"
 }
 
 interface HeaderProps {
@@ -35,7 +31,7 @@ const Header = ({ search, children }: HeaderProps) => {
   const { logout } = useLogout()
 
   // agents get the role badge, companies are identified by their own name
-  const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
+  const roleLabel = isCaseWorkerUser(user) ? "Handläggare" : null
 
   // the whole user cluster is meaningless before the profile resolves
   // no wrapper of its own, the bar and the dropdown lay it out differently
