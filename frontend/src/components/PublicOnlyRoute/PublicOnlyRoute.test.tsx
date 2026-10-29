@@ -33,7 +33,7 @@ describe("PublicOnlyRoute", () => {
     vi.spyOn(useUser, "useUser").mockReturnValue({
       data: {
         userId: 1, 
-        role: "company", 
+        roles: ["COMPANY"], 
         orgNumber: "556600-1234", 
         displayName: "Malmö Fastigheter AB"
       }
@@ -60,7 +60,7 @@ describe("PublicOnlyRoute", () => {
     vi.spyOn(useUser, "useUser").mockReturnValue({ 
       data: {
         userId: 1,
-        role: "caseWorker",
+        roles: ["CASEWORKER"],
         name: "Karin Handläggare",
         email: "karin@resurs.se"
       }
