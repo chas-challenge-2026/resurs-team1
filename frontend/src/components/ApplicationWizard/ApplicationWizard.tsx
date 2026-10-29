@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { BiChevronDown, BiChevronUp } from "react-icons/bi";
 import { formatCurrency } from "../../utils/formatters";
 import { LOAN_MIN, LOAN_MAX, EMAIL_PATTERN } from "../../constants/constants";
 import { isValidPhone } from "../../utils/validators";
@@ -12,9 +14,9 @@ import Slider from "../Slider/Slider";
 import s from "./ApplicationWizard.module.css"
 import type { CompanyUser } from "../../types/user";
 import { useGetFinancial } from "../../hooks/useFinancial";
-import Loading from "../Loading/Loading";
 import Button from "../Button/Button";
 import { useUser } from "../../hooks/useUser";
+import { FiCheck } from "react-icons/fi";
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -75,6 +77,7 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
   const financials = useGetFinancial()
   const { data } = useUser()
   const user = data as CompanyUser
+  const [expanded, setExpanded] = useState(false)
   
   switch (step) {
     case 1:
@@ -160,57 +163,6 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
     }
 
     case 3: {
-      
-      if (financials.isLoading) {
-        return (
-          <Card>
-            <CardBody className={s.loadingCard}>
-              <Loading />
-              <span>Hämtar ekonomiska uppgifter från Bolagsverket...</span>
-            </CardBody>
-          </Card>
-        )
-      }
-      
-      if (financials.isError || !financials.data) {
-        return (
-          <Card>
-            <CardBody className={s.errorCard}>
-              <p>Det gick inte att hämta de ekonomiska uppgifterna automatiskt.</p>
-              <Button variant="secondary" onClick={() => financials.refetch()}>
-                Försök igen
-              </Button>
-            </CardBody>
-          </Card>
-        )
-      }
-
-      const { incomeStatement, balanceSheet } = financials.data
-
-      return (
-        <Card>
-          <CardBody>
-            <div className={s.infoBox}>
-              <span className={s.infoBoxTitle}>Automatisk datahämtning</span>
-              <p>
-                Ekonomiska uppgifter hämtas automatiskt från Bolagsverket. Du behöver inte fylla i något manuellt.
-              </p>
-            </div>
-
-            <DataList>
-              <DataListItem label="Företagsnamn" value={user.displayName} />
-              <DataListItem label="Omsättning (senaste räkenskapsåret)" value={formatCurrency(incomeStatement.revenue)} />
-              <DataListItem label="Rörelseresultat / EBIT" value={formatCurrency(incomeStatement.operatingResult)} />
-              <DataListItem label="Eget kapital" value={formatCurrency(balanceSheet.equity)} />
-              <DataListItem label="Summa tillgångar" value={formatCurrency(balanceSheet.totalAssets)} />
-              <DataListItem label="Kortfristiga skulder" value={formatCurrency(balanceSheet.shortTermLiabilities)} />
-            </DataList>
-          </CardBody>
-        </Card>
-      )
-    }
-
-    case 4: {
       const purposeLabel = PURPOSE_OPTIONS.find((option) => option.value === values.purpose)?.label
 
       return (
@@ -221,37 +173,60 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
             </p>
 
             <div>
+              <h3 className="subtitle">Din ansökan</h3>
+              <div className={s.infoWrapper}>
+                <dl className={s.infoBox}>
+                  <dt className={s.infoBoxTitle}>Belopp</dt>
+                  <dd className={s.infoBoxValue}>{formatCurrency(values.requestedAmount)}</dd>
+                </dl>
+
+                <dl className={s.infoBox}>
+                  <dt className={s.infoBoxTitle}>Återbetalningstid</dt>
+                  <dd className={s.infoBoxValue}>{`${values.durationMonths} mån`}</dd>
+                </dl>
+
+                <dl className={s.infoBox}>
+                  <dt className={s.infoBoxTitle}>Ändamål</dt>
+                  <dd className={s.infoBoxValue}>{purposeLabel}</dd>
+                </dl>
+              </div>
+            </div>
+
+            {financials.data && 
+              <div>
+                <div className={s.titleWrapper}>
+                  <h3 className="subtitle">Företag</h3>
+                  <p className={s.badge}><FiCheck /> Hämtat från bolagsverket</p>
+                </div>
+                <DataList>
+                  <DataListItem label="Företagsnamn" value={user.displayName} />
+                  <DataListItem label="Organisationsnummer" value={values.orgNumber} />
+                  <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
+                  <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
+                  {expanded && (
+                    <>
+                      <DataListItem label="Eget kapital" value={formatCurrency(financials.data.balanceSheet.equity)} />
+                      <DataListItem label="Summa tillgångar" value={formatCurrency(financials.data.balanceSheet.totalAssets)} />
+                      <DataListItem label="Kortfristiga skulder" value={formatCurrency(financials.data.balanceSheet.shortTermLiabilities)} />
+                    </>
+                  )}
+                </DataList>
+                <Button variant="ghost" onClick={() => setExpanded(!expanded)} className={s.expandButton}>
+                  <span className={s.expandIcon}>{expanded ? <BiChevronUp /> : <BiChevronDown />}</span>
+                  {expanded ? "Dölj ekonomiska uppgifter" : "Visa alla ekonomiska uppgifter"}
+                </Button>
+              </div>
+            }
+
+            <div>
               <h3 className="subtitle">Kontakt</h3>
               <DataList>
-                <DataListItem label="Organisationsnummer" value={values.orgNumber} />
                 <DataListItem label="Kontaktperson" value={values.contactName} />
                 <DataListItem label="E-post" value={values.email} />
                 <DataListItem label="Telefonnummer" value={values.phoneNumber} />
               </DataList>
             </div>
 
-            <div>
-              <h3 className="subtitle">Ansökan</h3>
-              <DataList>
-                <DataListItem label="Ändamål" value={purposeLabel ?? "Ej valt"} />
-                <DataListItem label="Belopp" value={formatCurrency(values.requestedAmount)} />
-                <DataListItem
-                  label="Återbetalningstid"
-                  value={values.durationMonths ? `${values.durationMonths} mån` : "Ej valt"}
-                />
-              </DataList>
-            </div>
-
-            {financials.data && 
-              <div>
-                <h3 className="subtitle">Ekonomi</h3>
-                <DataList>
-                  <DataListItem label="Företagsnamn" value={user.displayName} />
-                  <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
-                  <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
-                </DataList>
-              </div>
-            }
 
             <div>
               <label className={s.checkboxLabel}>
