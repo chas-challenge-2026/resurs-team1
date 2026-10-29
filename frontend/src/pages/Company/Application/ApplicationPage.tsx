@@ -11,8 +11,8 @@ import Loading from "../../../components/Loading/Loading"
 import { useUser } from "../../../hooks/useUser"
 import { isCompanyUser } from "../../../utils/auth"
 
-const TOTAL_STEPS = 4
-const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
+const TOTAL_STEPS = 3
+const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
 
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
