@@ -6,7 +6,11 @@ import s from "./CardLayout.module.css"
 import { useUser } from "../hooks/useUser"
 import { isCaseWorkerUser } from "../utils/auth"
 
-const CardLayout = () => {
+interface LayoutProps {
+  children?: React.ReactNode
+}
+
+const CardLayout = ({children}: LayoutProps) => {
 
   const { data: user } = useUser()
 
@@ -26,7 +30,7 @@ const CardLayout = () => {
         ) : undefined}
       />
       <main className={s.main}>
-        <Outlet />
+        {children ? children : <Outlet />}
       </main>
     </div>
   )
