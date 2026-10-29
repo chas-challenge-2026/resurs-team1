@@ -52,7 +52,7 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -85,6 +85,7 @@ public class ApplicationService {
         creditApplication.setContactEmail(contactDetails.email());
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
+        creditApplication.setProtectedResource(signatoryProtected);
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);

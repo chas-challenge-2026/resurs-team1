@@ -32,7 +32,8 @@ CREATE TABLE applications (
     contact_email bytea,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    comment TEXT
+    comment TEXT,
+    protected_resource BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE documents (

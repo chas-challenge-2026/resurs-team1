@@ -57,7 +57,7 @@ public class DataBaseSeeder implements CommandLineRunner {
         }
 
         for(NewApplicationDTO creditApplication:seedApplications ){
-            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"));        }
+            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false);        }
 
     }
 

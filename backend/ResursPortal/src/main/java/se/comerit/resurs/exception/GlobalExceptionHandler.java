@@ -12,6 +12,7 @@ import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
 import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
+import se.comerit.resurs.exception.spar.SparUnavailableException;
 
 
 import java.time.Instant;
@@ -187,5 +188,15 @@ public class GlobalExceptionHandler {
                 null
         );
         return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY);
+    }
+    @ExceptionHandler(SparUnavailableException.class)
+    public ResponseEntity<ApiError> handleSparUnavailable(SparUnavailableException ex) {
+        ApiError body = new ApiError(
+                Instant.now(),
+                "PERSON_REGISTRY_UNAVAILABLE",
+                "The person registry is temporarily unavailable. Please try again shortly.",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

@@ -93,7 +93,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_shouldPersistApplication() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
 
         assertThat(saved).isNotNull();
@@ -118,7 +118,7 @@ class ApplicationServiceTests {
 
         NewApplicationDTO dto = createApplicationDTO();
 
-        CreditApplicationDTO saved = applicationService.saveApplication(dto,mockContacts);
+        CreditApplicationDTO saved = applicationService.saveApplication(dto,mockContacts, false);
 
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
@@ -137,6 +137,26 @@ class ApplicationServiceTests {
 
         assertThat(saved.scoringResult())
                 .isEqualTo(dto.scoring_result());
+    }
+
+    @Test
+    void saveApplication_whenSignatoryProtected_persistsProtectedIdentity() {
+
+        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, true);
+
+        CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
+
+        assertThat(stored.isProtectedResource()).isTrue();
+    }
+
+    @Test
+    void saveApplication_whenSignatoryNotProtected_persistsUnprotectedIdentity() {
+
+        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, false);
+
+        CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
+
+        assertThat(stored.isProtectedResource()).isFalse();
     }
 
     /*
@@ -201,7 +221,7 @@ class ApplicationServiceTests {
         );
 
         CreditApplicationDTO saved =
-                applicationService.saveApplication(dto,mockContacts);
+                applicationService.saveApplication(dto,mockContacts, false);
 
         assertThat(saved.orgNumber())
                 .isEqualTo("111111-2222");
@@ -218,7 +238,7 @@ class ApplicationServiceTests {
         );
 
         assertThatThrownBy(() ->
-                applicationService.saveApplication(dto,mockContacts)
+                applicationService.saveApplication(dto,mockContacts, false)
         ).isInstanceOf(Exception.class);
 
         assertThat(applicationRepository.count())
@@ -234,7 +254,7 @@ class ApplicationServiceTests {
     void findApplicationByID_shouldReturnApplication() {
 //kolla över
         CreditApplicationDTO saved =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
         CreditApplicationDTO result =
                 applicationService.findApplicationByID(saved.id());
@@ -275,21 +295,21 @@ class ApplicationServiceTests {
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                ),mockContacts
+                ),mockContacts, false
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                ),mockContacts
+                ),mockContacts, false
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "111111-2222",
                         "Other Company"
-                ),mockContacts
+                ),mockContacts, false
         );
 
         List<CreditApplicationDTO> applications =
@@ -321,11 +341,11 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnCompanyApplications() {
 //kolla över
         applicationService.saveApplication(
-                createApplicationDTO(),mockContacts
+                createApplicationDTO(),mockContacts, false
         );
 
         applicationService.saveApplication(
-                createApplicationDTO(),mockContacts
+                createApplicationDTO(),mockContacts, false
         );
 
         List<CreditApplicationDTO> applications =
@@ -344,9 +364,9 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompanyDesc_shouldRespectPageSize() {
 //kolla över
-        applicationService.saveApplication(createApplicationDTO(),mockContacts);
-        applicationService.saveApplication(createApplicationDTO(),mockContacts);
-        applicationService.saveApplication(createApplicationDTO(),mockContacts);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
         Pageable pageable = PageRequest.of(0, 2);
 
@@ -364,10 +384,10 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnNewestFirst() {
 //kolla över
         CreditApplicationDTO first =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
         CreditApplicationDTO second =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
         List<CreditApplicationDTO> applications =
                 applicationService.readApplicationsByCompanyDesc(
