@@ -20,7 +20,7 @@ describe("ProtectedRoute", () => {
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>
         <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["caseWorker"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["CASEWORKER"]} />}>
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />
@@ -47,7 +47,7 @@ describe("ProtectedRoute", () => {
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>
         <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["COMPANY"]} />}>
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />
@@ -67,7 +67,7 @@ describe("ProtectedRoute", () => {
     render(
       <MemoryRouter initialEntries={["/oversikt"]}>
         <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["COMPANY"]} />}>
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />

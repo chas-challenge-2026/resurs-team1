@@ -3,17 +3,16 @@ import { FiSearch } from "react-icons/fi"
 import Header from "../components/Header/Header"
 import Input from "../components/Input/Input"
 import { useUser } from "../hooks/useUser"
+import { isCaseWorkerUser } from "../utils/auth"
 
 const FullWidthLayout = () => {
 
   const { data: user } = useUser()
-  // case search is a caseworker tool, companies never see it
-  const isCaseWorker = user?.role === "caseWorker";
 
   return(
     <div>
       <Header
-        search={isCaseWorker ? (
+        search={isCaseWorkerUser(user) ? (
           <Input
             id="caseSearch"
             type="search"

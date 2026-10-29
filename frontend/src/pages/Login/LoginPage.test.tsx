@@ -127,7 +127,7 @@ describe("LoginPage", () => {
   it("sends formatted numbers with hyphens in the payload to the api", async () => {
     vi.mocked(loginCompany).mockResolvedValue({
       userId: 1,
-      role: "company",
+      roles: ["COMPANY"],
       orgNumber: ORG_NUMBER,
       displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",
@@ -150,7 +150,7 @@ describe("LoginPage", () => {
   it("redirects when the login is accepted", async () => {
     vi.mocked(loginCompany).mockResolvedValue({
       userId: 1,
-      role: "company",
+      roles: ["COMPANY"],
       orgNumber: ORG_NUMBER,
       displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",

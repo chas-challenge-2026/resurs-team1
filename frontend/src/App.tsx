@@ -26,7 +26,7 @@ function App() {
         </Route>
 
         {/* Company pages */}
-        <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["COMPANY"]} />}>
           <Route element={<FullWidthLayout />}>
             <Route path="oversikt" element={<CompanyHomePage />} />
           </Route>
@@ -38,7 +38,7 @@ function App() {
         </Route>
 
         {/* Caseworker pages */}
-        <Route element={<ProtectedRoute allowedRoles={["caseWorker"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["CASEWORKER"]} />}>
           <Route path="arenden" element={< CaseWorkerLayout />}>
             <Route path=":id" element={ <CaseDetailsPage />} />
           </Route>
