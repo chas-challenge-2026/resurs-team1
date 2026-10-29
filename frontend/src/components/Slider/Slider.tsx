@@ -91,7 +91,11 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
       )}
 
       {/* Interactive value display: toggles between a button and a text input */}
-      <div className={s.inputWrapper}>
+      <div className={`input-base ${s.inputWrapper}`}>
+        <span className={s.hiddenSizer} aria-hidden="true">
+          {inputValue || "0"}
+        </span>
+
         <input
           id={textInputId}
           type="text"
@@ -99,9 +103,8 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          size={inputValue.length > 1 ? inputValue.length - 1 : 1}
           aria-labelledby={labelId}
-          className={`input-base ${s.numberInput}`}
+          className={s.numberInput}
         />
         <span className={s.unitSuffix}>{unit}</span>
       </div>
