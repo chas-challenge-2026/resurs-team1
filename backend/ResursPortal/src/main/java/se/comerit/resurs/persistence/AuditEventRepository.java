@@ -28,4 +28,8 @@ public interface AuditEventRepository extends JpaRepository<AuditEvent, Long> {
     List<AuditEvent> findByApplicationIdAndActionInOrderBySequenceNumberAsc(
             Long applicationId, Collection<AuditAction> actions);
 
+    //Auditloggen för ett ärende, men bara om ärendet inte är skyddat (annars tomt)
+    List<AuditEvent> findByApplicationIdAndApplicationProtectedResourceFalseOrderBySequenceNumberAsc(
+            Long applicationId);
+
 }
