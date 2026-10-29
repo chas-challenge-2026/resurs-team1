@@ -16,9 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
-import se.comerit.resurs.dto.auth.CompanyLoginRequest;
-import se.comerit.resurs.dto.auth.CompanyLoginResponse;
-import se.comerit.resurs.dto.auth.CurrentUserResponse;
+import se.comerit.resurs.dto.auth.*;
 import se.comerit.resurs.exception.ApiError;
 
 import java.nio.file.Path;
@@ -61,8 +59,9 @@ class AuthControllerIntegrationTest {
     private static final String UNKNOWN_PERSONAL_NUMBER = "000000-0000";
 
     // Handläggaren kommer från infra/seed.sql
-    private static final String WORKER_EMAIL = "karin@resurs.se";
-    private static final String WORKER_PASSWORD = "password123";
+    private static final String WORKER_EMAIL = "charles@resurs.se";
+    private static final String WORKER_PASSWORD = "password456";
+    private static final String WORKER_NAME = "Charles Certifierad";
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -95,6 +94,25 @@ class AuthControllerIntegrationTest {
         assertThat(me.getBody().orgNumber()).isEqualTo(ORG_NUMBER);
         assertThat(me.getBody().displayName()).isEqualTo(COMPANY_NAME);
     }
+
+    @Test
+    void loginCaseworker_shouldStartSession_whenLoginSucceeds() {
+        ResponseEntity<CaseWorkerLoginResponse> login = loginCaseworker();
+        String session = sessionCookie(login);
+
+        assertThat(session).isNotNull();
+
+        ResponseEntity<CurrentUserResponse> me = restTemplate.exchange(
+                "/api/auth/me", HttpMethod.GET, withSession(session), CurrentUserResponse.class);
+
+        assertThat(me.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(me.getBody()).isNotNull();
+        assertThat(me.getBody().roles()).contains("CASEWORKER");
+        assertThat(me.getBody().roles()).contains("CERTIFIED");
+        assertThat(me.getBody().userId()).isNotNull();
+        assertThat(me.getBody().displayName()).isEqualTo(WORKER_NAME);
+    }
+
 
     @Test
     void me_shouldReturnUnauthorized_whenNoSessionIsSent() {
@@ -155,6 +173,13 @@ class AuthControllerIntegrationTest {
                 "/api/auth/login/company", HttpMethod.POST,
                 new HttpEntity<>(new CompanyLoginRequest(ORG_NUMBER, personalNumber), postHeaders(null)),
                 CompanyLoginResponse.class);
+    }
+
+    private ResponseEntity<CaseWorkerLoginResponse> loginCaseworker() {
+        return restTemplate.exchange(
+                "/api/auth/login/caseworker", HttpMethod.POST,
+                new HttpEntity<>(new CaseWorkerLoginRequest(WORKER_EMAIL, WORKER_PASSWORD), postHeaders(null)),
+                CaseWorkerLoginResponse.class);
     }
 
     private String csrfCookie() {
