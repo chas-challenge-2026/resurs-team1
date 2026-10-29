@@ -11,4 +11,8 @@ public interface DocumentRepository extends JpaRepository<Document,Long> {
 
     List<Document> findByApplicationId(Long applicationId);
 
+    //Dokumenten för ett ärende, men bara om ärendet inte är skyddat (annars tomt)
+    List<Document> findByApplicationIdAndApplicationProtectedResourceFalse(
+            Long applicationId);
+
 }
