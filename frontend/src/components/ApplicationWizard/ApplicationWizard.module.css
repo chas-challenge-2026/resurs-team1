@@ -1,3 +1,9 @@
+.titleWrapper {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
 .preFilled {
   display: flex;
   align-items: center;
@@ -13,11 +19,19 @@
   padding-bottom: var(--space-xs);
 }
 
+.infoWrapper {
+  display: flex;
+  gap: var(--space-base);
+  flex-wrap: wrap;
+  margin: var(--space-sm) 0;
+}
+
 .infoBox {
-  margin-top: var(--space-sm);
   padding: var(--space-sm);
   background-color: var(--bg-subtle-grey);
   border-radius: var(--radius-sm);
+  flex-wrap: wrap;
+  flex: 1;
 }
 
 .infoBoxTitle {
@@ -26,9 +40,40 @@
   color: var(--color-text-main);
 }
 
+.infoBoxValue {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
 .infoBox p {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.expandIcon {
+  font-size: 20px;
+}
+
+.badge {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  background-color: var(--bg-subtle-grey);
+  color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
 /* borrowed from .formError in login */
