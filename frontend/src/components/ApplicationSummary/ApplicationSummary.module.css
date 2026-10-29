@@ -17,19 +17,19 @@
 }
 
 .item + .item {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--divider);
 }
 
 .panel {
-  background-color: var(--bg-main);
+  background-color: var(--card-bg-secondary);
 }
 
 .panelPrimary {
-  background-color: var(--color-primary-light);
+  background-color: var(--brand-primary-light);
 }
 
 .label {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -52,11 +52,11 @@
 }
 
 .neutral {
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
 
 .primary {
-  color: var(--color-primary);
+  color: var(--brand-primary);
 }
 
 @media (min-width: 768px) {
@@ -66,7 +66,7 @@
 
   .item + .item {
     border-top: none;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--divider);
   }
 
   /* amount gets the most room, duration only takes what its number needs */
@@ -87,5 +87,5 @@
 
 /* make line between sökt belopp and months more gentle since they belong togeather*/
 .item + .durationItem {
-  border-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: color-mix(in srgb, var(--brand-primary) 15%, transparent);
 }

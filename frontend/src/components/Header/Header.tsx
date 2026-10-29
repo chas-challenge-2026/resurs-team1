@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { getDefaultRedirectPath } from "../../utils/auth"
 import { FiMenu, FiX } from "react-icons/fi"
 import type { User } from "../../types/user"
@@ -30,9 +30,10 @@ interface HeaderProps {
 
 const Header = ({ search, children }: HeaderProps) => {
   const [open, setOpen] = useState(false)
+  const location = useLocation()
 
   const { data: user } = useUser()
-  const { logout } = useLogout()
+  const { logout } = useLogout(user?.role)
 
   // agents get the role badge, companies are identified by their own name
   const roleLabel = user?.role === "caseWorker" ? "Handläggare" : null
@@ -54,7 +55,7 @@ const Header = ({ search, children }: HeaderProps) => {
     <>
       <header className={s.header}>
         <div className={s.inner}>
-          <Link className={s.logo} to={getDefaultRedirectPath(user)} aria-label={`Resurs - ${getReadableRedirectPath(user)}`}>
+          <Link className={s.logo} to={getDefaultRedirectPath(user, location.pathname)} aria-label={`Resurs - ${getReadableRedirectPath(user)}`}>
             <img src={logo} alt="Resurs" />
           </Link>
 

@@ -1,7 +1,7 @@
 .wrapper {
   display: flex;
   gap: var(--space-xs);
-  background-color: var(--bg-main);
+  background-color: var(--file-bg);
   border-radius: var(--radius-sm);
   padding: var(--space-sm);
   align-items: center;
@@ -9,8 +9,8 @@
 
 .iconWrapper {
   padding: var(--space-sm);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+  background-color: var(--brand-primary-light);
+  color: var(--brand-primary);
   border-radius: var(--radius-sm);
   font-size: 24px;
   flex-shrink: 0;
@@ -28,7 +28,7 @@
 }
 
 .fileInformation.clickable:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: var(--file-hover);
 }
 
 .filename {
@@ -42,7 +42,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: 0.875rem;
 }
 

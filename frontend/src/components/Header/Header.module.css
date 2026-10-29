@@ -1,6 +1,6 @@
 .header {
-  background-color: var(--bg-secondary);
-  box-shadow: 0 1px 0 0 var(--border);
+  background-color: var(--header-bg);
+  box-shadow: 0 1px 0 0 var(--header-border);
   height: auto;
   position: sticky;
   top: 0;
@@ -35,7 +35,7 @@
 
 .nav a,
 .menuNav a {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
 }
 
@@ -46,12 +46,12 @@
 
 .nav a:hover {
   background-color: rgba(0, 0, 0, 0.04);
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
 
 .nav a[aria-current],
 .menuNav a[aria-current] {
-  color: var(--color-text-main);
+  color: var(--text-main);
   font-weight: 600;
 }
 
@@ -73,24 +73,24 @@
 .user span {
   display: block;
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .divider {
   height: 40px;
   width: 1.5px;
   margin: 2px 0;
-  background-color: var(--border);
+  background-color: var(--divider);
 }
 
 /* role badge sits next to the wordmark */
 .role,
 .menuRole {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--header-role-text);
   white-space: nowrap;
 }
 
@@ -115,7 +115,7 @@
   padding: 0;
   border: none;
   background-color: transparent;
-  color: var(--color-text-main);
+  color: var(--text-main);
   cursor: pointer;
 }
 
@@ -146,7 +146,7 @@
 
   .menuRole {
     padding-top: var(--space-xs);
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--divider);
   }
 
   .burger {
@@ -191,7 +191,7 @@
   .menuNav,
   .menu .user {
     padding-top: var(--space-xs);
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--divider);
   }
 
   .menu .divider {

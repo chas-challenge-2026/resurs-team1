@@ -127,10 +127,15 @@ describe("useDocument hooks", () => {
       // Verify API call and cache invalidation
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true)
-        expect(postDocumentSpy).toHaveBeenCalledWith(payload)
-        expect(invalidateSpy).toHaveBeenCalledWith({
-          queryKey: ["documents", 3],
-        })
+        expect(invalidateSpy).toHaveBeenCalledTimes(2)
+      })
+
+      expect(postDocumentSpy).toHaveBeenCalledWith(payload)
+      expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
+        queryKey: ["documents", 3],
+      })
+      expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
+        queryKey: ["applications", 3],
       })
     })
   })

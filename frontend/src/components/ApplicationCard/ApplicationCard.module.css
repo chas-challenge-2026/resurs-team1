@@ -12,10 +12,10 @@
 }
 
 .cardFooter {
-  background-color: var(--bg-main);
+  background-color: var(--card-bg-secondary);
   justify-content: space-between;
   padding: var(--space-md);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--card-border);
 }
 
 /* Top / Left Side */
@@ -26,7 +26,7 @@
 }
 
 .reference {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .purpose {
@@ -35,7 +35,7 @@
 }
 
 .updatedAt {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Bottom / Right Side */
@@ -45,7 +45,7 @@
 }
 
 .amountLabel {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -58,7 +58,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  color: var(--color-primary);
+  color: var(--link-text);
   text-decoration: none;
 }
 
@@ -82,6 +82,6 @@
     text-align: end;
     align-items: end;
     border-top: none;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--card-border);
   }
 }

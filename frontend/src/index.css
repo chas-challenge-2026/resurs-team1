@@ -1,23 +1,151 @@
 :root {
-  /* Color Palatte */
-  --bg-main: #F7FAFA;
-  --bg-secondary: #FFFFFF;
-  --bg-subtle-grey: #F4F6F8;
+  /* PRIMITIVES - Raw colors - do not use in components */
+  --color-white-50: #FFFFFF;
+  --color-white-75: #F8F8F8;
+  --color-white-100: #F3F3F3;
 
-  --border: #D9D9D9;
+  --color-teal-30: #F2F7F7;
+  --color-teal-50: #EAF4F4;
+  --color-teal-500: #26938f;
+  --color-teal-600: #117069;
+  --color-teal-700: #006464;
+  --color-teal-800: #0E5D57;
 
-  --color-primary: #117069;
-  --color-primary-light: #EAF4F4;
+  --color-navy-50: #E9EDF6;
+  --color-navy-800: #2B3E6E;
 
-  --color-secondary: #2B3E6E;
+  --color-amber-30: #f5f1ee;
+  --color-amber-50: #F7F0EB;
+  --color-amber-100: #FBF1DF;
+  --color-amber-700: #B4711A;
+  --color-amber-900: #82451E;
 
-  --color-warning-text: #82451E;
-  /* --color-warning is a near-white, added this forcontrast */
-  --color-warning: #B4711A;
-  
-  --color-text-main: #393838;
-  --color-text-muted: #666666;
-  --color-error: #a5231f;
+  --color-red-50: #FAEAE9;
+  --color-red-600: #A5231F;
+  --color-red-800: #8C1D19;
+
+  --color-grey-50: #F7FAFA;
+  --color-grey-100: #EFF1F4;
+  --color-grey-200: #EAEDF3;
+  --color-grey-300: #D9D9D9;
+  --color-grey-600: #666666;
+  --color-grey-900: #393838;
+
+  /* SEMANTICS COLORS - Use in components */
+  /* Brand / Theme */
+  --brand-primary-extra-light: var(--color-teal-30);
+  --brand-primary-light: var(--color-teal-50);
+  --brand-primary: var(--color-teal-600);
+  --brand-primary-dark: var(--color-teal-700);
+
+  /* Backgrounds */
+  --bg-app: var(--color-grey-50);
+  --bg-surface: var(--color-white-50);
+  --bg-subtle: var(--color-grey-100);
+  --divider: var(--color-grey-300);
+
+  /* Header */
+  --header-bg: var(--bg-surface);
+  --header-border: var(--divider);
+  --header-role-text: var(--color-amber-900);
+
+  /* Cards */
+  --card-bg: var(--bg-surface);
+  --card-bg-secondary: var(--bg-app);
+  --card-border: var(--divider);
+  --card-accent-color: var(--brand-primary);
+  --card-secondary-accent: var(--color-navy-800);
+
+  /* Text */
+  --text-main: var(--color-grey-900);
+  --text-muted: var(--color-grey-600);
+
+  /* Forms */
+  --input-bg: var(--bg-surface);
+  --input-border: var(--divider);
+  --input-border-focus: var(--brand-primary);
+  --input-placeholder:  var(--color-grey-600);
+  --input-error-border: var(--status-error-border);
+
+  /* Buttons */
+  --btn-primary-bg: var(--brand-primary);
+  --btn-primary-hover: var(--brand-primary-dark);
+  --btn-primary-text: var(--color-white-50);
+  --btn-disabled-bg: var(--color-grey-200);
+  --btn-disabled-text: var(--color-grey-600);
+
+  --btn-secondary-bg: var(--bg-surface);
+  --btn-secondary-text: var(--brand-primary-dark);
+  --btn-secondary-border: var(--brand-primary-dark);
+  --btn-secondary-hover-bg: var(--color-teal-500);
+  --btn-secondary-hover-text: var(--bg-surface);
+
+  --btn-ghost-text: var(--color-grey-600);
+  --btn-ghost-hover-bg: var(--color-grey-200);
+  --btn-ghost-hover-text: var(--color-grey-900);
+
+  --btn-approve: var(--color-teal-600);
+  --btn-request-info: var(--color-amber-700);
+  --btn-reject: var(--color-red-600);
+  --btn-neutral: var(--color-grey-900); 
+
+  /* Buttongroup */
+  --btn-group-border: var(--color-grey-300);
+  --btn-group-active-bg: var(--brand-primary);
+  --btn-group-active-text: var(--color-white-50);
+
+  /* Dropzone */
+  --dropzone-bg: var(--brand-primary-light);
+  --dropzone-border: var(--divider);
+  --dropzone-bg-hover: var(--brand-primary-light);
+  --dropzone-border-hover: var(--brand-primary);
+
+  /* Sidebar Case Card */
+  --sidebar-card-bg: var(--color-white-100);
+  --sidebar-card-border: var(--brand-primary);
+  --sidebar-card-bg-hover: var(--color-white-75);
+
+  /* File */
+  --file-bg: var(--bg-subtle);
+  --file-hover: var(--color-grey-100);
+
+  /* Timeline */
+  --timeline-border: var(--brand-primary);
+  --timeline-bg: var(--bg-subtle);
+
+  /* Badges */
+  --badge-success-bg: var(--color-teal-50);
+  --badge-success-border: var(--color-teal-600);
+  --badge-success-text: var(--color-teal-800);
+
+  --badge-neutral-bg: var(--color-navy-50);
+  --badge-neutral-text: var(--color-navy-800);
+
+  --badge-warning-bg: var(--color-amber-100);
+  --badge-warning-border: var(--color-amber-700);
+  --badge-warning-text: var(--color-amber-900);
+
+  --badge-error-bg: var(--color-red-50);
+  --badge-error-border: var(--color-red-600);
+  --badge-error-text: var(--color-red-800);
+
+  /* Toggle switch */
+  --toggle-bg: var(--color-white-100);
+  --toggle-active-bg: var(--bg-surface);
+  --toggle-accent-active-border: var(--color-grey-600);
+  --toggle-accent-active-text: var(--color-grey-900);
+
+  /* Globals */
+  --status-success-text: var(--color-teal-800);
+
+  --status-error-text: var(--color-red-600);
+  --status-error-border: var(--color-red-600);
+
+  --status-info-bg: var(--brand-primary-light);
+  --status-info-border: var(--brand-primary);
+
+  --icon-bg: var(--brand-primary);
+  --link-text: var(--brand-primary-dark);
 
   /* Spacing */
   --space-xs:   0.5rem;  /* 8px */
@@ -40,6 +168,15 @@
   --font-size-title: 2rem;
 }
 
+.theme-caseworker {
+  --brand-primary-extra-light: var(--color-amber-30);
+  --brand-primary-light: var(--color-amber-50);
+  --brand-primary: var(--color-amber-700);
+  --brand-primary-dark: var(--color-amber-900);
+
+  --bg-app: var(--color-white-75);
+}
+
 /* Resets */
 * {
   box-sizing: border-box;
@@ -57,10 +194,10 @@ html {
 
 /* Core body defaults */
 body {
-  background-color: var(--bg-main);
+  background-color: var(--bg-app);
   min-height: 100vh;
   font-size: var(--font-size-base);
-  color: var(--color-text-main);
+  color: var(--text-main);
   line-height: 1.5;
   text-rendering: optimizeSpeed;
 }
@@ -83,7 +220,7 @@ input, button, textarea, select {
 .title {
   font-size: var(--font-size-title);
   font-weight: 500;
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
 
 .subtitle {
@@ -91,28 +228,29 @@ input, button, textarea, select {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .input-base {
   display: flex;
   gap: var(--space-xs);
   padding: var(--space-sm);
-  border: 2px solid var(--border);
+  background-color: var(--input-bg);
+  border: 2px solid var(--input-border);
   border-radius: var(--radius-sm);
 }
 
 .input-base:focus-visible {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--input-border-focus);
 }
 
 .error-border {
-  border-color: var(--color-error);
+  border-color: var(--input-error-border);
 }
 
 .information-text {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
 

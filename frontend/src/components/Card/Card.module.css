@@ -2,8 +2,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-base);
   padding: var(--space-lg);
   gap: var(--space-sm);
@@ -32,7 +32,7 @@
 
 .info {
   border-radius: 0 var(--radius-base) var(--radius-base) 0;
-  border-left: 3px solid var(--color-primary);
+  border-left: 3px solid var(--card-accent-color);
 }
 
 /* Accent line on top of the card */
@@ -44,7 +44,7 @@
   right: 0;
   height: var(--space-xs);
   /* Use selected color or default primary */
-  background-color: var(--card-accent-color, var(--color-primary));
+  background-color: var(--card-chosen-color, var(--card-accent-color));
 }
 
 /* Make entire card clickable*/

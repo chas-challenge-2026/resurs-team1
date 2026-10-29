@@ -40,14 +40,14 @@
 .sticky {
   position: sticky;
   top: 0;
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--divider);
 }
 
 .sideBar {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-surface);
   width: 100%;
   overflow-y: auto;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -58,7 +58,7 @@
 .collapsed.sideBar {
   min-width: 54px;
   width: 54px;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--divider);
   overflow-y: hidden;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .casesLength {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .toggleButton {
@@ -85,7 +85,7 @@
 }
 
 .endOfCases {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-align: center;
   padding: var(--space-base) var(--space-xs);
 }
@@ -107,7 +107,7 @@
   align-items: center;
   display: flex;
   flex-direction: column;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   gap: var(--space-base);
 }
 
@@ -121,7 +121,7 @@
   .sideBar {
     width: 25%;
     min-width: 250px;
-    border-right: 1px solid var(--border);
+    border-right: 1px solid var(--divider);
   }
 
   .collapsed {

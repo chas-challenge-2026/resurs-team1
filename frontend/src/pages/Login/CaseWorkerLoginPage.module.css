@@ -1,0 +1,14 @@
+@media (min-width: 1024px) {
+  /* background-image replaces every layer, so the gradient comes along */
+  .wrapper {
+    background-image:
+      url("../../assets/login-background-autumn.webp"),
+      linear-gradient(
+      to right,
+      var(--bg-app) 0%,
+      var(--bg-app) 50%,
+      var(--bg-surface) 50%,
+      var(--bg-surface) 100%
+    );
+  }
+}

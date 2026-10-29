@@ -5,7 +5,7 @@
   max-width: 1200px;
   min-height: calc(100vh - 64px);
   padding: var(--space-xl) var(--space-md);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-app);
   justify-content: center;
 }
 
@@ -18,6 +18,10 @@
   flex-direction: column;
   gap: var(--space-sm);
   width: 100%;
+  border: none;
+  box-shadow: 
+  2px 30px 60px -30px rgba(11, 79, 74, 0.35),
+  -2px -2px 8px 1px rgba(11, 79, 74, 0.035);
 }
 
 .loginHeader {
@@ -29,9 +33,9 @@
 
 /* mobile only, desktop has the owl in the background tree */
 .loginMascot {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  height: 88px;
+  height: 100px;
+  margin-left: auto;
+  width: fit-content;
 }
 
 .form {
@@ -41,7 +45,7 @@
 }
 
 .subTitle {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .button {
@@ -49,24 +53,49 @@
 }
 
 .formError {
-  color: var(--color-error);
+  color: var(--status-error-text);
   font-size: var(--font-size-sm);
+}
+
+.link {
+  color: var(--link-text);
+  font-weight: 500;
+}
+
+.link:hover {
+  text-underline-offset: 3px;
 }
 
 .divider {
   width: 100%;
   height: 1px;
-  background-color: var(--border);
+  background-color: var(--divider);
   margin: var(--space-md) 0;
+}
+
+.titleRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.badge {
+  background-color: var(--brand-primary-light);
+  color: var(--brand-primary-dark);
+  font-weight: 500;
+  width: fit-content;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
 }
 
 /* Company Status boxes */
 .pendingWrapper {
-  background-color: var(--color-primary-light);
+  background-color: var(--status-info-bg);
   gap: var(--space-xs);
   padding: var(--space-sm);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--status-info-border);
   display: flex;
   flex-direction: column;
   text-align: center;
@@ -80,19 +109,19 @@
   display: flex;
   gap: var(--space-sm);
   align-items: center;
-  background-color: var(--color-primary-light);
+  background-color: var(--status-info-bg);
   padding: var(--space-sm);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--status-info-border);
 }
 
 .successWrapper svg {
-  color: var(--color-primary);
+  color: var(--icon-bg);
   font-size: 40px;
 }
 
 .successTitle {
-  color: var(--color-primary);
+  color: var(--status-success-text);
   font-weight: 500;
 }
 
@@ -103,18 +132,55 @@
     width: 100%;
     min-height: calc(100vh - 64px);
     padding: 0 var(--space-base);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
     
     /* sized by height so owl branch always above title */
     background:
       url("../../assets/login-background.webp") left -3vh bottom / auto 100% no-repeat,
       linear-gradient(
       to right,
-      var(--bg-main) 0%,
-      var(--bg-main) 50%,
-      var(--bg-secondary) 50%,
-      var(--bg-secondary) 100%
+      var(--bg-app) 0%,
+      var(--bg-app) 50%,
+      var(--bg-surface) 50%,
+      var(--bg-surface) 100%
     );
   }
+
+  /* circles around login window */
+  .wrapper::before, .wrapper::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    aspect-ratio: 1;
+    /* wonky corners look custom made, a perfect circle looked stiff */
+    border-radius: 46% 54% 60% 40% / 45% 40% 60% 55%;
+  }
+
+  /* top circle */
+  .wrapper::before {
+    background-color: var(--brand-primary-light);
+    width: min(80vh, 55vw);
+    max-width: 50vw;
+    scale: 1.2;
+    top: 0;
+    right: -100px;
+    /* anchored to the centered content so it stays behind the login card at any width */
+    transform: translateY(-35%);
+  }
+
+  /* bottom circle */
+  .wrapper::after {
+    background-color: var(--brand-primary);
+    width: min(70vh, 40vw);
+    /* mnade lighter so it does not draw attention */
+    opacity: 0.85;
+    bottom: -100px;
+    right: -50px;
+    transform: translate(20%, 50%);
+  }
+  
 
   .container {
     display: grid;
@@ -134,9 +200,18 @@
   .loginSection {
     justify-content: center;
     align-self: center;
-    padding-left: var(--space-xl);
-    padding-right: var(--space-sm);
-    margin: 0 auto;
+    gap: var(--space-base);
+  }
+
+  .titleRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .badge {
+    order: 99;
   }
 
   .button {
@@ -152,6 +227,10 @@
   }
 
   .loginMascot {
+    display: none;
+  }
+
+  .hiddenDesktop {
     display: none;
   }
 }
