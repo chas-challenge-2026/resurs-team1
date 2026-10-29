@@ -45,6 +45,18 @@ docker build --no-cache --build-arg UBUNTU_VERSION=24.04 -t resurs-crypto-ubuntu
 docker build --no-cache --build-arg UBUNTU_VERSION=22.04 -t resurs-crypto-jammy ./native
 ```
 
+## Run the audit tests with sanitizers
+
+This optional Ubuntu 24.04 build adds checks for memory errors and undefined
+behavior in the audit library and tests. The tests run during the image build:
+
+```bash
+docker build --no-cache --build-arg UBUNTU_VERSION=24.04 --build-arg CMAKE_BUILD_TYPE=Debug --build-arg RESURS_AUDIT_ENABLE_SANITIZERS=ON -t resurs-native-audit-sanitized ./native
+```
+
+If the command completes successfully, the sanitizer pass and all registered
+native tests passed.
+
 ## Verify the selected Ubuntu version
 
 ```bash
