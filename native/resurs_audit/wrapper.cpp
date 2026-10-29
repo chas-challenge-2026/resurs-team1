@@ -2,8 +2,13 @@
 #include "resurs_audit.h"
 #include "audit_types.h"
 
-// ----------- Internal functions in anonymous namespace so it wont get exported  -----------
+// These helpers keep C++ objects behind the exported C boundary. The public
+// function validates buffer sizes first and translates any exception to a result code.
 namespace {
+    /**
+     * Hash the exact canonical bytes and copy the 32-byte result to caller memory.
+     * No JSON parsing or normalization happens in native code.
+     */
     int wrapper_hash(const uint8_t *canonicalData, size_t canonicalDateLength, uint8_t *output_buffer)
     {
         DigitalSign digSign;
@@ -19,7 +24,9 @@ namespace {
         return 0;
     }
 
-    //int wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
+    /**
+     * Sign currentHash with a borrowed Ed25519 key. DigitalSign keeps all temporary OpenSSL ownership local to this call.
+     */
     DigitalSignResultCode wrapper_sign(const uint8_t *privateKey, size_t privateKeyLength, uint8_t *input_buffer, uint8_t *output_buffer)
     {
         DigitalSign digSign;
@@ -32,7 +39,7 @@ namespace {
 
 HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t canonicalDataLength, const uint8_t *privateKey, size_t privateKeyLength, uint8_t *output_hash_buffer, size_t output_hash_buffer_size,  uint8_t *output_signature_buffer, size_t output_signature_buffer_size) noexcept
 {
-    // validation
+    // Reject invalid input before constructing C++ objects or passing pointers into OpenSSL.
     if (canonicalData == nullptr ||
         privateKey == nullptr ||
         output_hash_buffer == nullptr ||
@@ -53,7 +60,7 @@ HashAndSignResultCode wrapper_hash_and_sign(const uint8_t *canonicalData, size_t
         return HASH_AND_SIGN_INVALID_BUFFER_SIZE;
     }
 
-    // code
+    // The work below can allocate or throw. This noexcept boundary turns every failure into a stable result code for JNA.
     try {
         int hash_result = wrapper_hash(canonicalData, canonicalDataLength, output_hash_buffer);
     
@@ -191,7 +198,7 @@ GeneratePrivateKeyResultCode generate_private_key(unsigned char* output_buffer, 
 }
 
 
-// New version, now using custom PkeyPtr to take advantage of RAII so as to not leave the ownership externally and not freeing
+// Public-key extraction needs a temporary OpenSSL key only for this call.
 GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private_key_size, unsigned char* output_public_key, size_t output_public_key_size) noexcept
 {
     if (private_key == nullptr || output_public_key == nullptr)
@@ -210,8 +217,7 @@ GetPublicKeyResultCode get_public_key(unsigned char* private_key, size_t private
 
 
     try {        
-        // The class has this set, but it's private.
-        // Since this is the only method that requires it, we declare it locally in this scope again rather than moving the original to public
+        // A local smart pointer gives that temporary key one clear owner and guarantees cleanup on success, failure, and exceptions.
         using PkeyPtr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
         
         PkeyPtr pkey(

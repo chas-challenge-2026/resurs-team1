@@ -8,14 +8,14 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
-import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.util.HMACHasher;
-import se.comerit.resurs.enums.ApplicationStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
 
 
 import java.util.List;
@@ -35,9 +35,10 @@ public class ApplicationService {
     private final CreditApplicationRepository applicationRepository;
     private final ScoringService scoringService;
     private final HMACHasher hmacHasher;
+    private final ApplicationEventPublisher eventPublisher;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -46,11 +47,12 @@ public class ApplicationService {
         this.scoringService = scoringService;
         this.companyService = companyService;
         this.hmacHasher = hmacHasher;
+        this.eventPublisher = eventPublisher;
     }
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected){
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -83,6 +85,7 @@ public class ApplicationService {
         creditApplication.setContactEmail(contactDetails.email());
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
+        creditApplication.setProtectedResource(signatoryProtected);
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);
@@ -92,6 +95,11 @@ public class ApplicationService {
         if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
             auditService.scoringRun(saved, newApplication.flagCount());
         }
+        //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
+        //Mejlet skickas först efter commit
+        eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                saved.getId(), saved.getContactEmail(),
+                saved.getStatus()));
         return new CreditApplicationDTO(saved);
     }
 
@@ -149,6 +157,8 @@ public class ApplicationService {
                 company.getAuthorized_signatory(),
                 application.getPurpose(), application.getDurationMonths());
 
+        //Kom ihåg statusen före omkörningen
+        ApplicationStatus previousStatus = application.getStatus();
         // Skriver de nya resultatet på det befintliga ärendet, alltså skapas inget nytt
         // Ingen save() behövs då ärendet redan hanteras av JPA inuti @Transactional
         application.setStatus(rescored.status());
@@ -157,6 +167,12 @@ public class ApplicationService {
         application.setScoringResult(rescored.scoring_result());
 
         auditService.scoringRun(application, rescored.flagCount());
+
+        if (application.getStatus() != previousStatus) {
+            eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                    application.getId(), application.getContactEmail(),
+                    application.getStatus()));
+        }
 
         return new CreditApplicationDTO(application);
     }

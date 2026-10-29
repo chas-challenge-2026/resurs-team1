@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.comerit.resurs.enums.AuditAction;
+import tools.jackson.databind.JsonNode;
 
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -36,13 +38,13 @@ public class AuditEvent {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "jsonb")
-    private String data;
+    private JsonNode data;
 
     @Column(name = "previous_hash", length = 64)
-    private String previousHash;
+    private byte[] previousHash;
 
     @Column(name = "current_hash", length = 64)
-    private String currentHash;
+    private byte[] currentHash;
 
     private static final int SCHEMA_VERSION = 1;
 
@@ -53,7 +55,7 @@ public class AuditEvent {
     private String signingKeyId;
 
     @Column(name = "signature", length = 512)
-    private String signature;
+    private byte[] signature;
 
     protected AuditEvent() {
     }
@@ -61,8 +63,8 @@ public class AuditEvent {
 
 
     public AuditEvent(CreditApplication application, long sequenceNumber, AuditAction action,
-                      String actor, String data,
-                      String previousHash, String currentHash, String signingKeyId, String signature) {
+                      String actor, JsonNode data,
+                      byte[] previousHash, byte[] currentHash, String signingKeyId, byte[] signature) {
         this.eventId = UUID.randomUUID();
         this.application = application;
         this.sequenceNumber = sequenceNumber;
@@ -74,7 +76,7 @@ public class AuditEvent {
         this.currentHash = currentHash;
         this.signingKeyId = signingKeyId;
         this.signature = signature;
-        this.occurredAt = Instant.now();
+        this.occurredAt = Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public UUID getEventId() { return eventId; }
@@ -83,12 +85,33 @@ public class AuditEvent {
     public Instant getOccurredAt() { return occurredAt; }
     public AuditAction getAction() { return action; }
     public String getActor() { return actor; }
-    public String getData() { return data; }
-    public String getPreviousHash() { return previousHash; }
-    public String getCurrentHash() {return currentHash;}
+    public JsonNode getData() { return data; }
+    public byte[] getPreviousHash() { return previousHash; }
+    public byte[] getCurrentHash() {return currentHash;}
     public int getSchemaVersion() { return schemaVersion; }
     public String getSigningKeyId() { return signingKeyId; }
-    public String getSignature() { return signature; }
+    public byte[] getSignature(){return signature; }
+
+
+    public void setPreviousHash(byte[] previousHash) {
+        this.previousHash = previousHash;
+    }
+
+    public void setCurrentHash(byte[] currentHash) {
+        this.currentHash = currentHash;
+    }
+
+    public void setSchemaVersion(int schemaVersion) {
+        this.schemaVersion = schemaVersion;
+    }
+
+    public void setSigningKeyId(String signingKeyId) {
+        this.signingKeyId = signingKeyId;
+    }
+
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
+    }
 }
 
 

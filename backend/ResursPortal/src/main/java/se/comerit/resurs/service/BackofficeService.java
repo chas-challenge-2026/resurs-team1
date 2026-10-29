@@ -3,7 +3,6 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.AuditEventDTO;
@@ -18,6 +17,8 @@ import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
+import org.springframework.context.ApplicationEventPublisher;
+import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
 import java.util.List;
 
 /**
@@ -38,13 +39,16 @@ public class BackofficeService {
     private final AuditService auditService;
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Autowired
-    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo, DocumentRepository documentRepo) {
+    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo,
+                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher) {
         this.auditService = auditService;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
+        this.eventPublisher = eventPublisher;
     }
 
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
@@ -80,6 +84,10 @@ public class BackofficeService {
         application.setComment(comment == null || comment.isBlank() ? null : comment);
 
       auditService.manualDecision(application, workerEmail, workerName, previousStatus, comment);
+
+      // meddela kunden om beslutet
+      eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+              application.getId(), application.getContactEmail(), decision));
 
         //Should we return something to the controller and by extention, the frontend? /Jonathan
         return;
@@ -127,6 +135,11 @@ public class BackofficeService {
         application.setComment(comment);
 
         auditService.documentsRequested(application, workerEmail, workerName, previousStatus, comment);
+
+        //meddela kunden att de behöver komplettera
+        eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                application.getId(), application.getContactEmail(), ApplicationStatus.PENDING_DOCS
+        ));
     }
 
 
