@@ -14,7 +14,10 @@ import se.comerit.resurs.service.CaseWorkerService;
 import se.comerit.resurs.service.CompanyService;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 @Profile("dev")
@@ -57,7 +60,12 @@ public class DataBaseSeeder implements CommandLineRunner {
         }
 
         for(NewApplicationDTO creditApplication:seedApplications ){
-            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false);        }
+            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false);
+        }
+
+        workerRoles.forEach((email,roles) -> {
+            roles.forEach(role-> caseWorkerService.giveRole(email,role));
+        });
 
     }
 
@@ -67,8 +75,15 @@ public class DataBaseSeeder implements CommandLineRunner {
     );
 
     private final List<CreateCaseWorkerRequest> workerSeed = List.of(
-            new CreateCaseWorkerRequest("Karin Handläggare", "karin@resurs.se", "password123")
+            new CreateCaseWorkerRequest("Karin Handläggare", "karin@resurs.se", "password123"),
+            new CreateCaseWorkerRequest("Charles Certifierad", "charles@resurs.se", "password456"),
+            new CreateCaseWorkerRequest("Anders Admin", "anders@resurs.se", "password789")
     );
+
+    private final Map<String,Set<String>>workerRoles = new HashMap(Map.of(
+            "charles@resurs.se", Set.of("ROLE_CERTIFIED"),
+            "anders@resurs.se", Set.of("ROLE_ADMIN")
+    ));
 
     private final List<NewApplicationDTO> seedApplications = List.of(
         new NewApplicationDTO(
