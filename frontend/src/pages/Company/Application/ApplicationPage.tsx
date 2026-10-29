@@ -9,6 +9,7 @@ import { useApplications, useSubmitApplication } from "../../../hooks/useApplica
 import s from "./ApplicationPage.module.css"
 import Loading from "../../../components/Loading/Loading"
 import { useUser } from "../../../hooks/useUser"
+import { isCompanyUser } from "../../../utils/auth"
 
 const TOTAL_STEPS = 4
 const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
@@ -24,8 +25,8 @@ const ApplicationFormPage = () => {
 
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
-    orgNumber: user?.role === "company" ? user.orgNumber : "",
-    companyName: user?.role === "company" ? user.displayName : "",
+    orgNumber: isCompanyUser(user) ? user.orgNumber : "",
+    companyName: isCompanyUser(user) ? user.displayName : "",
     contactName: "",
     email: "",
     phoneNumber: "",

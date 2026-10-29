@@ -28,19 +28,19 @@ function App() {
         </Route>
 
         {/* Company pages */}
-        <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
-            <Route element={<FullWidthLayout />}>
-              <Route path="oversikt" element={<CompanyHomePage />} />
-            </Route>
-            <Route element={<CardLayout />}>
-              <Route path="kreditansokan" element={<ApplicationFormPage />} />
-              <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
-              <Route path="/mina-ansokningar/:id" element={<MyApplicationDetailsPage />} />
-            </Route>
+        <Route element={<ProtectedRoute allowedRoles={["COMPANY"]} />}>
+          <Route element={<FullWidthLayout />}>
+            <Route path="oversikt" element={<CompanyHomePage />} />
+          </Route>
+          <Route element={<CardLayout />}>
+            <Route path="kreditansokan" element={<ApplicationFormPage />} />
+            <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
+            <Route path="/mina-ansokningar/:id" element={<MyApplicationDetailsPage />} />
+          </Route>
         </Route>
 
         {/* Caseworker pages */}
-        <Route element={<ProtectedRoute allowedRoles={["caseWorker"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["CASEWORKER"]} />}>
           <Route path="arenden" element={< CaseWorkerLayout />}>
             <Route path=":id" element={ <CaseDetailsPage />} />
           </Route>
