@@ -2,3 +2,13 @@ services:
   app:
     ports:
       - "8083:8083"
+    environment:
+      # Local only: send e-mails to Mailpit instead of just logging them
+      - NOTIFICATION_CLIENT=smtp
+      - NOTIFICATION_FROM=no-reply@resurs.se
+      - SPRING_MAIL_HOST=mailpit
+      - SPRING_MAIL_PORT=1025
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
