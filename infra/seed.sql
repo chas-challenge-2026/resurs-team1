@@ -33,7 +33,7 @@ CREATE TABLE applications (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     comment TEXT,
-    signatory_protected_identity BOOLEAN NOT NULL DEFAULT FALSE
+    protected_resource BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE documents (

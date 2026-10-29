@@ -146,7 +146,7 @@ class ApplicationServiceTests {
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
-        assertThat(stored.isSignatoryProtectedIdentity()).isTrue();
+        assertThat(stored.isProtectedResource()).isTrue();
     }
 
     @Test
@@ -156,7 +156,7 @@ class ApplicationServiceTests {
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
-        assertThat(stored.isSignatoryProtectedIdentity()).isFalse();
+        assertThat(stored.isProtectedResource()).isFalse();
     }
 
     /*

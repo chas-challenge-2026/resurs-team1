@@ -8,14 +8,12 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
-import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.util.HMACHasher;
-import se.comerit.resurs.enums.ApplicationStatus;
 
 
 import java.util.List;
@@ -83,7 +81,7 @@ public class ApplicationService {
         creditApplication.setContactEmail(contactDetails.email());
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
-        creditApplication.setSignatoryProtectedIdentity(signatoryProtected);
+        creditApplication.setProtectedResource(signatoryProtected);
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);
