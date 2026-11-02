@@ -510,6 +510,68 @@ void test_wrapper_maps_all_tampering_to_authentication_failure()
     }
 }
 
+void test_payload_lengths_around_block_boundaries()
+{
+    AES256_Encryption crypto;
+    for (const std::size_t length : {1, 15, 16, 17, 31, 32, 33}) {
+        // Include zero and high-bit bytes so length handling cannot rely on strlen.
+        std::vector<uint8_t> input(length);
+        for (std::size_t index = 0; index < length; ++index)
+            input[index] = static_cast<uint8_t>((index * 73) & 0xFF);
+
+        const std::string plaintext(input.begin(), input.end());
+        const auto encrypted = core_encrypt(crypto, plaintext);
+        require(encrypted.ciphertext.size() == length,
+                "core changed the data length for " + std::to_string(length) + " bytes");
+        require(crypto.AES256_Decrypt(encrypted.ciphertext, TEST_KEY.data(),
+                    encrypted.iv, encrypted.tag) == plaintext,
+                "core round trip failed for " + std::to_string(length) + " bytes");
+
+        const auto wrapped = wrapper_encrypt(input);
+        require(wrapped.ciphertext.size() == length,
+                "wrapper changed the data length for " + std::to_string(length) + " bytes");
+        require(wrapper_decrypt(wrapped) == input,
+                "wrapper round trip failed for " + std::to_string(length) + " bytes");
+    }
+}
+
+void test_core_recovers_after_authentication_failure()
+{
+    AES256_Encryption crypto;
+    const std::string plaintext = "authenticate before releasing plaintext";
+    const auto encrypted = core_encrypt(crypto, plaintext);
+
+    // Reuse the same instance through each failure and recovery, rather than
+    // hiding stale OpenSSL state by constructing a new decryptor each time.
+    for (int scenario = 0; scenario < 4; ++scenario) {
+        auto modified = encrypted;
+        const unsigned char *key = TEST_KEY.data();
+        switch (scenario) {
+            case 0: modified.ciphertext[0] ^= 0x01; break;
+            case 1: modified.iv[0] ^= 0x01; break;
+            case 2: modified.tag[0] ^= 0x01; break;
+            case 3: key = WRONG_KEY.data(); break;
+        }
+
+        bool rejected = false;
+        try {
+            (void)crypto.AES256_Decrypt(modified.ciphertext, key, modified.iv, modified.tag);
+        } catch (const AuthenticationError &) {
+            rejected = true;
+        }
+        require(rejected, "core accepted an unauthenticated message");
+        require(crypto.AES256_Decrypt(encrypted.ciphertext, TEST_KEY.data(),
+                    encrypted.iv, encrypted.tag) == plaintext,
+                "same instance failed to decrypt a valid message after rejection");
+
+        const std::string next_plaintext = "new operation after rejection " + std::to_string(scenario);
+        const auto next = core_encrypt(crypto, next_plaintext);
+        require(crypto.AES256_Decrypt(next.ciphertext, TEST_KEY.data(),
+                    next.iv, next.tag) == next_plaintext,
+                "same instance failed a new round trip after rejection");
+    }
+}
+
 } // namespace
 
 int main()
@@ -530,6 +592,8 @@ int main()
         {"wrapper rejects a different valid-length key", test_wrapper_rejects_wrong_key},
         {"wrapper enforces metadata sizes and preserves data buffer boundaries", test_wrapper_enforces_metadata_sizes_and_preserves_data_buffers},
         {"wrapper maps tampering to authentication failure", test_wrapper_maps_all_tampering_to_authentication_failure},
+        {"payload lengths around block boundaries", test_payload_lengths_around_block_boundaries},
+        {"core recovers after authentication failure", test_core_recovers_after_authentication_failure},
     };
 
     int failures = 0;

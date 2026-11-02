@@ -2,6 +2,7 @@ ARG UBUNTU_VERSION=24.04
 FROM ubuntu:${UBUNTU_VERSION}
 
 ARG CMAKE_BUILD_TYPE=Debug
+ARG RESURS_AUDIT_ENABLE_SANITIZERS=OFF
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential cmake libssl-dev \
@@ -12,6 +13,7 @@ COPY . .
 
 RUN cmake -S . -B /resurs-build \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DRESURS_AUDIT_ENABLE_SANITIZERS=${RESURS_AUDIT_ENABLE_SANITIZERS} \
         -DBUILD_TESTING=ON \
         -DRESURS_BUILD_CRYPTO_DEMO=ON \
         -DRESURS_BUILD_AUDIT_DEMO=ON \

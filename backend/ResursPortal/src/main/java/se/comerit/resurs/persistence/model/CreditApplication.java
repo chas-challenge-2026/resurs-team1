@@ -71,6 +71,9 @@ public class CreditApplication {
     @Column(name = "comment")
     private String comment;
 
+    @Column(nullable = false)
+    private boolean protectedResource;
+
 
     public Integer getDurationMonths() {
         return durationMonths;
@@ -195,5 +198,13 @@ public class CreditApplication {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isProtectedResource() {
+        return protectedResource;
+    }
+
+    public void setProtectedResource(boolean protectedResource) {
+        this.protectedResource = protectedResource;
     }
 }

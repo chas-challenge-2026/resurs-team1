@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 
 #if defined(_WIN32)
@@ -67,16 +68,18 @@ int main(int argc, char **argv)
         "wrapper_verify_chain"
     };
 
-    bool success = true;
+    std::size_t passed = 0;
     for (const char *symbol : required_symbols) {
         if (!has_symbol(library, symbol)) {
-            std::cerr << "missing exported symbol: " << symbol << '\n';
-            success = false;
+            std::cout << "[FAIL] exported symbol " << symbol << '\n';
+        } else {
+            std::cout << "[PASS] exported symbol " << symbol << '\n';
+            ++passed;
         }
     }
 
     close_library(library);
-    if (success)
-        std::cout << "all required resurs_audit symbols are exported\n";
-    return success ? 0 : 1;
+    const auto total = sizeof(required_symbols) / sizeof(required_symbols[0]);
+    std::cout << passed << "/" << total << " symbol checks passed\n";
+    return passed == total ? 0 : 1;
 }

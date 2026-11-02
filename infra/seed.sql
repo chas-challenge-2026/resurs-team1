@@ -16,6 +16,29 @@ CREATE TABLE case_workers (
     search_key_email bytea UNIQUE
 );
 
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE
+);
+
+CREATE TABLE case_worker_roles(
+    worker_id SERIAL,
+    role_id SERIAL,
+
+    PRIMARY KEY (worker_id,role_id),
+
+    CONSTRAINT fk_case_worker_roles_worker
+        FOREIGN KEY (worker_id)
+        REFERENCES case_workers(id),
+
+    CONSTRAINT fk_case_worker_roles_role
+        FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+
+);
+
+
+
 CREATE TABLE applications (
     id SERIAL PRIMARY KEY,
     version INT,
@@ -32,7 +55,8 @@ CREATE TABLE applications (
     contact_email bytea,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    comment TEXT
+    comment TEXT,
+    protected_resource BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE documents (
@@ -60,16 +84,22 @@ CREATE TABLE audit_events (
     action VARCHAR(50) NOT NULL,
     actor VARCHAR(100) NOT NULL,
     data JSONB,
-    previous_hash VARCHAR(64),
-    current_hash VARCHAR(64),
+    previous_hash BYTEA,
+    current_hash BYTEA,
     schema_version INT NOT NULL,
     signing_key_id VARCHAR(64),
-    signature VARCHAR(512),
+    signature BYTEA,
     CONSTRAINT uq_audit_application_sequence UNIQUE (application_id, sequence_number)
 );
 
 CREATE INDEX idx_audit_application_id ON audit_events(application_id);
 CREATE INDEX idx_audit_action ON audit_events(action);
+
+-- Roles within our application
+INSERT INTO roles (id, name)
+VALUES
+    (1, 'ROLE_CERTIFIED'),
+    (2, 'ROLE_ADMIN');
 
 -- Branch Specific medians for use
 INSERT INTO branches (

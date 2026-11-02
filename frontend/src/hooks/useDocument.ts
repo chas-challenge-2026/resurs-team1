@@ -1,5 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { queryClient } from "../main"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getDocument, getDocuments, postDocument, type DocumentUploadPayload } from "../api/documentApi"
 import type { ApplicationDocument } from "../api/applicationApi"
 import type { ApiErrorPayload } from "../api/client"
@@ -33,6 +32,8 @@ export const useDocuments = (applicationId: number) => {
 }
 
 export const useUploadDocument = () => {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (params: DocumentUploadPayload) => postDocument(params),
     onSuccess: (_, variables) => {

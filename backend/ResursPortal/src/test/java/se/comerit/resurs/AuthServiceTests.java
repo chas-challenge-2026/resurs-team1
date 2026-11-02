@@ -139,7 +139,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
                 authService.loginCaseWorker(EMAIL, PASSWORD);
 
         assertThat(response.userId()).isEqualTo(worker.getId());
-        assertThat(response.role()).isEqualTo("caseWorker");
+        assertThat(response.roles()).contains("ROLE_CASEWORKER");
         assertThat(response.name()).isEqualTo(worker.getName());
         assertThat(response.email()).isEqualTo(worker.getEmail());
 

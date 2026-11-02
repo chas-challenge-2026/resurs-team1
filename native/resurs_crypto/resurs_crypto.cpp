@@ -2,32 +2,35 @@
 #include <openssl/ssl.h>
 #include <cstring>
 
+/**
+ * @file
+ * @brief AES-256-GCM operations using the context owned by AES256_Encryption.
+ * Method contracts and exception behavior are documented in resurs_crypto.h.
+ */
+
 EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const unsigned char* aes_key)
 {
     EncryptionResult result;
 
-    // Create 96bit IV
+    // Every encryption requests a fresh unpredictable IV before initialization, avoiding reuse of the previous operation's IV.
     if (RAND_bytes(result.iv.data(), static_cast<int>(result.iv.size())) != 1)
     {
         throw std::runtime_error("failed to generate IV");
     }
 
-    // The class constructor fetched the algoritm for us, so no need for specific code here.
-
-
-    // We supply the key and IV directly. The default length of the IV is already set to 12 bytes(96 bits), so no need to explicitly set it.
+    // The constructor already fetched AES-256-GCM, and its standard 12-byte IV length matches this module's contract.
     if (EVP_EncryptInit_ex2(ctx.get(), cipher.get(), aes_key, result.iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set key and IV");
     }
 
-    // GCM ciphertext is the same size as plaintext
+    // GCM requires no padding, so ciphertext has the same byte length as plaintext.
     result.ciphertext.resize(plaintext.size());
 
     int written = 0;
     int totalWritten = 0;
 
-    // Now encrypt the plaintext.
+    // Explicit lengths preserve embedded null bytes in the input string.
     if (!plaintext.empty())
     {
         if (EVP_EncryptUpdate(ctx.get(), result.ciphertext.data(), &written, reinterpret_cast<const unsigned char *>(plaintext.data()), static_cast<int>(plaintext.size())) != 1)
@@ -38,7 +41,7 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const
         totalWritten += written;
     }
 
-    // finalize encryption
+    // Finalize before reading the authentication tag for the completed message.
     if (EVP_EncryptFinal_ex(ctx.get(), result.ciphertext.data() + totalWritten, &written) != 1)
     {
         throw std::runtime_error("encryption finalization failed");
@@ -47,7 +50,7 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const
     totalWritten += written;
     result.ciphertext.resize(totalWritten);
 
-    // retrieve GCM authenticaiton tag
+    // Authentication requires this tag together with the ciphertext and IV, so return all three as one result.
     if (EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_GET_TAG, static_cast<int>(result.tag.size()), result.tag.data()) != 1)
     {
         throw std::runtime_error("failed to retrieve authentication tag");
@@ -59,32 +62,32 @@ EncryptionResult AES256_Encryption::AES256_Encrypt(std::string &plaintext, const
 std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &ciphertext, const unsigned char* aes_key, const std::array<unsigned char, resurs::crypto::GCM_IV_SIZE_BYTES> &iv, const std::array<unsigned char, resurs::crypto::GCM_TAG_SIZE_BYTES> &tag)
 {
 
-    // Resuse existing context, but reset/clear previous encryption state.
+    // Clear the previous operation's state before reusing this instance to decrypt.
     if (EVP_CIPHER_CTX_reset(ctx.get()) != 1)
     {
         throw std::runtime_error("failed to rset cipher context");
     }
 
-    // cipher already fetched, so just a safey error check
+    // Construction normally guarantees this. 
+    // Keep the check close to use so a missing algorithm can never reach OpenSSL unnoticed.
     if (cipher == nullptr)
     {
         throw std::runtime_error("cipher not initalized");
     }
 
 
-    // init 
     if (EVP_DecryptInit_ex2(ctx.get(), cipher.get(), aes_key, iv.data(), nullptr) != 1)
     {
         throw std::runtime_error("failed to set KEY and IV");
     }
 
-    // gcm plaintext will be same size as ciphertext
+    // Keep tentative plaintext local until the final authentication check succeeds.
     std::vector<unsigned char> plaintext(ciphertext.size());
 
     int written = 0;
     int totalWritten = 0;
 
-    // decrypt
+    // Decrypt the bytes; this update does not establish authenticity yet.
     if (!ciphertext.empty())
     {
         if (EVP_DecryptUpdate(ctx.get(), plaintext.data(), &written, ciphertext.data(), static_cast<int>(ciphertext.size())) != 1)
@@ -95,14 +98,13 @@ std::string AES256_Encryption::AES256_Decrypt(const std::vector<unsigned char> &
         totalWritten += written;
     }
 
-    // Supply the authenticaiton tag that was created during encryption
+    // Supply the expected tag. OpenSSL's API takes a mutable pointer to this input.
     if (EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_TAG, static_cast<int>(tag.size()), const_cast<unsigned char *>(tag.data())) != 1)
     {
         throw std::runtime_error("failed to set authentication tag");
     }
 
-    // finalize decryptiong
-    // for GCM, this is also where we verify atuthentication
+    // GCM authenticates here. Throw before returning any unauthenticated plaintext.
     if (EVP_DecryptFinal_ex(ctx.get(), plaintext.data() + totalWritten, &written) != 1)
     {
         throw AuthenticationError();

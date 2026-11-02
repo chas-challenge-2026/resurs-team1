@@ -41,3 +41,6 @@ build-windows/
 
 # Local native development build
 native/build-devcontainer/
+
+# Python helper scripts
+__pycache__/

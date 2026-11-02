@@ -16,12 +16,12 @@
   gap: var(--space-xs);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color 0.15s ease, transform 0.15s ease;
   width: fit-content;
 }
 
 .backButton:hover {
-  color: var(--color-text-main);
+  color: var(--text-main);
 }

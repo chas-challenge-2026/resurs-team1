@@ -1,7 +1,10 @@
 package se.comerit.resurs.dto.auth;
 
+import java.util.List;
+import java.util.Set;
+
 public record CaseWorkerLoginResponse(Long userId,
-                                      String role,
+                                      Set<String> roles,
                                       String name,
                                       String email) {
 }

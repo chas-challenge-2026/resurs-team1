@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import org.apache.catalina.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -56,6 +58,8 @@ public class CaseWorkerServiceTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+
 
     private String uniqueEmail() {
         return UUID.randomUUID() + "@resurs.se";
@@ -163,4 +167,22 @@ public class CaseWorkerServiceTest {
     void delete_unknownId_throwsException() {
         assertThrows(NoSuchElementException.class, () -> caseWorkerService.delete(999_999L));
     }
+
+    @Test
+    void giveRole_addsRoleToCaseWorker() {
+        // Arrange
+        CaseWorker worker = caseWorkerRepository.findAll().getFirst();
+
+        // Act
+        caseWorkerService.giveRole(worker.getEmail(), "ROLE_ADMIN");
+
+        // Assert
+        CaseWorker updatedWorker = caseWorkerRepository
+                .findById(worker.getId())
+                .orElseThrow();
+
+        assertTrue(updatedWorker.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_ADMIN")));
+    }
+
 }

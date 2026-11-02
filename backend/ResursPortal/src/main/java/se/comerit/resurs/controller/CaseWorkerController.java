@@ -13,7 +13,7 @@ import se.comerit.resurs.service.CaseWorkerService;
  * TODO: We need to create a Admin role that manages CRUD on caseworkers, a casual caseworker should not have this
  *  permission.
  * */
-@PreAuthorize("hasRole('CASE_WORKER')")
+@PreAuthorize("hasRole('CASEWORKER')")
 @RestController
 @RequestMapping("/api/caseworkers")
 public class CaseWorkerController {
@@ -42,6 +42,13 @@ public class CaseWorkerController {
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         caseWorkerService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> giveRole(String email, String role){
+        caseWorkerService.giveRole(email,role);
+
+        return ResponseEntity.ok().build();
     }
 
 }

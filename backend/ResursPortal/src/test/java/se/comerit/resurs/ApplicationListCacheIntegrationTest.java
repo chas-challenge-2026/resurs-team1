@@ -233,7 +233,7 @@ class ApplicationListCacheIntegrationTest {
     }
 
     private CreditApplicationDTO save(String orgNumber, ApplicationStatus status) {
-        return applicationService.saveApplication(newApplication(orgNumber, status), CONTACTS);
+        return applicationService.saveApplication(newApplication(orgNumber, status), CONTACTS, false);
     }
 
     private Long companyIdOf(CreditApplicationDTO application) {

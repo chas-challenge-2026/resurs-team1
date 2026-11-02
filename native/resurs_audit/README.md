@@ -236,6 +236,19 @@ ctest --test-dir build/audit-debug \
   --output-on-failure
 ```
 
+For an additional Linux memory-safety and undefined-behavior check, build the
+Ubuntu 24.04 test image with sanitizers enabled. The image build runs the tests
+automatically and fails if a sanitizer reports a problem:
+
+```bash
+docker build --no-cache \
+  --build-arg UBUNTU_VERSION=24.04 \
+  --build-arg CMAKE_BUILD_TYPE=Debug \
+  --build-arg RESURS_AUDIT_ENABLE_SANITIZERS=ON \
+  -t resurs-native-audit-sanitized \
+  ./native
+```
+
 Build distribution binaries separately with `CMAKE_BUILD_TYPE=Release` after
 the Debug tests pass. A direct CMake distribution build may use
 `BUILD_TESTING=OFF`; the Dockerfile keeps tests enabled while producing the
@@ -314,6 +327,12 @@ these implementation types directly.
   that all four supported JNA entry points can be resolved by name.
 - Known-answer tests use the RFC 8032 test key and a deterministic
   SHA-256-then-Ed25519 result for canonical bytes `abc`.
+- A production-shaped known-answer entry checks nested fields, UTF-8 text,
+  escaped content, and independently calculated hash and signature values.
+- A large-entry test checks that data near the end of a payload larger than
+  64 KiB affects verification.
+- An ABI layout test checks the documented x86-64 JNA sizes, alignments, and
+  field offsets for `AuditEntry` and `VerifyChainResult`.
 - Tests cover modified data, hash, signature, previous hash, invalid sequence
   start, sequence gaps, and valid multi-entry chains.
 
