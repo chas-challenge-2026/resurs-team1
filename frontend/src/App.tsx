@@ -4,7 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute"
 import { Toaster } from "sonner"
 import CardLayout from "./layouts/CardLayout"
 import NotFoundPage from "./pages/NotFound/NotFoundPage"
-import LoginPage from "./pages/Login/LoginPage"
+import CustomerLoginPage from "./pages/Login/CustomerLoginPage"
+import CaseWorkerLoginPage from "./pages/Login/CaseWorkerLoginPage"
 import CompanyHomePage from "./pages/Company/Home/CompanyHomePage"
 import ApplicationFormPage from "./pages/Company/Application/ApplicationPage"
 import MyApplicationsPage from "./pages/Company/MyApplications/MyApplicationsPage"
@@ -21,20 +22,21 @@ function App() {
         {/* Public only pages */}
         <Route element={<PublicOnlyRoute />}>
           <Route element={<FullWidthLayout />}>
-            <Route index element={<LoginPage />} />
+            <Route index element={<CustomerLoginPage />} />
+            <Route path="handlaggare" element={<CaseWorkerLoginPage />} />
           </Route>
         </Route>
 
         {/* Company pages */}
         <Route element={<ProtectedRoute allowedRoles={["company"]} />}>
-          <Route element={<FullWidthLayout />}>
-            <Route path="oversikt" element={<CompanyHomePage />} />
-          </Route>
-          <Route element={<CardLayout />}>
-            <Route path="kreditansokan" element={<ApplicationFormPage />} />
-            <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
-            <Route path="/mina-ansokningar/:id" element={<MyApplicationDetailsPage />} />
-          </Route>
+            <Route element={<FullWidthLayout />}>
+              <Route path="oversikt" element={<CompanyHomePage />} />
+            </Route>
+            <Route element={<CardLayout />}>
+              <Route path="kreditansokan" element={<ApplicationFormPage />} />
+              <Route path="/mina-ansokningar" element={<MyApplicationsPage />} />
+              <Route path="/mina-ansokningar/:id" element={<MyApplicationDetailsPage />} />
+            </Route>
         </Route>
 
         {/* Caseworker pages */}

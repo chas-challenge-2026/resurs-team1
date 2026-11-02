@@ -194,7 +194,8 @@ const CaseDetailsPage = () => {
             <>
             <div className={s.actionsWrapper}>
               <Button
-                variant="secondary" 
+                variant="secondary"
+                color="var(--btn-approve)"
                 className={s.actionButton}
                 active={activeAction === "approve"}
                 onClick={() => handleActionToggle("approve")}
@@ -203,7 +204,7 @@ const CaseDetailsPage = () => {
               </Button>
               <Button 
                 variant="secondary"
-                color="var(--color-warning)"
+                color="var(--btn-request-info)"
                 className={s.actionButton}
                 active={activeAction === "requestDocs"}
                 onClick={() => handleActionToggle("requestDocs")}
@@ -212,7 +213,7 @@ const CaseDetailsPage = () => {
               </Button>
               <Button
                 variant="secondary" 
-                color="var(--color-error)"
+                color="var(--btn-reject)"
                 className={s.actionButton}
                 active={activeAction === "reject"}
                 onClick={() => handleActionToggle("reject")}

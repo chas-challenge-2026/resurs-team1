@@ -21,7 +21,7 @@
 }
 
 .subTitle {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -46,7 +46,7 @@
 .action {
   flex: 1;
   /* grey top border showed as a light line between the cat and the accent */
-  border-top-color: var(--action-color);
+  border-top: var(--action-color);
 }
 
 .action:hover {
@@ -64,11 +64,11 @@
 }
 
 .actionPrimary {
-  --action-color: var(--color-primary);
+  --action-color: var(--card-accent-color);
 }
 
 .actionSecondary {
-  --action-color: var(--color-secondary);
+  --action-color: var(--card-secondary-accent);
 }
 
 .action .label,
@@ -93,15 +93,15 @@
 
 .divider {
   height: 1px;
-  background-color: var(--border);
+  background-color: var(--divider);
 }
 
 .supportText {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .supportLink {
-  color: var(--color-primary);
+  color: var(--link-text);
   white-space: nowrap;
 }
 

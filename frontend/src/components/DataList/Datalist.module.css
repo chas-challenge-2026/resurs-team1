@@ -2,11 +2,11 @@
   display: flex;
   justify-content: space-between;
   padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--divider);
 }
 
 .label {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
