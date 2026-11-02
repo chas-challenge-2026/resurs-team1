@@ -43,7 +43,7 @@
 .infoBoxValue {
   font-size: var(--font-size-lg);
   font-weight: 500;
-  color: var(--color-primary);
+  color: var(--brand-primary);
   white-space: nowrap;
 }
 
@@ -68,8 +68,8 @@
   display: flex;
   gap: var(--space-xs);
   align-items: center;
-  background-color: var(--bg-subtle-grey);
-  color: var(--color-primary);
+  background-color: var(--bg-subtle);
+  color: var(--brand-primary);
   border-radius: var(--radius-pill);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--font-size-sm);
