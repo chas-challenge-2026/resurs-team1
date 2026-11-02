@@ -129,6 +129,13 @@
   --badge-error-border: var(--color-red-600);
   --badge-error-text: var(--color-red-800);
 
+  /* Protected identity (dog-ear, reminder, hidden values) */
+  --protected-accent: var(--color-grey-900);
+  --protected-on-accent: var(--color-white-50);
+  --protected-bg: var(--color-grey-100);
+  --protected-border: var(--color-grey-300);
+  --protected-text: var(--color-grey-900);
+
   /* Toggle switch */
   --toggle-bg: var(--color-white-100);
   --toggle-active-bg: var(--bg-surface);
