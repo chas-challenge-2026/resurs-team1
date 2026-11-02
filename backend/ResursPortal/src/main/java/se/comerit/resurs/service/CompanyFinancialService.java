@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.client.companyvalidation.CompanyValidationClient;
 import se.comerit.resurs.client.companyvalidation.RegistryResponseValidator;
@@ -19,6 +20,7 @@ public class CompanyFinancialService {
         this.responseValidator = responseValidator;
     }
 
+    @Cacheable(cacheNames = "annualReports", key = "#orgNumber", unless = "#result == null")
     public Optional<CompanyFinancialApiDTO> fetchLatestAnnualReport(String orgNumber) {
         return client.fetchLatestAnnualReport(orgNumber)
                 .map(report -> responseValidator.validate(report, orgNumber))
