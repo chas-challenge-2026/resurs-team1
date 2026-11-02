@@ -3,7 +3,10 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
@@ -19,7 +22,10 @@ import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import org.springframework.context.ApplicationEventPublisher;
 import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
+import se.comerit.resurs.security.ApplicationAccessPolicy;
+
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * BackofficeService -> allt en handläggare behöver för att granska ansökningar
@@ -41,14 +47,17 @@ public class BackofficeService {
     private final DocumentRepository documentRepo;
     private final ApplicationEventPublisher eventPublisher;
 
+    private final ApplicationAccessPolicy accessPolicy;
+
 
     @Autowired
     public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo,
-                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher) {
+                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher, ApplicationAccessPolicy accessPolicy) {
         this.auditService = auditService;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
         this.eventPublisher = eventPublisher;
+        this.accessPolicy = accessPolicy;
     }
 
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
@@ -56,27 +65,58 @@ public class BackofficeService {
     public BackOfficeListsDTO applicationsForReview(
             @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
+        Page<CreditApplication> reviewInfo;
+        Page<CreditApplication> historicalReviewInfo;
+        List<ApplicationStatus> toBeReviewedStatuses = List.of(
+                ApplicationStatus.UNDER_REVIEW,
+                ApplicationStatus.PENDING_SCORING,
+                ApplicationStatus.PENDING_DOCS);
+        List<ApplicationStatus> hasBeenReviewedStatuses = List.of(
+                ApplicationStatus.APPROVED,
+                ApplicationStatus.REJECTED);
+
+
+        if(accessPolicy.caseworkerHasSpecialAccess()){
+            reviewInfo = findByStatusAll(toBeReviewedStatuses,reviewPageable);
+            historicalReviewInfo = findByStatusAll(hasBeenReviewedStatuses,decidedPageable);
+        } else {
+            reviewInfo = findByStatusRestricted(toBeReviewedStatuses,reviewPageable);
+            historicalReviewInfo = findByStatusRestricted(hasBeenReviewedStatuses,decidedPageable);
+        }
+
+
         PagedResult<ReviewInfo> underReview = PagedResult.from(
-                creditRepo.findByStatusInOrderByCreatedAtAsc(
-                        List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING,ApplicationStatus.PENDING_DOCS),
-                        reviewPageable)
+                reviewInfo
                         .map(ReviewInfo::new));
 
         PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
-                creditRepo.findByStatusInOrderByCreatedAtAsc(
-                        List.of(ApplicationStatus.APPROVED, ApplicationStatus.REJECTED),
-                        decidedPageable)
+                historicalReviewInfo
                         .map(HistoricalReviewInfo::new));
 
 
         return new BackOfficeListsDTO(decidedReview,underReview);
     }
 
+    private Page<CreditApplication> findByStatusRestricted(List<ApplicationStatus> statuses, Pageable pagable){
+        return creditRepo.findByStatusInAndProtectedResourceFalseOrderByCreatedAtAsc(statuses,pagable);
+    }
+
+    private Page<CreditApplication> findByStatusAll(List<ApplicationStatus> statuses, Pageable pagable){
+        return creditRepo.findByStatusInOrderByCreatedAtAsc(statuses,pagable);
+    }
+
+
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)
     @Transactional
     public void application_decision(Long applicationId,ApplicationStatus decision,String workerEmail,String workerName, String comment){
 
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); // throws NoSuchElement
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
+
         ApplicationStatus previousStatus = application.getStatus();
 
         application.setStatus(decision);
@@ -97,6 +137,11 @@ public class BackofficeService {
     public CreditApplicationDetails application_details(Long id){
 
         CreditApplication application = creditRepo.findById(id).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+ id);
+        }
+
         List<DocumentDTO> linkedDocuments =
                 documentRepo.findByApplicationId(id).stream().map(DocumentDTO::new).toList();
 
@@ -106,6 +151,11 @@ public class BackofficeService {
     @Transactional
     public void application_comment(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         application.setComment(comment);
 
         auditService.commentAdded(application, workerEmail, workerName, comment);
@@ -114,7 +164,12 @@ public class BackofficeService {
     //Hämtar hela auditloggen för ett ärende, äldsta händelsen först
     // Kollar först att ärendet finns, annars hade ett okänt id gett en tom lista istället för 404
     public List<AuditEventDTO> application_audit_log(Long applicationId) {
-        creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         return auditService.findAuditEventsByApplicationID(applicationId);
     }
 
@@ -123,6 +178,11 @@ public class BackofficeService {
     @Transactional
     public void application_request_documents(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         ApplicationStatus previousStatus = application.getStatus();
 
         //Ett avgjort ärende kan inte kompletteras
