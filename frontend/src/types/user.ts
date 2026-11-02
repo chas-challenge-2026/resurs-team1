@@ -1,9 +1,9 @@
 // same as back end. 
-export type UserRole = "company" | "caseWorker"
+export type UserRole = "COMPANY" | "CASEWORKER" | "CERTIFIED" | "ADMIN"
 
 export interface CompanyUser {
   userId: number;
-  role: "company";
+  roles: UserRole[];
   orgNumber: string;
   displayName: string;
   name?: string;
@@ -12,7 +12,7 @@ export interface CompanyUser {
 
 export interface CaseWorkerUser {
   userId: number;
-  role: "caseWorker";
+  roles: UserRole[];
   displayName: string;
   name?: string; //Backend sends name instead of displayname on login endpoint
 }

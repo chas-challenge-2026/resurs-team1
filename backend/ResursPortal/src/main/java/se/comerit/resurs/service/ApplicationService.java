@@ -2,6 +2,8 @@ package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,7 +60,8 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected){
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected) {
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -70,9 +73,9 @@ public class ApplicationService {
         //persist the new company in DB
         company = companyOptional.orElseGet(
                 () -> companyService.createCompany(
-                                newApplication.company_name(),
-                                newApplication.org_number(),
-                                newApplication.authorized_signatory()
+                        newApplication.company_name(),
+                        newApplication.org_number(),
+                        newApplication.authorized_signatory()
                 )
         );
 
@@ -113,7 +116,8 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
-    public Page<CreditApplicationDataObject> getApplicationsByOrgNumber(String orgNumber, Pageable pageable){
+    @Cacheable(cacheNames = "applicationLists", key = "'org-' + #orgNumber + '-' + #pageable")
+    public Page<CreditApplicationDataObject> getApplicationsByOrgNumber(String orgNumber, Pageable pageable) {
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
@@ -148,6 +152,7 @@ public class ApplicationService {
 
     // Kör om scoring på ett ärende som redan finns och uppdaterar det
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public CreditApplicationDTO rescoreApplication(Long applicationId) {
         CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
 
@@ -159,7 +164,7 @@ public class ApplicationService {
         // Om en handläggare redan fattat ett beslut så får vi inte skriva över det
         // Tittar på auditloggen och inte på status, eftersom scoring också sätter APPROVED/REJECTED själv och
         // de automatiska besluten vill vi att man ska kunna köra om
-        if(auditService.hasManualDecision(applicationId)) {
+        if (auditService.hasManualDecision(applicationId)) {
             throw new IllegalArgumentException((
                     "Application " + applicationId + " has a manual decision and can not be re-scored"));
         }

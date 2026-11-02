@@ -20,7 +20,7 @@ vi.mock("../../../hooks/useUser", () => ({
   useUser: () => ({
     data: {
       userId: 1,
-      role: "company",
+      roles: ["COMPANY"],
       orgNumber: "556000-1234",
       companyName: "Malmö Fastigheter AB",
     }

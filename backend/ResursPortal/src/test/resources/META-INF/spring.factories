@@ -1,1 +1,1 @@
-org.springframework.test.context.TestExecutionListener=se.comerit.resurs.CircuitBreakerResetListener
+org.springframework.test.context.TestExecutionListener=se.comerit.resurs.CircuitBreakerResetListener,se.comerit.resurs.CacheResetListener
