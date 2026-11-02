@@ -1,5 +1,6 @@
 package se.comerit.resurs.service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +56,7 @@ public class DocumentService {
     // Utan transactional så sparas document, audit-log och status var för sig till databasen, helt oberoende
     // av varandra, om det skulle krascha mitt i så lämnas inkonsekvent data, samma bugg som i known-bugs.md #5.
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public void uploadDocument(Long applicationId, String docType, MultipartFile file) {
         if (applicationId == null) {
             throw new IllegalArgumentException("Application ID must not be null.");

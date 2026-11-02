@@ -3,6 +3,8 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,7 @@ public class BackofficeService {
 
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
     //Further requires indexation, and sorting options
+    @Cacheable(cacheNames = "applicationLists", key = "'review-' + #reviewPageable + '-' + #decidedPageable")
     public BackOfficeListsDTO applicationsForReview(
             @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
@@ -70,6 +73,7 @@ public class BackofficeService {
 
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public void application_decision(Long applicationId,ApplicationStatus decision,String workerEmail,String workerName, String comment){
 
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); // throws NoSuchElement
@@ -96,6 +100,7 @@ public class BackofficeService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public void application_comment(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
         application.setComment(comment);
@@ -113,6 +118,7 @@ public class BackofficeService {
     //Handläggaren ber kunden komplettera: ärendet får status PENDING_DOCS och texten sparas som senaste kommentar,
     // så att kunden kan se vad som saknas
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public void application_request_documents(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
         ApplicationStatus previousStatus = application.getStatus();

@@ -1,6 +1,8 @@
 package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.ContactDetails;
@@ -50,13 +52,11 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
 
         CreditApplication creditApplication = new CreditApplication();
 
-        ////////////////
-        //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
-        /////////////////
         Optional<Company> companyOptional = companyRepository.findBySearchKeyOrgNumber(hmacHasher.encode(newApplication.org_number()));
         Company company;
         //persist the new company in DB
@@ -99,6 +99,7 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
+    @Cacheable(cacheNames = "applicationLists", key = "'org-' + #orgNumber + '-' + #pageable")
     public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber, Pageable pageable){
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
@@ -118,6 +119,7 @@ public class ApplicationService {
 
     // Kör om scoring på ett ärende som redan finns och uppdaterar det
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public CreditApplicationDTO rescoreApplication(Long applicationId) {
         CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
 
@@ -161,10 +163,10 @@ public class ApplicationService {
         return new CreditApplicationDTO(application);
     }
 
-
     public CreditApplicationDTO findApplicationByID (Long id){
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());
     }
+
 
     public List<CreditApplicationDTO> readApplicationsByCompany(Long companyID){
         return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
@@ -173,8 +175,9 @@ public class ApplicationService {
     public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID){
         return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
     }
-    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pagable){
-        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID,pagable).stream().map(CreditApplicationDTO::new).toList();
+    @Cacheable(cacheNames = "applicationLists", key = "'company-' + #companyID + '-' + #pageable")
+    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pageable){
+        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID,pageable).stream().map(CreditApplicationDTO::new).toList();
     }
 
     public List<ApplicationCommentDTO> findComments(Long applicationId) {
