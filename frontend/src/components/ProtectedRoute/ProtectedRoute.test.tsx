@@ -6,6 +6,10 @@ import type { User } from "../../types/user";
 import ProtectedRoute from "./ProtectedRoute";
 import * as useUser from "../../hooks/useUser";
 
+vi.mock("../../hooks/useLogout", () => ({
+  useLogout: () => ({ logout: vi.fn() }),
+}))
+
 describe("ProtectedRoute", () => {
   it("allows access to caseWorker user to caseWorker paths", () => {
     vi.spyOn(useUser, "useUser").mockReturnValue({ 
@@ -24,14 +28,13 @@ describe("ProtectedRoute", () => {
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />
-          <Route path="*" element={<p>404 Page</p>} />
         </Routes>
       </MemoryRouter>
     )
 
     expect(screen.getByText("Protected Page")).toBeDefined()
     expect(screen.queryByText("Login Page")).toBeNull()
-    expect(screen.queryByText("404 Page")).toBeNull()
+    expect(screen.queryByText(/Hoppsan/i)).toBeNull()
   })
 
   it("send logged in user with wrong role to Not Found", () => {
@@ -51,14 +54,13 @@ describe("ProtectedRoute", () => {
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />
-          <Route path="*" element={<p>404 Page</p>} />
         </Routes>
       </MemoryRouter>
     )
 
     expect(screen.queryByText("Protected Page")).toBeNull()
     expect(screen.queryByText("Login Page")).toBeNull()
-    expect(screen.getByText("404 Page")).toBeDefined()
+    expect(screen.getByText(/Hoppsan/i)).toBeDefined()
   })
 
   it("redirect unauthorized user to /", () => {
@@ -71,13 +73,12 @@ describe("ProtectedRoute", () => {
             <Route path="oversikt" element={<p>Protected Page</p>} />
           </Route>
           <Route path="/" element={<p>Login Page</p>} />
-          <Route path="*" element={<p>404 Page</p>} />
         </Routes>
       </MemoryRouter>
     )
 
     expect(screen.queryByText("Protected Page")).toBeNull()
     expect(screen.getByText("Login Page")).toBeDefined()
-    expect(screen.queryByText("404 page")).toBeNull()
+    expect(screen.queryByText(/Hoppsan/i)).toBeNull()
   })
 })
