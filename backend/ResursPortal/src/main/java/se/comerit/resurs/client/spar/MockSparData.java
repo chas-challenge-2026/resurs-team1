@@ -13,7 +13,7 @@ final class MockSparData {
             "820624-5678", new SparPersonDTO("820624-5678", false),
             "660930-7777", new SparPersonDTO("660930-7777", false),
             "710214-7777", new SparPersonDTO("710214-7777", true),
-            "681105-9999", new SparPersonDTO("681105-9999", false)
+            "681105-9999", new SparPersonDTO("681105-9999", true)
     );
 
     private MockSparData() {

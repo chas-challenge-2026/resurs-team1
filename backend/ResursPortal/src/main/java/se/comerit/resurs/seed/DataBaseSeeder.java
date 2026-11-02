@@ -4,14 +4,15 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import se.comerit.resurs.dto.ContactDetails;
+import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.Company;
-import se.comerit.resurs.service.ApplicationService;
-import se.comerit.resurs.service.CaseWorkerService;
-import se.comerit.resurs.service.CompanyService;
+import se.comerit.resurs.service.*;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -24,15 +25,19 @@ import java.util.Set;
 public class DataBaseSeeder implements CommandLineRunner {
 
     private final CaseWorkerService caseWorkerService;
+    private final ScoringService scoringService;
     private final CaseWorkerRepository caseWorkerRepository;
     private final CompanyService companyService;
     private final ApplicationService applicationService;
+    private final CompanyFinancialService financialService;
 
-    public DataBaseSeeder(CaseWorkerService caseWorkerService, CaseWorkerRepository caseWorkerRepository, CompanyService companyService, ApplicationService applicationService) {
+    public DataBaseSeeder(CaseWorkerService caseWorkerService, ScoringService scoringService, CaseWorkerRepository caseWorkerRepository, CompanyService companyService, ApplicationService applicationService, CompanyFinancialService financialService) {
         this.caseWorkerService = caseWorkerService;
+        this.scoringService = scoringService;
         this.caseWorkerRepository = caseWorkerRepository;
         this.companyService = companyService;
         this.applicationService = applicationService;
+        this.financialService = financialService;
     }
 
 
@@ -59,8 +64,25 @@ public class DataBaseSeeder implements CommandLineRunner {
             caseWorkerService.create(worker);
         }
 
-        for(NewApplicationDTO creditApplication:seedApplications ){
-            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false);
+        for (ApplicationSeed creditApplication : createApplicationSeeds()) {
+            NewApplicationDTO scoredApplication = scoringService.scoreFromFinancialObject(
+                    creditApplication.financials(),
+                    creditApplication.requestedAmount(),
+                    creditApplication.bransch(),
+                    creditApplication.orgNumber(),
+                    creditApplication.companyName(),
+                    creditApplication.authorizedSignatory(),
+                    creditApplication.purpose(),
+                    creditApplication.durationMonths()
+            );
+
+            CreditApplicationDataObject object = applicationService.saveApplication(
+                    scoredApplication,
+                    creditApplication.contactDetails,
+                    creditApplication.protectedResource
+            );
+
+            System.out.println(object);
         }
 
         workerRoles.forEach((email,roles) -> {
@@ -71,7 +93,9 @@ public class DataBaseSeeder implements CommandLineRunner {
 
     private final List<Company> companySeed = List.of(
             new Company("556000-1234", "Fasen Elteknik AB", "Anders Karlsson"),
-            new Company("556000-5678", "Britt Maries Ögonfransar AB", "Maria Svensson")
+            new Company("556000-5678", "Britt Maries Ögonfransar AB", "Maria Svensson"),
+            new Company("556000-9999", "Frukt och grönt Göteborg", "Erik Lindkvist"),
+            new Company("556000-7777", "Gunnar Kruts Dynamit AB", "Johan Berg")
     );
 
     private final List<CreateCaseWorkerRequest> workerSeed = List.of(
@@ -85,20 +109,49 @@ public class DataBaseSeeder implements CommandLineRunner {
             "anders@resurs.se", Set.of("ROLE_ADMIN")
     ));
 
-    private final List<NewApplicationDTO> seedApplications = List.of(
-        new NewApplicationDTO(
-                BigDecimal.valueOf(500000.0),
-                "Expansion av verksamheten",
-                12, ApplicationStatus.UNDER_REVIEW,
-                null,
-                "'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)'",
-                "'FLAGGED: soliditet=0.28 (OK), likviditetsgrad=0.95 (FLAGGED), skuldsättningsgrad=2.1 (OK)'",
-                "If this can be read during runtime,  Something is wrong",
-                "556000-1234",
-                "Anders Karlsson",
-                2)
-    );
 
+    private List<ApplicationSeed> createApplicationSeeds(){
+        return List.of(
+                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-1234").get(), //succeeds
+                        BigDecimal.valueOf(500000.0),
+                        "El och Energi",
+                        "556000-1234",
+                        "Fasen Elteknik AB",
+                        "750312-1234",
+                        "Expansion", 6, false,
+                        new ContactDetails("Anders Karlsson", "Anka@Email.se", "07333333333")
+                        ),
+                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-9999").get(), //Protected identity on signatory
+                        BigDecimal.valueOf(20000.0),
+                        "Grosshandlare",
+                        "556000-9999",
+                        "Frukt och grönt Göteborg",
+                        "681105-9999",
+                        "Ny butik",1, true,
+                        new ContactDetails("Erik Lindqvist", "erli@Email.se", "07444444444")),
+                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-7777").get(),
+                        BigDecimal.valueOf(1500000),
+                        "Kanoner och Krut",
+                        "556000-7777",
+                        "Gunnar Kruts Dynamit AB",
+                        "660930-7777",
+                        "The fighting egg", 6, false,
+                        new ContactDetails("Johan Berg", "Jobe@Email.se", "07555555555")
+                )
+        );
+    }
 
+    private record ApplicationSeed(
+            CompanyFinancialApiDTO financials,
+            BigDecimal requestedAmount,
+            String bransch,
+            String orgNumber,
+            String companyName,
+            String authorizedSignatory,
+            String purpose,
+            Integer durationMonths,
+            boolean protectedResource,
+            ContactDetails contactDetails
+    ) {}
 
 }
