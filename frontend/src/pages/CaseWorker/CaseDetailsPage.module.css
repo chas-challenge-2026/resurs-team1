@@ -36,14 +36,14 @@
   padding: var(--space-base);
 }
 
-/* Manage Case view */
+/* Manage split view */
 .splitColumns {
   display: grid;
   gap: var(--space-base);
   align-items: start; 
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1050px) {
   .splitColumns {
     grid-template-columns: 1fr 1fr;
   }
@@ -104,4 +104,15 @@
 .badgeReject {
   background-color: var(--badge-error-bg);
   color: var(--badge-error-text);
+}
+/* Protected identity */
+.titleWithTag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.protectedHintBelow {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
 }

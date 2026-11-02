@@ -12,6 +12,9 @@ import { Card, CardFooter } from "../../components/Card/Card"
 import { DataList, DataListItem } from "../../components/DataList/DataList"
 import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
 import StatusTag from "../../components/StatusTag/StatusTag"
+import ProtectedNotice from "../../components/ProtectedNotice/ProtectedNotice"
+import ProtectedValue from "../../components/ProtectedValue/ProtectedValue"
+import ProtectedTag from "../../components/ProtectedTag/ProtectedTag"
 import AttachedFile from "../../components/AttachedFile/AttachedFile"
 import Button from "../../components/Button/Button"
 import TextArea from "../../components/Textarea/Textarea"
@@ -129,15 +132,36 @@ const CaseDetailsPage = () => {
         <ToggleSwitch variant="accent" name="view" options={options} selectedValue={view} onChange={(newView) => setView(newView)} />
       </section>
 
+      {data.protectedResource && <ProtectedNotice />}
+
       {view === "overview" &&
         <section className={s.contentWrapper}>
+          <div className={s.splitColumns}>
+            
           <Card>
-            <h3 className="subtitle">Kontakt</h3>
+            <h3 className={`subtitle ${s.titleWithTag}`}>
+              Kontakt
+              {data.protectedResource && <ProtectedTag />}
+            </h3>
             <DataList>
-              <DataListItem label="Namn" value={data.contactDetails.name} />
-              <DataListItem label="E-postadress" value={data.contactDetails.email} />
-              <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
+              {/* protected case: value hidden until hover (desktop) or tap (mobile) */}
+              {data.protectedResource ? (
+                <>
+                  <DataListItem label="Namn" value={<ProtectedValue>{data.contactDetails.name}</ProtectedValue>} />
+                  <DataListItem label="E-postadress" value={<ProtectedValue>{data.contactDetails.email}</ProtectedValue>} />
+                  <DataListItem label="Telefonnummer" value={<ProtectedValue>{data.contactDetails.phoneNumber}</ProtectedValue>} />
+                </>
+              ) : (
+                <>
+                  <DataListItem label="Namn" value={data.contactDetails.name} />
+                  <DataListItem label="E-postadress" value={data.contactDetails.email} />
+                  <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
+                </>
+              )}
             </DataList>
+            {data.protectedResource && (
+              <p className={s.protectedHintBelow}>Klicka på ett värde för att visa det.</p>
+            )}
           </Card>
 
           {data.scoringResult && (
@@ -164,6 +188,7 @@ const CaseDetailsPage = () => {
               </DataList>
             </Card>
           )}
+          </div>
 
           <Card>
             <h3 className="subtitle">Ekonomi</h3>
