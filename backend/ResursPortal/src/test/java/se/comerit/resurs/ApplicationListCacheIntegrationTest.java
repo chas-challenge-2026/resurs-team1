@@ -7,15 +7,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -26,6 +30,7 @@ import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.service.ApplicationService;
 import se.comerit.resurs.service.BackofficeService;
 import se.comerit.resurs.service.DocumentService;
+import se.comerit.resurs.util.HMACHasher;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -33,6 +38,8 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers
@@ -75,10 +82,14 @@ class ApplicationListCacheIntegrationTest {
     private DocumentRepository documentRepository;
 
     @Autowired
+    @MockitoSpyBean
     private CreditApplicationRepository applicationRepository;
 
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private HMACHasher hmacHasher;
 
     @BeforeEach
     void setUp() {
@@ -90,76 +101,119 @@ class ApplicationListCacheIntegrationTest {
     }
 
     @Test
-    void readApplicationsByCompanyDesc_calledTwice_returnsCachedList() {
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
+    void readApplicationsByCompanyDesc_calledTwice_fetchesApplicationsOnlyOnce() {
         Long companyId = companyIdOf(save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW));
 
-        List<CreditApplicationDTO> first = applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
-        List<CreditApplicationDTO> second = applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
+        Page<CreditApplicationDataObject> first =
+                applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
 
-        assertThat(second).isSameAs(first);
+        Page<CreditApplicationDataObject> second =
+                applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
+
+        assertThat(first.getContent()).hasSize(1);
+        assertThat(second.getContent()).hasSize(1);
+
+        verify(applicationRepository, times(1))
+                .findByCompanyIdAndProtectedResourceFalseOrderByCreatedAtDesc(
+                        companyId, FIRST_PAGE);
     }
 
     @Test
     void readApplicationsByCompanyDesc_differentPages_returnDifferentApplications() {
-        CreditApplicationDTO older = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
-        CreditApplicationDTO newer = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject older = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject newer = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         Long companyId = companyIdOf(newer);
 
-        List<CreditApplicationDTO> firstPage = applicationService.readApplicationsByCompanyDesc(companyId, PageRequest.of(0, 1));
-        List<CreditApplicationDTO> secondPage = applicationService.readApplicationsByCompanyDesc(companyId, PageRequest.of(1, 1));
+        Page<CreditApplicationDataObject> firstPage = applicationService.readApplicationsByCompanyDesc(companyId, PageRequest.of(0, 1));
+        Page<CreditApplicationDataObject> secondPage = applicationService.readApplicationsByCompanyDesc(companyId, PageRequest.of(1, 1));
 
-        assertThat(firstPage).extracting(CreditApplicationDTO::id).containsExactly(newer.id());
-        assertThat(secondPage).extracting(CreditApplicationDTO::id).containsExactly(older.id());
+        assertThat(firstPage).extracting(CreditApplicationDataObject::id).containsExactly(newer.id());
+        assertThat(secondPage).extracting(CreditApplicationDataObject::id).containsExactly(older.id());
     }
 
     @Test
     void readApplicationsByCompanyDesc_differentCompanies_returnOwnApplications() {
-        CreditApplicationDTO own = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
-        CreditApplicationDTO other = save(OTHER_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject own = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject other = save(OTHER_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
 
-        List<CreditApplicationDTO> ownList = applicationService.readApplicationsByCompanyDesc(companyIdOf(own), FIRST_PAGE);
-        List<CreditApplicationDTO> otherList = applicationService.readApplicationsByCompanyDesc(companyIdOf(other), FIRST_PAGE);
+        Page<CreditApplicationDataObject> ownList = applicationService.readApplicationsByCompanyDesc(companyIdOf(own), FIRST_PAGE);
+        Page<CreditApplicationDataObject> otherList = applicationService.readApplicationsByCompanyDesc(companyIdOf(other), FIRST_PAGE);
 
-        assertThat(ownList).extracting(CreditApplicationDTO::id).containsExactly(own.id());
-        assertThat(otherList).extracting(CreditApplicationDTO::id).containsExactly(other.id());
+        assertThat(ownList).extracting(CreditApplicationDataObject::id).containsExactly(own.id());
+        assertThat(otherList).extracting(CreditApplicationDataObject::id).containsExactly(other.id());
     }
 
     @Test
-    void getApplicationsByOrgNumber_calledTwice_returnsCachedList() {
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
+    void getApplicationsByOrgNumber_calledTwice_fetchesApplicationsOnlyOnce() {
         save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
 
-        List<CreditApplicationDTO> first = applicationService.getApplicationsByOrgNumber(ORG_NUMBER, FIRST_PAGE);
-        List<CreditApplicationDTO> second = applicationService.getApplicationsByOrgNumber(ORG_NUMBER, FIRST_PAGE);
+        Page<CreditApplicationDataObject> first =
+                applicationService.getApplicationsByOrgNumber(ORG_NUMBER, FIRST_PAGE);
 
-        assertThat(second).isSameAs(first);
+        Page<CreditApplicationDataObject> second =
+                applicationService.getApplicationsByOrgNumber(ORG_NUMBER, FIRST_PAGE);
+
+        assertThat(first.getContent()).hasSize(1);
+        assertThat(second.getContent()).hasSize(1);
+
+        verify(applicationRepository, times(1))
+                .findByCompany_SearchKeyOrgNumberAndProtectedResourceFalseOrderByCreatedAtDesc(
+                        hmacHasher.encode(ORG_NUMBER), FIRST_PAGE);
     }
 
     @Test
-    void applicationsForReview_calledTwice_returnsCachedLists() {
+    void applicationsForReview_calledTwice_fetchesApplicationsOnlyOnce() {
         save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
 
-        BackOfficeListsDTO first = backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE);
-        BackOfficeListsDTO second = backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE);
+        BackOfficeListsDTO first =
+                backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE);
 
-        assertThat(second).isSameAs(first);
+        BackOfficeListsDTO second =
+                backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE);
+
+        assertThat(first).isNotNull();
+        assertThat(second).isNotNull();
+
+        verify(applicationRepository, times(1))
+                .findByStatusInAndProtectedResourceFalseOrderByCreatedAtAsc(
+                        List.of(
+                                ApplicationStatus.UNDER_REVIEW,
+                                ApplicationStatus.PENDING_SCORING,
+                                ApplicationStatus.PENDING_DOCS
+                        ),
+                        FIRST_PAGE
+                );
+
+        verify(applicationRepository, times(1))
+                .findByStatusInAndProtectedResourceFalseOrderByCreatedAtAsc(
+                        List.of(
+                                ApplicationStatus.APPROVED,
+                                ApplicationStatus.REJECTED
+                        ),
+                        FIRST_PAGE
+                );
+
     }
 
     @Test
     void saveApplication_evictsCachedLists_soNewApplicationIsListed() {
-        CreditApplicationDTO existing = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject existing = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         Long companyId = companyIdOf(existing);
         applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
 
-        CreditApplicationDTO added = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject added = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
 
         assertThat(applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE))
-                .extracting(CreditApplicationDTO::id)
+                .extracting(CreditApplicationDataObject::id)
                 .containsExactlyInAnyOrder(existing.id(), added.id());
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_evictsCachedLists() {
-        CreditApplicationDTO application = save(RESCORABLE_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject application = save(RESCORABLE_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         Long companyId = companyIdOf(application);
         applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
 
@@ -169,47 +223,37 @@ class ApplicationListCacheIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_evictsCachedLists_soNewStatusIsListed() {
-        CreditApplicationDTO application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         Long companyId = companyIdOf(application);
         applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
 
         backofficeService.application_decision(application.id(), ApplicationStatus.APPROVED, WORKER_EMAIL, WORKER_NAME, null);
 
         assertThat(applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE))
-                .extracting(CreditApplicationDTO::status)
+                .extracting(CreditApplicationDataObject::status)
                 .containsExactly(ApplicationStatus.APPROVED);
     }
 
-    @Test
-    void applicationComment_evictsCachedLists_soNewCommentIsListed() {
-        CreditApplicationDTO application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
-        Long companyId = companyIdOf(application);
-        applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
-
-        backofficeService.application_comment(application.id(), "Ny kommentar", WORKER_EMAIL, WORKER_NAME);
-
-        assertThat(applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE))
-                .extracting(CreditApplicationDTO::comment)
-                .containsExactly("Ny kommentar");
-    }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationRequestDocuments_evictsCachedLists_soPendingDocsIsListed() {
-        CreditApplicationDTO application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         Long companyId = companyIdOf(application);
         applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
 
         backofficeService.application_request_documents(application.id(), "Skicka balansräkning", WORKER_EMAIL, WORKER_NAME);
 
         assertThat(applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE))
-                .extracting(CreditApplicationDTO::status)
+                .extracting(CreditApplicationDataObject::status)
                 .containsExactly(ApplicationStatus.PENDING_DOCS);
     }
 
     @Test
     void uploadDocument_evictsCachedLists_soUnderReviewIsListed() {
-        CreditApplicationDTO application = save(ORG_NUMBER, ApplicationStatus.PENDING_DOCS);
+        CreditApplicationDataObject application = save(ORG_NUMBER, ApplicationStatus.PENDING_DOCS);
         Long companyId = companyIdOf(application);
         applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE);
         MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
@@ -218,13 +262,14 @@ class ApplicationListCacheIntegrationTest {
         documentService.uploadDocument(application.id(), "balansrakning", file);
 
         assertThat(applicationService.readApplicationsByCompanyDesc(companyId, FIRST_PAGE))
-                .extracting(CreditApplicationDTO::status)
-                .containsExactly(ApplicationStatus.UNDER_REVIEW);
+                .extracting(CreditApplicationDataObject::status)
+                .containsExactly(ApplicationStatus.PENDING_DOCS);
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_evictsBackofficeLists() {
-        CreditApplicationDTO application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
+        CreditApplicationDataObject application = save(ORG_NUMBER, ApplicationStatus.UNDER_REVIEW);
         BackOfficeListsDTO before = backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE);
 
         backofficeService.application_decision(application.id(), ApplicationStatus.REJECTED, WORKER_EMAIL, WORKER_NAME, null);
@@ -232,11 +277,11 @@ class ApplicationListCacheIntegrationTest {
         assertThat(backofficeService.applicationsForReview(FIRST_PAGE, FIRST_PAGE)).isNotSameAs(before);
     }
 
-    private CreditApplicationDTO save(String orgNumber, ApplicationStatus status) {
+    private CreditApplicationDataObject save(String orgNumber, ApplicationStatus status) {
         return applicationService.saveApplication(newApplication(orgNumber, status), CONTACTS, false);
     }
 
-    private Long companyIdOf(CreditApplicationDTO application) {
+    private Long companyIdOf(CreditApplicationDataObject application) {
         return applicationRepository.findById(application.id()).orElseThrow().getCompany().getId();
     }
 

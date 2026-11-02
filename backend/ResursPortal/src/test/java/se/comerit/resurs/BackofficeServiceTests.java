@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -93,6 +94,7 @@ class BackofficeServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_shouldApproveApplication() {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -114,6 +116,7 @@ class BackofficeServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_shouldRejectApplication() {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -135,6 +138,7 @@ class BackofficeServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_shouldWriteAuditEvent() {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -199,6 +203,7 @@ class BackofficeServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDetails_shouldReturnApplicationAndDocuments() {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -229,6 +234,7 @@ class BackofficeServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDetails_shouldReturnEmptyDocumentsWhenNoneExist() {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -263,6 +269,7 @@ class BackofficeServiceTests {
 
     // Kontrollerar att handläggarens kommentar sparas på ärendet när ett beslut fattas
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_shouldSaveCommentOnApplication() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -274,6 +281,7 @@ class BackofficeServiceTests {
 
     // Kontrollerar att en tom kommentar (mellanslag här) sparas som null istället för tom text
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_shouldStoreNullWhenCommentIsBlank() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -284,6 +292,7 @@ class BackofficeServiceTests {
 
     // Kontroller att en kommentar sparas på ärendet och att statusen inte ändras
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationComment_shouldSaveCommentAndKeepStatus() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -296,6 +305,7 @@ class BackofficeServiceTests {
 
     // Kontrollerar atte n COMMENT_ADDED händelse skrivs i auditloggen när en kommentar läggs till
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationComment_shouldWriteAuditEvent() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -317,6 +327,7 @@ class BackofficeServiceTests {
     //Ska kontrollera att hela auditloggen för ett ärende hämtas, äldsta händelsen först
     //Händelserna skapas via riktiga metoder (som @Transactional) alltså samma väg som en handläggare använder
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER", "ROLE_CERTIFIED"})
     void applicationAuditLog_shouldReturnEventsInOrder() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
         backofficeService.application_comment(saved.getId(), "Första", WORKER_EMAIL, WORKER_NAME);
@@ -333,6 +344,7 @@ class BackofficeServiceTests {
 
     //Ett ärende som inte har några händelser ska ge en tom lista (inte ett fel)
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationAuditLog_shouldReturnEmptyListWhenNoEvents() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -341,6 +353,7 @@ class BackofficeServiceTests {
 
     //Auditloggen ska bara innehålla händelserna för ärendet man frågar efter, inte andra ärenden
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationAuditLog_shouldOnlyReturnEventsForThatApplication() {
         CreditApplication first = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
         CreditApplication second = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
@@ -360,6 +373,7 @@ class BackofficeServiceTests {
     //---------------
     //Kontrollerar att en begäran om komplettering sätter status PENDING_DOCS och sparar texten på ärendet
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void requestDocuments_shouldSetPendingDocsAndSaveComment() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -373,6 +387,7 @@ class BackofficeServiceTests {
 
     // Kontrollerar att en DOCUMENTS_REQUESTED-händelse skrivs i auditloggen
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void requestDocuments_shouldWriteAuditEvent() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
@@ -386,6 +401,7 @@ class BackofficeServiceTests {
 
     // Ett godkänt ärende kan inte kompletteras, och ska vara orört
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void requestDocuments_shouldThrowWhenApplicationIsApproved() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.APPROVED));
 
@@ -401,6 +417,7 @@ class BackofficeServiceTests {
 
     // Samma för ett avslaget ärende
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void requestDocuments_shouldThrowWhenApplicationIsRejected() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.REJECTED));
 
@@ -422,6 +439,7 @@ class BackofficeServiceTests {
 
     // En ny begäran på ett ärende som redan väntar på dokument är tillåten och ersätter texten
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void requestDocuments_shouldAllowNewRequestWhenAlreadyPendingDocs() {
         CreditApplication saved = creditRepo.save(createApplication(ApplicationStatus.PENDING_DOCS));
 

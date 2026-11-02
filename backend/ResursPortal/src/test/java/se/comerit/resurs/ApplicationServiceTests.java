@@ -5,14 +5,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
+import se.comerit.resurs.dto.CreditApplicationProtectedDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
@@ -93,7 +97,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_shouldPersistApplication() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
 
         assertThat(saved).isNotNull();
@@ -118,7 +122,7 @@ class ApplicationServiceTests {
 
         NewApplicationDTO dto = createApplicationDTO();
 
-        CreditApplicationDTO saved = applicationService.saveApplication(dto,mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(dto,mockContacts, false);
 
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
@@ -142,7 +146,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_whenSignatoryProtected_persistsProtectedIdentity() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, true);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, true);
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
@@ -152,7 +156,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_whenSignatoryNotProtected_persistsUnprotectedIdentity() {
 
-        CreditApplicationDTO saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, false);
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
@@ -220,7 +224,7 @@ class ApplicationServiceTests {
                 "Other company"
         );
 
-        CreditApplicationDTO saved =
+        CreditApplicationDataObject saved =
                 applicationService.saveApplication(dto,mockContacts, false);
 
         assertThat(saved.orgNumber())
@@ -253,10 +257,10 @@ class ApplicationServiceTests {
     @Test
     void findApplicationByID_shouldReturnApplication() {
 //kolla över
-        CreditApplicationDTO saved =
+        CreditApplicationDataObject saved =
                 applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
-        CreditApplicationDTO result =
+        CreditApplicationDataObject result =
                 applicationService.findApplicationByID(saved.id());
 
         assertThat(result).isNotNull();
@@ -312,7 +316,7 @@ class ApplicationServiceTests {
                 ),mockContacts, false
         );
 
-        List<CreditApplicationDTO> applications =
+        List<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompany(
                         testCompany.getId()
                 );
@@ -324,7 +328,7 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompany_shouldReturnEmptyListWhenCompanyHasNoApplications() {
 //kolla över
-        List<CreditApplicationDTO> applications =
+        List<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompany(
                         testCompany.getId()
                 );
@@ -348,7 +352,7 @@ class ApplicationServiceTests {
                 createApplicationDTO(),mockContacts, false
         );
 
-        List<CreditApplicationDTO> applications =
+        List<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompanyDesc(
                         testCompany.getId()
                 );
@@ -370,7 +374,7 @@ class ApplicationServiceTests {
 
         Pageable pageable = PageRequest.of(0, 2);
 
-        List<CreditApplicationDTO> applications =
+        Page<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompanyDesc(
                         testCompany.getId(),
                         pageable
@@ -383,13 +387,13 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompanyDesc_shouldReturnNewestFirst() {
 //kolla över
-        CreditApplicationDTO first =
+        CreditApplicationDataObject first =
                 applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
-        CreditApplicationDTO second =
+        CreditApplicationDataObject second =
                 applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
 
-        List<CreditApplicationDTO> applications =
+        Page<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompanyDesc(
                         testCompany.getId(),
                         PageRequest.of(0, 10)
@@ -398,10 +402,10 @@ class ApplicationServiceTests {
         assertThat(applications)
                 .hasSize(2);
 
-        assertThat(applications.get(0).id())
+        assertThat(applications.getContent().get(0).id())
                 .isEqualTo(second.id());
 
-        assertThat(applications.get(1).id())
+        assertThat(applications.getContent().get(1).id())
                 .isEqualTo(first.id());
     }
 
@@ -414,12 +418,12 @@ class ApplicationServiceTests {
         applicationRepository.save(createApplicationFor(target, ApplicationStatus.APPROVED));
         applicationRepository.save(createApplicationFor(other, ApplicationStatus.UNDER_REVIEW));
 
-        List<CreditApplicationDTO> result =
+        Page<CreditApplicationDataObject> result =
                 applicationService.getApplicationsByOrgNumber("556000-1111", PageRequest.of(0,20));
 
         assertThat(result).hasSize(2);
         assertThat(result)
-                .extracting(CreditApplicationDTO::orgNumber)
+                .extracting(CreditApplicationDataObject::orgNumber)
                 .containsOnly("556000-1111");
     }
 
@@ -507,6 +511,7 @@ class ApplicationServiceTests {
     // ============================================================
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldUpdateSameApplication() {
         CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
 
@@ -533,6 +538,7 @@ class ApplicationServiceTests {
     // beslutet skapas via BackofficeService (som är @Transactional och loggar MANUAL_DECISION), alltså samma väg som
     // en handläggare använder.
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldThrowWhenManualDecisionExists() {
         CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
         backofficeService.application_decision(application.getId(), ApplicationStatus.APPROVED,
@@ -550,6 +556,7 @@ class ApplicationServiceTests {
 
     //Ett automatiskt beslut (REJECTED från scoring, inget manuellt beslut) ska gå att köra om
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldAllowRescoreOfAutomaticDecision() {
         CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.REJECTED);
         CreditApplicationDTO result = applicationService.rescoreApplication(application.getId());
@@ -558,6 +565,7 @@ class ApplicationServiceTests {
 
     // Omkörningen ska loggas som en SCORING_RUN i auditloggen
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldWriteScoringRunEvent() {
         CreditApplication application = saveApplicationFor("556000-7777", ApplicationStatus.UNDER_REVIEW);
         applicationService.rescoreApplication(application.getId());
@@ -578,6 +586,7 @@ class ApplicationServiceTests {
     // Om registret ligger nere (556000-5555 simulerar det) ska felet kastas vidare och ärendet ska vara oförändrat
     // t.ex när kreditupplysningen inte fungerar just nu
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldLeaveApplicationUnchangedWhenRegistryIsDown() {
         CreditApplication application = saveApplicationFor("556000-5555", ApplicationStatus.UNDER_REVIEW);
         assertThatThrownBy(() -> applicationService.rescoreApplication(application.getId()))
@@ -593,6 +602,7 @@ class ApplicationServiceTests {
 
     //Ett ärende som väntar på dokument från kunden ska inte kunna köras om, då skulle statusen flyttas bort från PENDING_DOCS
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void rescoreApplication_shouldThrowWhenWaitingForDocument() {
         CreditApplication application = saveApplicationFor("556000-7777",
                 ApplicationStatus.PENDING_DOCS);
@@ -606,5 +616,60 @@ class ApplicationServiceTests {
         assertThat(fromDb.getStatus()).isEqualTo(ApplicationStatus.PENDING_DOCS);
         assertThat(fromDb.getScoringResult()).isNull();
     }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_CASEWORKER")
+    void regularCaseworkerCannotSeeProtectedApplications() {
+        // Arrange: company has one regular and one protected application
+
+        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true);
+
+        // Act
+        Page<CreditApplicationDataObject> result =
+                applicationService.readApplicationsByCompanyDesc(
+                        testCompany.getId(), Pageable.unpaged());
+
+        // Assert
+        assertThat(result)
+                .extracting(CreditApplicationDataObject::id)
+                .containsExactly(regularApp.id());
+
+        assertThat(result)
+                .noneMatch(app -> app instanceof CreditApplicationProtectedDTO);
+
+        assertThat(result)
+                .noneMatch(app -> app.id().equals(protectedApp.id()));
+    }
+
+    @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER", "ROLE_CERTIFIED"})
+    void certifiedCaseworkerCanSeeProtectedApplications() {
+        // Arrange: company has one regular and one protected application
+
+        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true);
+
+        // Act
+        Page<CreditApplicationDataObject> result =
+                applicationService.readApplicationsByCompanyDesc(
+                        testCompany.getId(), Pageable.unpaged());
+
+        // Assert
+        assertThat(result)
+                .extracting(CreditApplicationDataObject::id)
+                .containsExactly(protectedApp.id(),regularApp.id());
+
+        assertThat(result)
+                .filteredOn(app -> app.id().equals(regularApp.id()))
+                .first()
+                .isInstanceOf(CreditApplicationDTO.class);
+
+        assertThat(result)
+                .filteredOn(app -> app.id().equals(protectedApp.id()))
+                .first()
+                .isInstanceOf(CreditApplicationProtectedDTO.class);
+    }
+
 }
 
