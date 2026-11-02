@@ -17,17 +17,17 @@
   width: fit-content;
   font-size: var(--font-size-sm);
   font-weight: 500;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .backButton:hover {
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
 
 .description {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .infoSubtitle {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Info Card Body */
@@ -83,30 +83,30 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xxs);
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--dropzone-border);
   border-radius: var(--radius-sm);
   padding: var(--space-lg) var(--space-base);
 }
 
 .dropzone:hover,
 .dropzone:focus-visible {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  border-color: var(--dropzone-border-hover);
+  background-color: var(--dropzone-bg-hover);
 }
 
 .dropzoneIcon {
   font-size: 24px;
-  color: var(--color-primary);
+  color: var(--brand-primary);
 }
 
 .dropzoneTitle {
   font-weight: 600;
-  color: var(--color-text-main);
+  color: var(--text-main);
   font-size: var(--font-size-sm);
 }
 
 .dropzoneHint {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-size: var(--font-size-xs);
 }
 
@@ -144,7 +144,7 @@
 .commentBox {
   margin-top: var(--space-base);
   padding: var(--space-sm);
-  background-color: var(--bg-subtle-grey);
+  background-color: var(--bg-subtle);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
@@ -158,7 +158,7 @@
 }
 
 .commentText {
-  color: var(--color-text-main);
+  color: var(--text-main);
   white-space: pre-wrap; 
 }
 
@@ -166,10 +166,10 @@
   .iconWrapper {
     display: block;
     aspect-ratio: 1 / 1;
-    background-color: var(--color-primary-light);
+    background-color: var(--brand-primary-light);
     padding: var(--space-xs);
     border-radius: var(--radius-pill);
     font-size: 24px;
-    color: var(--color-primary);
+    color: var(--brand-primary);
   }
 }

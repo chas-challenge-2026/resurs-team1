@@ -14,9 +14,9 @@ const CompanyHomePage = () => {
 
       <div className={s.actionsContainer}>
         <img src={cat} alt="" className={s.mascot} />
-        <Card as="article" variant="accent" accentColor="var(--color-primary)" className={`${s.action} ${s.actionPrimary}`}>
+        <Card as="article" variant="accent" className={`${s.action} ${s.actionPrimary}`}>
           <CardHeader>
-            <span className={s.label} style={{color: "var(--color-primary)"}}>Ansökan</span>
+            <span className={s.label}>Ansökan</span>
             <h3 className={s.cardTitle}>Ny ansökan</h3>
           </CardHeader>
           <CardBody>
@@ -27,7 +27,7 @@ const CompanyHomePage = () => {
           </CardFooter>
         </Card>
 
-        <Card as="article" variant="accent" accentColor="var(--color-secondary)" className={`${s.action} ${s.actionSecondary}`}>
+        <Card as="article" variant="accent" accentColor="var(--card-secondary-accent)" className={`${s.action} ${s.actionSecondary}`}>
           <CardHeader>
             <span className={s.label}>Historik</span>
             <h3 className={s.cardTitle}>Mina ansökningar</h3>

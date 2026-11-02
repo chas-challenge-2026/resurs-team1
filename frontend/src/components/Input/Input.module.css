@@ -24,7 +24,7 @@
   position: absolute;
   left: var(--space-sm);
   display: flex;
-  color: var(--color-text-muted);
+  color: var(--input-placeholder);
   /* clicks land on the input underneath instead of dying on the icon */
   pointer-events: none;
 }
