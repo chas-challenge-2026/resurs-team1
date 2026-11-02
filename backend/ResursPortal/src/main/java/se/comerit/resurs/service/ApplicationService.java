@@ -1,6 +1,7 @@
 package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -33,6 +34,7 @@ import static java.util.stream.Collectors.toList;
 public class ApplicationService {
 
     private final ApplicationAccessPolicy accessPolicy;
+    private final CacheManager cacheManager;
     private final AuditService auditService;
     private final CompanyFinancialService financialService;
     private final CompanyValidationService validationService;
@@ -45,8 +47,9 @@ public class ApplicationService {
     private final ApplicationEventPublisher eventPublisher;
 
 
-    public ApplicationService(ApplicationAccessPolicy accessPolicy, CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
+    public ApplicationService(ApplicationAccessPolicy accessPolicy, CacheManager cacheManager, CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
         this.accessPolicy = accessPolicy;
+        this.cacheManager = cacheManager;
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -60,7 +63,7 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
     public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected) {
 
         CreditApplication creditApplication = new CreditApplication();
@@ -116,7 +119,7 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
-    @Cacheable(cacheNames = "applicationLists", key = "'org-' + #orgNumber + '-' + #pageable")
+
     public Page<CreditApplicationDataObject> getApplicationsByOrgNumber(String orgNumber, Pageable pageable) {
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
@@ -138,21 +141,40 @@ public class ApplicationService {
         return applications;
     }
 
-    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberAll(String orgNumber, Pageable pageable){
-        byte[] hash = hmacHasher.encode(orgNumber);
-        return  applicationRepository.findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hash,pageable)
-                .map(CreditApplicationProtectedDTO::new);
+    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberAll(
+            String orgNumber, Pageable pageable) {
+
+        String key = "org-" + orgNumber + "-" + pageable;
+
+        return cacheManager.getCache("certifiedAccessApplications")
+                .get(key, () -> {
+                    byte[] hash = hmacHasher.encode(orgNumber);
+
+                    return applicationRepository
+                            .findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hash, pageable)
+                            .map(CreditApplicationProtectedDTO::new);
+                });
     }
 
-    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberRestricted(String orgNumber, Pageable pageable){
-        byte[] hash = hmacHasher.encode(orgNumber);
-        return  applicationRepository.findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hash,pageable)
-                .map(CreditApplicationDTO::new);
+    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberRestricted(
+            String orgNumber, Pageable pageable) {
+
+        String key = "org-" + orgNumber + "-" + pageable;
+
+        return cacheManager.getCache("restrictedAccessApplications")
+                .get(key, () -> {
+                    byte[] hash = hmacHasher.encode(orgNumber);
+
+                    return applicationRepository
+                            .findByCompany_SearchKeyOrgNumberAndProtectedResourceFalseOrderByCreatedAtDesc(
+                                    hash, pageable)
+                            .map(CreditApplicationDTO::new);
+                });
     }
 
     // Kör om scoring på ett ärende som redan finns och uppdaterar det
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
     public CreditApplicationDTO rescoreApplication(Long applicationId) {
         CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
 
@@ -261,15 +283,27 @@ public class ApplicationService {
         }
 
         return fetchedApps.map(application -> application.isProtectedResource()
-                ? (CreditApplicationDataObject) new CreditApplicationProtectedDTO(application)
+                ? new CreditApplicationProtectedDTO(application)
                 : new CreditApplicationDTO(application));
     }
 
-    private Page<CreditApplication> applicationsByCompanyAll(Long companyID,Pageable pageable){
-        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID, pageable);
+    private Page<CreditApplication> applicationsByCompanyAll(
+            Long companyID, Pageable pageable) {
+
+        return cacheManager.getCache("certifiedAccessApplications")
+                .get("Company-" + companyID + "-" + pageable,
+                        () -> applicationRepository
+                                .findByCompanyIdOrderByCreatedAtDesc(companyID, pageable));
     }
-    private Page<CreditApplication> applicationsByCompanyRestricted(Long companyID,Pageable pageable){
-        return applicationRepository.findByCompanyIdAndProtectedResourceFalseOrderByCreatedAtDesc(companyID, pageable);
+
+    private Page<CreditApplication> applicationsByCompanyRestricted(
+            Long companyID, Pageable pageable) {
+
+        return cacheManager.getCache("restrictedAccessApplications")
+                .get("Company-" + companyID + "-" + pageable,
+                        () -> applicationRepository
+                                .findByCompanyIdAndProtectedResourceFalseOrderByCreatedAtDesc(
+                                        companyID, pageable));
     }
 
     public List<ApplicationCommentDTO> findComments(Long applicationId) {

@@ -20,14 +20,24 @@ public class CacheConfig {
 
 
     @Bean
-    public CacheManager cacheManager(CacheProperties properties){
+    public CacheManager cacheManager(CacheProperties properties) {
         CaffeineCacheManager caffeine = new CaffeineCacheManager();
+
         caffeine.setCacheSpecification(properties.getCaffeine().getSpec());
         caffeine.setCacheNames(properties.getCacheNames());
-        caffeine.registerCustomCache("applicationLists", Caffeine.newBuilder()
-                .maximumSize(1000)
-                .expireAfterWrite(Duration.ofMinutes(20))
-                .build());
+
+        caffeine.registerCustomCache("restrictedAccessApplications",
+                Caffeine.newBuilder()
+                        .maximumSize(1000)
+                        .expireAfterWrite(Duration.ofMinutes(5))
+                        .build());
+
+        caffeine.registerCustomCache("certifiedAccessApplications",
+                Caffeine.newBuilder()
+                        .maximumSize(1000)
+                        .expireAfterWrite(Duration.ofMinutes(5))
+                        .build());
+
         return new TransactionAwareCacheManagerProxy(caffeine);
     }
 
