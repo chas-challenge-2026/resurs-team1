@@ -3,7 +3,6 @@ import { RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
 import Button from "../Button/Button";
 import s from "./Pagination.module.css"
 
-// TODO: Confirm with backend how the data type is supposed to be and move out type to seperate folder
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
