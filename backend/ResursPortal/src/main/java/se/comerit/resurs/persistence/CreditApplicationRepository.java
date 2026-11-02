@@ -30,6 +30,17 @@ public interface CreditApplicationRepository extends JpaRepository<CreditApplica
             Pageable pageable
     );
 
+    //Backoffice-listorna för handläggare utan CERTIFIED: bara ärenden som INTE är skyddade
+    Page<CreditApplication> findByStatusInAndProtectedResourceFalseOrderByCreatedAtAsc(
+            List<ApplicationStatus> statuses, Pageable pageable);
+
+    //Handläggarens sökning på orgnummer, utan skyddade ärenden
+    List<CreditApplication> findByCompany_SearchKeyOrgNumberAndProtectedResourceFalseOrderByCreatedAtDesc(
+            byte[] orgNumber_hash, Pageable pageable);
+
+    //Svarar på om ett enskilt ärende är skyddat, för servicelagret
+    boolean existsByIdAndProtectedResourceTrue(Long id);
+
     List<CreditApplication> findByCompanyId(Long companyID);
     List<CreditApplication> findByCompanyIdOrderByCreatedAtDesc(Long companyID, Pageable pagable);
     List<CreditApplication> findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(byte[] orgNumber_hash, Pageable pageable);

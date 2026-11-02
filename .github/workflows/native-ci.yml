@@ -1,0 +1,163 @@
+name: Native CI
+
+# Keep the workflow itself unfiltered so the final check can always report.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Supersede old PR runs, but keep each post-merge/manual run independent.
+  group: native-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  changes:
+    name: Detect native changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      native: ${{ steps.filter.outputs.native }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check changed paths
+        id: filter
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Run when a comparison is unavailable rather than miss a change.
+          native=true
+          if [[ "$EVENT_NAME" != workflow_dispatch && -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
+            if [[ "$EVENT_NAME" == pull_request ]]; then
+              BASE_SHA=$(git merge-base "$BASE_SHA" "$HEAD_SHA") || BASE_SHA=""
+            fi
+            if [[ -n "$BASE_SHA" ]] && git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+              native/ \
+              .github/workflows/native-ci.yml \
+              .github/scripts/native_ci_report.py \
+              .github/scripts/test_native_ci_report.py \
+              .gitattributes .gitmodules; then
+              native=false
+            fi
+          fi
+          echo "native=$native" >> "$GITHUB_OUTPUT"
+          if [[ "$native" == true ]]; then
+            echo 'Native build and test checks are needed (or were requested manually).' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No native or native CI inputs changed. Native build and test checks are not needed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  linux:
+    name: Native / Ubuntu ${{ matrix.ubuntu }} / Debug
+    needs: changes
+    if: needs.changes.outputs.native == 'true'
+    runs-on: ubuntu-${{ matrix.ubuntu }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ['22.04', '24.04']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends build-essential cmake libssl-dev
+      - name: Check report generation
+        run: python3 -m unittest discover -s .github/scripts -p 'test_native_ci_report.py'
+      - name: Record build environment
+        run: |
+          mkdir -p build/native-ci/logs
+          {
+            cat /etc/os-release
+            cmake --version
+            c++ --version
+            dpkg-query --show libssl-dev
+          } | tee build/native-ci/logs/environment.log
+      - name: Configure native libraries, demos and tests
+        id: configure
+        run: |
+          cmake -S native -B build/native-ci \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_TESTING=ON \
+            -DRESURS_BUILD_CRYPTO_DEMO=ON \
+            -DRESURS_BUILD_AUDIT_DEMO=ON \
+            2>&1 | tee build/native-ci/logs/configure.log
+      - name: Compile all native targets
+        id: build
+        run: |
+          cmake --build build/native-ci --parallel 2 \
+            2>&1 | tee build/native-ci/logs/build.log
+      - name: Run all registered native tests
+        id: tests
+        run: |
+          ctest --test-dir build/native-ci \
+            --verbose --output-on-failure --no-tests=error --timeout 120 \
+            --test-output-size-passed 1048576 --test-output-size-failed 1048576 \
+            --output-junit "$GITHUB_WORKSPACE/build/native-ci/ctest.xml" \
+            2>&1 | tee build/native-ci/logs/tests.log
+      - name: Write test summary
+        if: always()
+        env:
+          NATIVE_PLATFORM: Ubuntu ${{ matrix.ubuntu }} / Debug
+          CONFIGURE_RESULT: ${{ steps.configure.outcome }}
+          BUILD_RESULT: ${{ steps.build.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+        run: |
+          python3 .github/scripts/native_ci_report.py \
+            --report build/native-ci/ctest.xml \
+            --summary "$GITHUB_STEP_SUMMARY"
+      - name: Save reports and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-ubuntu-${{ matrix.ubuntu }}-debug
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            build/native-ci/ctest.xml
+            build/native-ci/logs/
+            build/native-ci/Testing/Temporary/*.log
+
+  result:
+    # This stable name is the check to require after validating the workflow.
+    name: Native CI result
+    needs: [changes, linux]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Verify required jobs succeeded
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          NATIVE_NEEDED: ${{ needs.changes.outputs.native }}
+          LINUX_RESULT: ${{ needs.linux.result }}
+        run: |
+          if [[ "$CHANGES_RESULT" != success ]]; then
+            echo 'Native change detection failed.' | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if [[ "$NATIVE_NEEDED" == false && "$LINUX_RESULT" == skipped ]]; then
+            echo 'Passed: no native or native CI inputs changed; builds were not needed.' | tee -a "$GITHUB_STEP_SUMMARY"
+          elif [[ "$NATIVE_NEEDED" == true && "$LINUX_RESULT" == success ]]; then
+            echo 'Passed: native compilation and all CTest suites succeeded on both Ubuntu versions.' | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Native CI did not pass: Linux jobs are $LINUX_RESULT." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi

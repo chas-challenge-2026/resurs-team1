@@ -71,6 +71,9 @@ public class CreditApplication {
     @Column(name = "comment")
     private String comment;
 
+    @Column(nullable = false)
+    private boolean protectedResource;
+
     @Column(name = "requires_co_signature", nullable = false)
     private boolean requiresCoSignature;
 
@@ -200,6 +203,14 @@ public class CreditApplication {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public boolean isProtectedResource() {
+        return protectedResource;
+    }
+
+    public void setProtectedResource(boolean protectedResource) {
+        this.protectedResource = protectedResource;
     }
 
     public boolean isRequiresCoSignature() {

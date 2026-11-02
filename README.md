@@ -2,26 +2,40 @@
 
 B2B-kreditansökningsportal för Resurs Bank. Företag ansöker om kredit, laddar upp årsredovisning, och får ett kreditbeslut baserat på finansiella nyckeltal.
 
-## Snabbstart
+## Starta projektet
 
+### Hela appen (som på stage)
 ```bash
-cd infra && docker compose up
+cd infra && docker compose up --build
 ```
+Öppna [http://localhost:8083](http://localhost:8083). Frontend och backend byggs ihop i Docker, inget byggkommando behövs.
 
-Öppna [http://localhost:8083](http://localhost:8083)
+### Utveckla frontend
+Kör Docker enligt ovan. Första gången: skapa `frontend/.env` utifrån `frontend/.env.example`. Sen i en ny terminal:
+```bash
+cd frontend
+npm install   # första gången
+npm run dev
+```
+Öppna [http://localhost:5173](http://localhost:5173). Ändringar syns direkt, `/api` skickas vidare till backend på 8083.
+
+### Deploy
+Push till `develop` → stage, push till `main` → prod. Allt byggs automatiskt. Se `DRIFT.md`.
 
 ### API-dokumentation
 Swagger UI nås på denna länk: http://localhost:8083/swagger-ui/index.html
 
 ### Testinloggningar
 
-| Roll | Uppgifter | FirmaTeknare(Företag)                    | Info                                     |
-|------|-----------|------------------------------------------|------------------------------------------|
-| Företag (Fasen Elteknik AB) | Org.nr: `556000-1234` | Anders Karlsson<br/>Pers#: `750312-1234` | Goda finanser                            |
-| Företag (Ögonfransar AB) | Org.nr: `556000-5678` | Maria Svensson<br/>Pers#: `820624-5678`  | Inget kassaflöde dokumenterat            |
-| Företag (Gunnar Kruts Dynamit AB) | Org.nr: `556000-7777` | Johan Berg<br/>Pers#: `660930-7777`      | Lån över 1000000 markeras för granskning |
-| Företag (Frukt och grönt Göteborg) | Org.nr: `556000-9999` | Erik Lindqvist<br/>Pers#: `681105-9999`  | Negativt rörelseresultat,                |
-| Handläggare | `karin@resurs.se` / `password123` |                                          |                                          |
+| Roll | Uppgifter                           | FirmaTeknare(Företag)                    | Info                                     |
+|------|-------------------------------------|------------------------------------------|------------------------------------------|
+| Företag (Fasen Elteknik AB) | Org.nr: `556000-1234`               | Anders Karlsson<br/>Pers#: `750312-1234` | Goda finanser                            |
+| Företag (Ögonfransar AB) | Org.nr: `556000-5678`               | Maria Svensson<br/>Pers#: `820624-5678`  | Inget kassaflöde dokumenterat            |
+| Företag (Gunnar Kruts Dynamit AB) | Org.nr: `556000-7777`               | Johan Berg<br/>Pers#: `660930-7777`      | Lån över 1000000 markeras för granskning |
+| Företag (Frukt och grönt Göteborg) | Org.nr: `556000-9999`               | Erik Lindqvist<br/>Pers#: `681105-9999`  | Negativt rörelseresultat,                |
+| Handläggare | `karin@resurs.se` / `password123`   |                                          |                                          |
+|Handläggare| `anders@resurs.se` / `password546`  | Admin                                    |                                          |
+|Handläggare| `charles@resurs.se` / `password789` | Certifierad Får läsa skyddade uppgifter  |                                          |
 
 
 ## Mappstruktur

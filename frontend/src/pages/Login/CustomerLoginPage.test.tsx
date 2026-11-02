@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { loginCompany } from "../../api/authApi"
-import LoginPage from "./LoginPage"
+import CustomerLoginPage from "./CustomerLoginPage"
 
 const navigate = vi.fn()
 
@@ -29,7 +29,7 @@ const renderPage = () => {
 
   render(
     <QueryClientProvider client={queryClient}>
-      <LoginPage />
+      <CustomerLoginPage />
     </QueryClientProvider>
   )
 
@@ -40,7 +40,7 @@ const renderPage = () => {
   }
 }
 
-describe("LoginPage", () => {
+describe("CustomerLoginPage", () => {
   beforeEach(() => vi.clearAllMocks())
 
   it("formats what the user types into one org number shape", () => {
@@ -127,7 +127,7 @@ describe("LoginPage", () => {
   it("sends formatted numbers with hyphens in the payload to the api", async () => {
     vi.mocked(loginCompany).mockResolvedValue({
       userId: 1,
-      role: "company",
+      roles: ["COMPANY"],
       orgNumber: ORG_NUMBER,
       displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",
@@ -150,7 +150,7 @@ describe("LoginPage", () => {
   it("redirects when the login is accepted", async () => {
     vi.mocked(loginCompany).mockResolvedValue({
       userId: 1,
-      role: "company",
+      roles: ["COMPANY"],
       orgNumber: ORG_NUMBER,
       displayName: "Fasen Elteknik AB",
       name: "Anders Karlsson",

@@ -14,7 +14,6 @@ import se.comerit.resurs.dto.application.*;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
-import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
@@ -40,8 +39,9 @@ public class ApplicationController {
     private final CompanyService companyService; //Swap to CompanyService later
     private final ScoringService creditScoreService;
     private final ApplicationAccessPolicy accessPolicy;
+    private final SparService sparService;
 
-    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService, ApplicationAccessPolicy accessPolicy) {
+    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService, ApplicationAccessPolicy accessPolicy, SparService sparService) {
         this.validationService = validationService;
         this.financialService = financialService;
         this.documentService = documentService;
@@ -49,6 +49,7 @@ public class ApplicationController {
         this.companyService = companyService;
         this.creditScoreService = creditScoreService;
         this.accessPolicy = accessPolicy;
+        this.sparService = sparService;
     }
 
     // ============================================================
@@ -73,12 +74,10 @@ public class ApplicationController {
         NewApplicationDTO newApplication;
             CompanyValidationApiDTO company = validationService.validateCompanyExists(submission.orgNumber());
             CompanyValidationApiDTO.Signatory signatory = validationService.validateSignatory(company, personalNumber);
-
-
+        boolean signatoryProtected = sparService.hasProtectedIdentity(personalNumber);
         try {
             CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(submission.orgNumber())
                     .orElseThrow();
-
 
             //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
             newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
@@ -87,8 +86,8 @@ public class ApplicationController {
                     ApplicationStatus.PENDING_SCORING, null, null, null,
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
-        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails());
-        //I moved this to Application service, it does not fetch the log and update it as its uneccessary when we create the log either way.
+        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected);
+        //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
         // INSERT 3: Uppdatera audit log med scoring-resultat
@@ -109,7 +108,7 @@ public class ApplicationController {
     // ============================================================
     // GET /application/{id} — visa enskild ansökan
     // ============================================================
-    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASEWORKER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
                                                                        @AuthenticationPrincipal Object principal) {
@@ -135,7 +134,7 @@ public class ApplicationController {
         return ResponseEntity.ok(apps);
 
     }
-    @PreAuthorize("hasRole('CASE_WORKER')")
+    @PreAuthorize("hasRole('CASEWORKER')")
     @GetMapping("/company")
     public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
             @RequestParam("orgNumber") String orgNumber, Pageable pageable) {
@@ -162,13 +161,13 @@ public class ApplicationController {
     // Kör om scoring på ett ärende, bara handläggare(och i framtiden systemet själv) ska komma åt denna
     // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
     @PostMapping("rescore/{id}")
-    @PreAuthorize("hasRole('CASE_WORKER')")
+    @PreAuthorize("hasRole('CASEWORKER')")
     public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
         return ResponseEntity.ok(appService.rescoreApplication(id));
     }
 
 
-    @PreAuthorize("hasAnyRole('COMPANY', 'CASE_WORKER')")
+    @PreAuthorize("hasAnyRole('COMPANY', 'CASEWORKER')")
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,
                                                                     @AuthenticationPrincipal Object principal) {

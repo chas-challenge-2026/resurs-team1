@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailedException;
 import se.comerit.resurs.exception.companyvalidation.CompanyValidationFailureReason;
 import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
+import se.comerit.resurs.exception.jna.JnaSigningException;
+import se.comerit.resurs.exception.spar.SparUnavailableException;
 
 
 import java.time.Instant;
@@ -190,5 +192,26 @@ public class GlobalExceptionHandler {
                 null
         );
         return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler(JnaSigningException.class)
+    public ResponseEntity<ApiError>handleFailedDigitalSignature(JnaSigningException ex){
+        ApiError body = new ApiError(
+                Instant.now(),
+                "INTERNAL_SERVER_ERROR",
+                "a JNA component failed",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    @ExceptionHandler(SparUnavailableException.class)
+    public ResponseEntity<ApiError> handleSparUnavailable(SparUnavailableException ex) {
+        ApiError body = new ApiError(
+                Instant.now(),
+                "PERSON_REGISTRY_UNAVAILABLE",
+                "The person registry is temporarily unavailable. Please try again shortly.",
+                null
+        );
+        return new ResponseEntity<>(body, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

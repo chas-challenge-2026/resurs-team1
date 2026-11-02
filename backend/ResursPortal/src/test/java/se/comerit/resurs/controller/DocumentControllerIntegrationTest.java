@@ -248,6 +248,25 @@ class DocumentControllerIntegrationTest {
                         .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
                 .andExpect(status().isBadRequest());
     }
+    @Test
+    void uploadDocument_approvedApplication_keepsStatus() throws Exception {
+        CreditApplication approved = creditApplicationRepository.findById(pendingDocsApplicationId).orElseThrow();
+        approved.setStatus(ApplicationStatus.APPROVED);
+        creditApplicationRepository.save(approved);
+
+        MockMultipartFile file = new MockMultipartFile("file", "balansrakning.pdf",
+                "application/pdf", "dummy".getBytes());
+
+        mockMvc.perform(multipart("/api/documents/upload")
+                        .file(file)
+                        .param("applicationId", String.valueOf(pendingDocsApplicationId))
+                        .param("docType", "balansrakning")
+                        .sessionAttr("userId", 1L).with(user("test")).with(csrf()))
+                .andExpect(status().isCreated());
+
+        CreditApplication application = creditApplicationRepository.findById(pendingDocsApplicationId).orElseThrow();
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+    }
 
 
 }

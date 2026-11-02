@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import static se.comerit.resurs.client.companyvalidation.MockCompanyData.*;
 
-@Component
+@Component("rawCompanyValidationClient")
 @ConditionalOnProperty(prefix = "company-validation", name = "client", havingValue = "mock")
 class MockCompanyValidationClient implements CompanyValidationClient {
 

@@ -2,6 +2,8 @@ import { Navigate, Outlet } from "react-router-dom"
 import { useUser } from "../../hooks/useUser"
 import type { UserRole } from "../../types/user"
 import Loading from "../Loading/Loading"
+import NotFoundPage from "../../pages/NotFound/NotFoundPage"
+import CardLayout from "../../layouts/CardLayout"
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[]
@@ -18,8 +20,12 @@ const ProtectedRoute = ({allowedRoles}: ProtectedRouteProps) => {
     return <Navigate to="/" replace />
   }
 
-  if(allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/404" replace />
+  if(allowedRoles && !user.roles.some((role) => allowedRoles.includes(role))) {
+    return (
+      <CardLayout>
+        <NotFoundPage />
+      </CardLayout>
+    )
   }
 
   return <Outlet />

@@ -1,16 +1,18 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ApplicationWizard, { type ApplicationFormData} from "../../../components/ApplicationWizard/ApplicationWizard"
-import { EMAIL_PATTERN, PHONE_PATTERN } from "../../../constants/constants"
+import { EMAIL_PATTERN } from "../../../constants/constants"
+import { isValidPhone } from "../../../utils/validators"
 import ProgressBar from "../../../components/ProgressBar/ProgressBar"
 import Button from "../../../components/Button/Button"
 import { useApplications, useSubmitApplication } from "../../../hooks/useApplication"
 import s from "./ApplicationPage.module.css"
 import Loading from "../../../components/Loading/Loading"
 import { useUser } from "../../../hooks/useUser"
+import { isCompanyUser } from "../../../utils/auth"
 
-const TOTAL_STEPS = 4
-const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Ekonomi", "Granska och skicka"]
+const TOTAL_STEPS = 3
+const STEP_TITLES = ["Lånebehov", "Kontaktuppgifter", "Granska och skicka"]
 
 const ApplicationFormPage = () => {
   const navigate = useNavigate()
@@ -23,8 +25,8 @@ const ApplicationFormPage = () => {
 
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<ApplicationFormData>({
-    orgNumber: user?.role === "company" ? user.orgNumber : "",
-    companyName: user?.role === "company" ? user.displayName : "",
+    orgNumber: isCompanyUser(user) ? user.orgNumber : "",
+    companyName: isCompanyUser(user) ? user.displayName : "",
     contactName: "",
     email: "",
     phoneNumber: "",
@@ -56,7 +58,7 @@ const ApplicationFormPage = () => {
       : step === 2
         ? values.contactName !== "" &&
           EMAIL_PATTERN.test(values.email) &&
-          PHONE_PATTERN.test(values.phoneNumber)
+          isValidPhone(values.phoneNumber)
         : true
 
   const handleSubmit = () => {

@@ -49,7 +49,7 @@
 }
 
 .subtitle {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* The ring rotates while the stroke grows and shrinks, which is what
@@ -60,13 +60,13 @@
 
 .arcTrack {
   fill: none;
-  stroke: var(--color-primary-light);
+  stroke: var(--brand-primary-light);
   stroke-width: 4;
 }
 
 .arcPath {
   fill: none;
-  stroke: var(--color-primary);
+  stroke: var(--brand-primary);
   stroke-width: 4;
   stroke-linecap: round;
   stroke-dasharray: 90 150;
@@ -104,6 +104,6 @@
     width: auto;
     height: auto;
     clip-path: none;
-    color: var(--color-text-muted);
+    color: var(--text-muted);
   }
 }

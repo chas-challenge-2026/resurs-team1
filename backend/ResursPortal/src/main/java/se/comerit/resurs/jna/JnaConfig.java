@@ -16,5 +16,11 @@ public class JnaConfig {
                 "resurs_crypto",
                 NativeCryptographerInterface.class);
     }
+    @Bean
+    NativeSignatureInterface signatureLibraryInstance(){
+        return Native.load(
+                "resurs_audit",
+                NativeSignatureInterface.class);
+    }
 
 }

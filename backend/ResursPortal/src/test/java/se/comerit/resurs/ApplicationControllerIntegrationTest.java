@@ -9,8 +9,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -23,6 +22,7 @@ import se.comerit.resurs.dto.auth.CompanyLoginRequest;
 import se.comerit.resurs.dto.auth.CompanyLoginResponse;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.notification.EmailSender;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.model.AuditEvent;
 
@@ -32,6 +32,11 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
@@ -61,6 +66,9 @@ class ApplicationControllerIntegrationTest {
     @Autowired
     private AuditEventRepository auditEventRepository;
 
+    @MockitoBean
+    private EmailSender emailSender;
+
     // 556000-4444 finns i registret men årsredovisningen är "nere" i mocken
     private static final String ANNUAL_REPORT_UNAVAILABLE_ORG_NUMBER = "556000-4444";
     private static final String SIGNATORY_PERSONAL_NUMBER = "750312-1234";
@@ -76,7 +84,6 @@ class ApplicationControllerIntegrationTest {
     // ============================================================
     // POST /application/apply
     // ============================================================
-
 
 
     @Test
@@ -102,11 +109,11 @@ class ApplicationControllerIntegrationTest {
         String sessionCookie = loginResponse
                 .getResponseHeaders()
                 .get(HttpHeaders.SET_COOKIE)
-                        .stream()
-                                .map(value -> value.split(";", 2)[0])
-                                .filter(value -> value.startsWith("JSESSIONID="))
-                                .findFirst()
-                                .orElseThrow();
+                .stream()
+                .map(value -> value.split(";", 2)[0])
+                .filter(value -> value.startsWith("JSESSIONID="))
+                .findFirst()
+                .orElseThrow();
 
 
         restTestClient
@@ -137,6 +144,32 @@ class ApplicationControllerIntegrationTest {
                     assertThat(application.contactDetails().email()).isEqualTo("mail@live.se");
                     assertThat(application.contactDetails().phoneNumber()).isEqualTo("number");
                 });
+    }
+
+    // När en ansökan skickas in ska kunden få ett mejl (efter att den sparats)
+    @Test
+    void submitApplication_sendsConfirmationEmail() {
+        String token = csrfToken();
+        String sessionCookie = loginAsCompany(token, "556000-1234", SIGNATORY_PERSONAL_NUMBER);
+
+        restTestClient
+                .post()
+                .uri("/api/application/apply")
+                .header("X-XSRF-TOKEN", token)
+                .header(HttpHeaders.COOKIE, sessionCookie + "; XSRF-TOKEN=" + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApplicationSubmission(
+                        "556000-1234",
+                        BigDecimal.valueOf(250000),
+                        "Expansion",
+                        12,
+                        new ContactDetails("Test", "kund@example.com", "number")
+                ))
+                .exchange()
+                .expectStatus()
+                .isCreated();
+
+        verify(emailSender, timeout(2000)).send(eq("kund@example.com"), contains("ansökan #"), anyString());
     }
 
     // Registret svarar på bolagsuppslaget men inte på årsredovisningen -> ansökan sparas utan scoring
@@ -191,7 +224,6 @@ class ApplicationControllerIntegrationTest {
                 .extracting(AuditEvent::getAction)
                 .containsExactly(AuditAction.APPLICATION_CREATED);
     }
-
 
 
     @Test

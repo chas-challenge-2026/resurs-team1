@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Outlet, useOutlet } from "react-router-dom"
 import { FiFile, FiSearch, FiX } from "react-icons/fi"
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io"
@@ -37,8 +37,15 @@ const CaseWorkerLayout = () => {
       ? reviewApplication 
       : decidedApplication
 
-  // TODO: Add endpoint for searching org.nr.
-  // const query = search.trim().toLowerCase().replaceAll("-", "")
+
+  useEffect(() => {
+    document.documentElement.classList.add('theme-caseworker');
+
+    // 2. Cleanup
+    return () => {
+      document.documentElement.classList.remove('theme-caseworker');
+    };
+  }, [])
 
   const toggleCollapsed = () => {
     setIsCollapsed(!isCollapsed)
@@ -143,7 +150,7 @@ const CaseWorkerLayout = () => {
             activeList.hasNextPage ? (
               <Button
                 variant="primary"
-                color="var(--color-text-main)"
+                color="var(--btn-neutral)"
                 className={s.showMoreButton}
                 onClick={handleShowMore}
               >

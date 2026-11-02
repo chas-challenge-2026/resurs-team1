@@ -31,15 +31,16 @@ const MyApplicationsPage = () => {
     return <Loading label="Hämtar ansökningar..." size="lg" centerOnPage delay />
   }
 
+  if(!isError && applications.length < 1) return (
+    <NotFoundPage 
+    title="Mina Ansökningar"
+    description="Du har inga registrerade kreditansökningar hos oss just nu. När du påbörjar och skickar in en ansökan kommer du att kunna följa hela din process, komplettera handlingar och se din historik här."
+    backLinkText="Skapa ny ansökan"
+    backLinkUrl="/kreditansokan"
+    />
+  )
+
   if(isError) {
-    if(error.status === 404) return (
-      <NotFoundPage 
-        title="Mina Ansökningar"
-        description="Du har inga registrerade kreditansökningar hos oss just nu. När du påbörjar och skickar in en ansökan kommer du att kunna följa hela din process, komplettera handlingar och se din historik här."
-        backLinkText="Skapa ny ansökan"
-        backLinkUrl="/kreditansokan"
-      />
-    )
     return <p>{error.message}</p>
   }
 

@@ -2,7 +2,7 @@
 .topSection {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-surface);
 }
 
 .topWrapper {
@@ -20,12 +20,12 @@
 
 .applicationRef {
   font-size: var(--font-size-base);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .infoText {
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Content section */
@@ -66,7 +66,7 @@
 
 .addingTitle {
   font-size: var(--font-size-base);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .addingFooter {
@@ -92,16 +92,16 @@
 }
 
 .badgeOk {
-  background-color: var(--color-primary-light);
-  color: #0E5D57;
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-text);
 }
 
 .badgeFlagged {
-  background-color: #FBF1DF;
-  color: var(--color-warning-text);
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
 }
 
 .badgeReject {
-  background-color: #FAEAE9;
-  color: #8C1D19;
+  background-color: var(--badge-error-bg);
+  color: var(--badge-error-text);
 }

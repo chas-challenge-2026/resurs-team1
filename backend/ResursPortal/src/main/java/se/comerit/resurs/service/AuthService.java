@@ -10,7 +10,11 @@ import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.CaseWorker;
+import se.comerit.resurs.persistence.model.Role;
 import se.comerit.resurs.util.HMACHasher;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -77,9 +81,13 @@ public class AuthService {
         if (!passwordEncoder.matches(password, worker.getPasswordHash())) {
             throw new LoginFailedException(LoginFailureReason.BAD_CREDENTIALS);
         }
+
+        Set<String> rolesSet = worker.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+        rolesSet.add("ROLE_CASEWORKER");
+
         return new CaseWorkerLoginResponse(
                 worker.getId(),
-                "caseWorker",
+                rolesSet,
                 worker.getName(),
                 worker.getEmail()
         );

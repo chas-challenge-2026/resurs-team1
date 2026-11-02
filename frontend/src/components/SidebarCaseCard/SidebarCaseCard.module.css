@@ -2,26 +2,26 @@
   display: block;
   padding: 12px 16px 12px 13px;
   border-left: 3px solid transparent;
-  border-bottom: 1px solid var(--border); /*divider lines*/
+  border-bottom: 1px solid var(--divider); /*divider lines*/
   color: inherit;
   text-decoration: none;
 }
 
 /* lighter than "selected" color */
 .card:hover {
-  background-color: #F2F7F7;
+  background-color: var(--sidebar-card-bg-hover);
 }
 
 .card:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand-primary);
   outline-offset: -2px;
 }
 
 /* :hover repeated so the active card keeps its tint */
 .active,
 .active:hover {
-  border-left-color: var(--color-primary);
-  background-color: var(--color-primary-light);
+  border-left-color: var(--sidebar-card-border);
+  background-color: var(--sidebar-card-bg);
 }
 
 .row {
@@ -58,12 +58,12 @@
   gap: 6px;
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .date {
   font-size: 12px;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 .icon {
@@ -74,17 +74,17 @@
 
 /* same colours as the bar in StatusTag */
 .PENDING_DOCS {
-  color: var(--color-warning);
+  color: var(--badge-warning-border);
 }
 
 .UNDER_REVIEW {
-  color: var(--color-secondary);
+  color: var(--badge-neutral-text);
 }
 
 .APPROVED {
-  color: var(--color-primary);
+  color: var(--badge-success-border);
 }
 
 .REJECTED {
-  color: var(--color-error);
+  color: var(--badge-error-border);
 }

@@ -59,7 +59,7 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
 
   // Calculate percentage filled for the dynamic CSS gradient track (clamped between 0 and 100%)
   const trackStyle = {
-    background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${percentage}%, var(--border) ${percentage}%, var(--border) 100%)`
+    background: `linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) ${percentage}%, var(--divider) ${percentage}%, var(--divider) 100%)`
   }
 
 
@@ -91,7 +91,11 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
       )}
 
       {/* Interactive value display: toggles between a button and a text input */}
-      <div className={s.inputWrapper}>
+      <div className={`input-base ${s.inputWrapper}`}>
+        <span className={s.hiddenSizer} aria-hidden="true">
+          {inputValue || "0"}
+        </span>
+
         <input
           id={textInputId}
           type="text"
@@ -99,9 +103,8 @@ const Slider = ({name, label, value, onChange, min, max, step = 10000, unit = "k
           value={inputValue}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          size={inputValue.length > 1 ? inputValue.length - 1 : 1}
           aria-labelledby={labelId}
-          className={`input-base ${s.numberInput}`}
+          className={s.numberInput}
         />
         <span className={s.unitSuffix}>{unit}</span>
       </div>

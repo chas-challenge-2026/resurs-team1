@@ -13,8 +13,8 @@ import s from "./LoginPage.module.css"
 import { IoCheckmarkCircle } from "react-icons/io5";
 
 const SWITCH_OPTIONS: SwitchOption<UserRole>[] = [
-  { label: "Företag", value: "company" },
-  { label: "Handläggare", value: "caseWorker" },
+  { label: "Företag", value: "COMPANY" },
+  { label: "Handläggare", value: "CASEWORKER" },
 ]
 
 const INITIAL_FORM = {
@@ -25,7 +25,7 @@ const INITIAL_FORM = {
 }
 
 const LoginPage = () => {
-  const [role, setRole] = useState<UserRole>("company")
+  const [role, setRole] = useState<UserRole>("COMPANY")
   const [formData, setFormData] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState(INITIAL_FORM)
 
@@ -35,7 +35,7 @@ const LoginPage = () => {
   const companyFieldsTooShort = formData.orgNumber.trim().length < 11 || formData.personalNumber.trim().length < 11
   const caseWorkerFieldsTooShort = !formData.email.trim() || formData.password.trim().length < 8
 
-  const activeLogin = role === "company" ? companyLogin : caseWorkerLogin
+  const activeLogin = role === "COMPANY" ? companyLogin : caseWorkerLogin
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -125,7 +125,7 @@ const LoginPage = () => {
             }}
           />
 
-          {role === "company" ? (
+          {role === "COMPANY" ? (
             <form className={s.form} onSubmit={handleCompanySubmit}>
               <Input 
                 id="orgNumber"

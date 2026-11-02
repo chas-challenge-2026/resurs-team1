@@ -1,19 +1,31 @@
-import { Outlet } from "react-router-dom"
+import { useEffect } from "react"
+import { Outlet, useLocation } from "react-router-dom"
+import { useUser } from "../hooks/useUser"
+import { isCaseWorkerUser } from "../utils/auth"
 import { FiSearch } from "react-icons/fi"
 import Header from "../components/Header/Header"
 import Input from "../components/Input/Input"
-import { useUser } from "../hooks/useUser"
 
 const FullWidthLayout = () => {
 
   const { data: user } = useUser()
-  // case search is a caseworker tool, companies never see it
-  const isCaseWorker = user?.role === "caseWorker";
+  const location = useLocation()
+
+  useEffect(() => {
+    if(location.pathname === "/handlaggare") {
+      document.documentElement.classList.add('theme-caseworker');
+    }
+
+    // 2. Cleanup
+    return () => {
+      document.documentElement.classList.remove('theme-caseworker');
+    };
+  }, [location.pathname])
 
   return(
     <div>
       <Header
-        search={isCaseWorker ? (
+        search={isCaseWorkerUser(user) ? (
           <Input
             id="caseSearch"
             type="search"

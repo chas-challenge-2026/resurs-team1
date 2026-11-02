@@ -63,7 +63,7 @@ export const useDecideApplication = () => {
 
 export const useRequestInformation = () => {
   const queryClient = useQueryClient()
-
+  
   return useMutation<void, ApiErrorPayload, { id: number, comment: string }>({
     mutationFn: ({ id, comment }) => postRequest(id, comment),
     onSuccess: () => {

@@ -1,8 +1,14 @@
+.titleWrapper {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
 .preFilled {
   display: flex;
   align-items: center;
-  background-color: var(--bg-subtle-grey);
-  border-color: var(--bg-subtle-grey) !important;
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--bg-subtle) !important;
 }
 
 .preFilled p {
@@ -13,27 +19,66 @@
   padding-bottom: var(--space-xs);
 }
 
+.infoWrapper {
+  display: flex;
+  gap: var(--space-base);
+  flex-wrap: wrap;
+  margin: var(--space-sm) 0;
+}
+
 .infoBox {
-  margin-top: var(--space-sm);
   padding: var(--space-sm);
-  background-color: var(--bg-subtle-grey);
+  background-color: var(--bg-subtle);
   border-radius: var(--radius-sm);
+  flex-wrap: wrap;
+  flex: 1;
 }
 
 .infoBoxTitle {
   font-weight: 600;
   font-size: var(--font-size-sm);
-  color: var(--color-text-main);
+  color: var(--text-main);
+}
+
+.infoBoxValue {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  color: var(--brand-primary);
+  white-space: nowrap;
 }
 
 .infoBox p {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.expandIcon {
+  font-size: 20px;
+}
+
+.badge {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  background-color: var(--bg-subtle);
+  color: var(--brand-primary);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
 /* borrowed from .formError in login */
 .submitError {
-  color: var(--color-error);
+  color: var(--status-error-text);
   font-size: var(--font-size-sm);
   text-align: end;
 }
@@ -53,7 +98,7 @@
 }
 
 .link {
-  color: var(--color-primary);
+  color: var(--link-text);
 }
 
 .checkboxLabel {
@@ -63,6 +108,6 @@
 }
 
 .checkboxLabel input[type="checkbox"] {
-  accent-color: var(--color-primary);
+  accent-color: var(--brand-primary);
   cursor: pointer;
 }

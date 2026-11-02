@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import se.comerit.resurs.persistence.converter.PiiAttributeConverter;
 import se.comerit.resurs.persistence.listener.CaseworkerSearchKeyListener;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @EntityListeners(CaseworkerSearchKeyListener.class)
 @Table(name = "case_workers")
@@ -31,6 +34,13 @@ public class CaseWorker {
     @Column(name = "search_key_email", unique = true)
     private byte[] searchKeyEmail;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "case_worker_roles",
+            joinColumns = @JoinColumn(name = "worker_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
     public CaseWorker() {
 
     }
@@ -65,5 +75,9 @@ public class CaseWorker {
 
     public void setSearchKeyEmail(byte[] searchKeyEmail) {
         this.searchKeyEmail = searchKeyEmail;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
     }
 }

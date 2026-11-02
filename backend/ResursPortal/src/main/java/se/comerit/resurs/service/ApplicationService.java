@@ -1,6 +1,8 @@
 package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.ContactDetails;
@@ -8,14 +10,14 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
-import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.util.HMACHasher;
-import se.comerit.resurs.enums.ApplicationStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
 
 
 import java.util.List;
@@ -35,9 +37,10 @@ public class ApplicationService {
     private final CreditApplicationRepository applicationRepository;
     private final ScoringService scoringService;
     private final HMACHasher hmacHasher;
+    private final ApplicationEventPublisher eventPublisher;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -46,25 +49,24 @@ public class ApplicationService {
         this.scoringService = scoringService;
         this.companyService = companyService;
         this.hmacHasher = hmacHasher;
+        this.eventPublisher = eventPublisher;
     }
 
     //Submit application
     @Transactional
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails){
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected) {
 
         CreditApplication creditApplication = new CreditApplication();
 
-        ////////////////
-        //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
-        /////////////////
         Optional<Company> companyOptional = companyRepository.findBySearchKeyOrgNumber(hmacHasher.encode(newApplication.org_number()));
         Company company;
         //persist the new company in DB
         company = companyOptional.orElseGet(
                 () -> companyService.createCompany(
-                                newApplication.company_name(),
-                                newApplication.org_number(),
-                                newApplication.authorized_signatory()
+                        newApplication.company_name(),
+                        newApplication.org_number(),
+                        newApplication.authorized_signatory()
                 )
         );
 
@@ -83,6 +85,7 @@ public class ApplicationService {
         creditApplication.setContactEmail(contactDetails.email());
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
+        creditApplication.setProtectedResource(signatoryProtected);
 
 
         CreditApplication saved = applicationRepository.save(creditApplication);
@@ -92,6 +95,11 @@ public class ApplicationService {
         if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
             auditService.scoringRun(saved, newApplication.flagCount());
         }
+        //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
+        //Mejlet skickas först efter commit
+        eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                saved.getId(), saved.getContactEmail(),
+                saved.getStatus()));
         return new CreditApplicationDTO(saved);
     }
 
@@ -99,7 +107,8 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
-    public List<CreditApplicationDTO>getApplicationsByOrgNumber(String orgNumber, Pageable pageable){
+    @Cacheable(cacheNames = "applicationLists", key = "'org-' + #orgNumber + '-' + #pageable")
+    public List<CreditApplicationDTO> getApplicationsByOrgNumber(String orgNumber, Pageable pageable) {
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
@@ -118,13 +127,14 @@ public class ApplicationService {
 
     // Kör om scoring på ett ärende som redan finns och uppdaterar det
     @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public CreditApplicationDTO rescoreApplication(Long applicationId) {
         CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
 
         // Om en handläggare redan fattat ett beslut så får vi inte skriva över det
         // Tittar på auditloggen och inte på status, eftersom scoring också sätter APPROVED/REJECTED själv och
         // de automatiska besluten vill vi att man ska kunna köra om
-        if(auditService.hasManualDecision(applicationId)) {
+        if (auditService.hasManualDecision(applicationId)) {
             throw new IllegalArgumentException((
                     "Application " + applicationId + " has a manual decision and can not be re-scored"));
         }
@@ -149,6 +159,8 @@ public class ApplicationService {
                 company.getAuthorized_signatory(),
                 application.getPurpose(), application.getDurationMonths());
 
+        //Kom ihåg statusen före omkörningen
+        ApplicationStatus previousStatus = application.getStatus();
         // Skriver de nya resultatet på det befintliga ärendet, alltså skapas inget nytt
         // Ingen save() behövs då ärendet redan hanteras av JPA inuti @Transactional
         application.setStatus(rescored.status());
@@ -158,27 +170,34 @@ public class ApplicationService {
 
         auditService.scoringRun(application, rescored.flagCount());
 
+        if (application.getStatus() != previousStatus) {
+            eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                    application.getId(), application.getContactEmail(),
+                    application.getStatus()));
+        }
+
         return new CreditApplicationDTO(application);
     }
 
-
-    public CreditApplicationDTO findApplicationByID (Long id){
+    public CreditApplicationDTO findApplicationByID(Long id) {
         return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());
     }
 
-    public List<CreditApplicationDTO> readApplicationsByCompany(Long companyID){
+
+    public List<CreditApplicationDTO> readApplicationsByCompany(Long companyID) {
         return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
     }
 
-    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID){
+    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID) {
         return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
     }
-    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pagable){
-        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID,pagable).stream().map(CreditApplicationDTO::new).toList();
+
+    @Cacheable(cacheNames = "applicationLists", key = "'company-' + #companyID + '-' + #pageable")
+    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pageable) {
+        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID, pageable).stream().map(CreditApplicationDTO::new).toList();
     }
 
     public List<ApplicationCommentDTO> findComments(Long applicationId) {
         return auditService.findComments(applicationId);
     }
-
 }

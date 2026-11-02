@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios"
-import { QueryClient } from "@tanstack/react-query"
+import { queryClient } from "./queryClient"
+
 
 export interface ApiErrorPayload {
   status?: number
@@ -16,7 +17,6 @@ const api = axios.create({
 })
 
 export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
-  const queryClient = new QueryClient()
   const status = error.response?.status
   const isLoginRequest = error.config?.url?.includes("/login")
   
@@ -26,8 +26,12 @@ export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
     fallbackMessage = "Kunde inte ansluta till servern. Kontrollera din internetanslutning."
   } else if (status === 401 && !isLoginRequest) {
     queryClient.setQueryData(["me"], null)
-    if(window.location.pathname !== "/") {
-      window.location.href = "/"
+    const currentPath = window.location.pathname
+    const isCaseWorkerLoginRoute = currentPath.startsWith("/handlaggare")
+    const targetRedirect = isCaseWorkerLoginRoute ? "/handlaggare" : "/"
+
+    if (currentPath !== targetRedirect) {
+      window.location.href = targetRedirect
     }
     return Promise.reject(error)
   } else if (status === 401 && isLoginRequest) {
