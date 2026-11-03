@@ -94,7 +94,7 @@ public class DataBaseSeeder implements CommandLineRunner {
     private final List<Company> companySeed = List.of(
             new Company("556000-1234", "Fasen Elteknik AB", "Anders Karlsson"),
             new Company("556000-5678", "Britt Maries Ögonfransar AB", "Maria Svensson"),
-            new Company("556000-9999", "Frukt och grönt Göteborg", "Erik Lindkvist"),
+            new Company("556000-9999", "Frukt och grönt Göteborg", "Erik Lindqvist"),
             new Company("556000-7777", "Gunnar Kruts Dynamit AB", "Johan Berg")
     );
 
@@ -114,29 +114,29 @@ public class DataBaseSeeder implements CommandLineRunner {
         return List.of(
                 new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-1234").get(), //succeeds
                         BigDecimal.valueOf(500000.0),
-                        "El och Energi",
+                        "35.400 - Mäklare och agenter för el och naturgas",
                         "556000-1234",
                         "Fasen Elteknik AB",
                         "750312-1234",
-                        "Expansion", 6, false,
-                        new ContactDetails("Anders Karlsson", "Anka@Email.se", "07333333333")
+                        "Expansion av verksamhet", 6, false,
+                        new ContactDetails("Anders Karlsson", "anders@fasenel.se", "0701234567")
                         ),
                 new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-9999").get(), //Protected identity on signatory
                         BigDecimal.valueOf(20000.0),
-                        "Grosshandlare",
+                        "46.310 - Partihandel med frukt och grönsaker",
                         "556000-9999",
                         "Frukt och grönt Göteborg",
                         "681105-9999",
-                        "Ny butik",1, true,
-                        new ContactDetails("Erik Lindqvist", "erli@Email.se", "07444444444")),
+                        "Ny butik",12, true,
+                        new ContactDetails("Erik Lindqvist", "erik@fruktgbg.se", "0702345678")),
                 new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-7777").get(),
                         BigDecimal.valueOf(1500000),
-                        "Kanoner och Krut",
+                        "20.591 - Sprängämnestillverkning",
                         "556000-7777",
                         "Gunnar Kruts Dynamit AB",
                         "660930-7777",
-                        "The fighting egg", 6, false,
-                        new ContactDetails("Johan Berg", "Jobe@Email.se", "07555555555")
+                        "Maskininvestering", 6, false,
+                        new ContactDetails("Johan Berg", "johan@kruts.se", "0703456789")
                 )
         );
     }
