@@ -59,7 +59,6 @@ export const parseDecisionReasons = (rawString: string): DecisionDetail[] => {
   })
 }
 
-// TODO: Check if it includes all possible variants from backend
 export const getCustomerRejectionsSummary = (rawString: string): string[] => {
   if (!rawString) return []
 
