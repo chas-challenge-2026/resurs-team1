@@ -73,14 +73,6 @@ Seed-datan skapas automatiskt första gången appen startar.
 | `charles@resurs.se` | `password456` | Certifierad (ser skyddade uppgifter) |
 | `anders@resurs.se` | `password789` | Admin |
 
-### Felfall att testa
-
-| Värde | Vad som händer |
-|-------|----------------|
-| Org.nr `556000-4444` | Årsredovisning saknas |
-| Org.nr `556000-5555` | Företagsregistret svarar inte |
-| Personnr `550101-5555` | Personregistret (SPAR) svarar inte |
-
 ## Teknik
 
 | Del | Teknik |
