@@ -10,15 +10,14 @@ import se.comerit.resurs.persistence.model.Document;
 import java.util.List;
 
 public record ApplicationWithDocumentsDTO(
-        CreditApplicationDataObject app,
+        CreditApplicationDataObject application,
         List<DocumentDTO> documents) {
 
     public ApplicationWithDocumentsDTO(
             CreditApplication app,
-            List<Document> documents,
-            boolean protectedResource) {
+            List<Document> documents) {
         this(
-                protectedResource
+                app.isProtectedResource()
                         ? new CreditApplicationProtectedDTO(app)
                         : new CreditApplicationDTO(app),
                 documents.stream().map(DocumentDTO::new).toList()

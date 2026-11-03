@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public record HistoricalReviewInfo(
-        long id,
+        Long id,
         BigDecimal requestedAmount,
         String purpose,
         String decision,
@@ -14,7 +14,7 @@ public record HistoricalReviewInfo(
         Instant updatedAt,
         String companyName,
         String orgNumber
-) {
+) implements HistoricListElement{
     public HistoricalReviewInfo(CreditApplication application) {
         this(application.getId(),
                 application.getRequestedAmount(),

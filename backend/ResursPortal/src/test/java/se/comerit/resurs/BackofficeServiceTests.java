@@ -13,9 +13,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.AuditEventDTO;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
+import se.comerit.resurs.dto.backoffice.ReviewListElement;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
@@ -27,7 +28,6 @@ import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
 import se.comerit.resurs.service.BackofficeService;
-import se.comerit.resurs.dto.backoffice.ReviewInfo;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -197,7 +197,7 @@ class BackofficeServiceTests {
                 PageRequest.of(0,20),PageRequest.of(0,20));
 
         assertThat(result.reviewApplications().content())
-                .extracting(ReviewInfo::status)
+                .extracting(ReviewListElement::status)
                 .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING);
         assertThat(result.decidedApplications().content()).hasSize(1);
     }
@@ -216,7 +216,7 @@ class BackofficeServiceTests {
 
         documentRepo.save(document);
 
-        CreditApplicationDetails result =
+        ApplicationWithDocumentsDTO result =
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
@@ -239,7 +239,7 @@ class BackofficeServiceTests {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
-        CreditApplicationDetails result =
+        ApplicationWithDocumentsDTO result =
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
@@ -461,7 +461,7 @@ class BackofficeServiceTests {
                 PageRequest.of(0, 20), PageRequest.of(0, 20));
 
         assertThat(result.reviewApplications().content())
-                .extracting(ReviewInfo::status)
+                .extracting(ReviewListElement::status)
                 .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_DOCS);
     }
     //---------------
