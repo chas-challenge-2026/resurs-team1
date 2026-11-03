@@ -67,6 +67,7 @@ export interface Application {
   documents?: ApplicationDocument[]
   comment?: string
   companyFinances?: CompanyFinances | null // only from backoffice, null when no annual report is found
+  protectedResource?: boolean // true when the signatory has a protected identity
   contactDetails: { // I put as optional because mock data differs and there cold be old data in current DB
     name: string;
     email: string;
@@ -99,6 +100,7 @@ export interface ReviewApplication {
   decisionReason: string | null
   companyName: string
   orgNumber: string
+  protectedResource?: boolean
 }
 
 // HistoricalReviewInfo.java
@@ -111,6 +113,7 @@ export interface DecidedApplication {
   updatedAt: string
   companyName: string
   orgNumber: string
+  protectedResource?: boolean
 }
 
 // PagedResult.java
@@ -136,6 +139,7 @@ export interface CaseListItem {
   orgNumber: string
   requestedAmount: number
   createdAt: string
+  protectedResource?: boolean
 }
 
 export interface DetailedApplication {
@@ -172,12 +176,35 @@ export const postApplication = async (application: NewApplicationPayload): Promi
   return response.data
 }
 
+// ---------------------------------------------------------------------------
+// TODO(#375): TEMPORARY. The /backoffice endpoints don't send protectedResource yet, so made this temp fix.
+// Remove this block ( + the lines marked TODO(#375) below) once backend adds the field to
+// ReviewInfo, HistoricalReviewInfo and application_details.
+// ---------------------------------------------------------------------------
+// --- start TODO(#375) ---
+
+// rn only 1 company is "protected" - so hard coding them whilst waiting for back end to fix
+const TEMP_PROTECTED_ORG_NUMBERS = ["556000-9999"]
+
+// will still work when backend fixes, as long as they call it ".protectedResource" - but i requested that on slack so lets pray
+const withTempListFlag = <T extends { orgNumber: string, protectedResource?: boolean }>(page: PagedResult<T>): PagedResult<T> => ({
+  ...page,
+  content: page.content.map((item) => ({
+    ...item,
+    protectedResource: item.protectedResource ?? TEMP_PROTECTED_ORG_NUMBERS.includes(item.orgNumber),
+  })),
+})
+// --- end TODO(#375) ---
+
 export const getBackofficeApplicationById = async (id: number): Promise<Application> => {
   const response = await api.get(`/backoffice/application/${id}`)
+  const application = response.data.appDetails.application
+
   return {
-    ...response.data.appDetails.application,
+    ...application,
     documents: response.data.appDetails.documents,
     companyFinances: response.data.companyFinances,
+    protectedResource: application.protectedResource ?? TEMP_PROTECTED_ORG_NUMBERS.includes(application.orgNumber), // TODO(#375) - delete full row
   }
 }
 
@@ -191,12 +218,12 @@ export const postRequest = async (id: number, comment: string): Promise<void> =>
 
 export const getReviewPage = async (page: number): Promise<PagedResult<ReviewApplication>> => {
   const response = await api.get<BackofficeLists>("/backoffice", { params: { review_page: page, review_size: 20 } })
-  return response.data.reviewApplications
+  return withTempListFlag(response.data.reviewApplications) // TODO(#375): back to plain return
 }
 
 export const getDecidedPage = async (page: number): Promise<PagedResult<DecidedApplication>> => {
   const response = await api.get<BackofficeLists>("/backoffice", { params: { decided_page: page, decided_size: 20 } })
-  return response.data.decidedApplications
+  return withTempListFlag(response.data.decidedApplications) // TODO(#375): back to plain return
 }
 
 export const getApplicationDetails = async (id: number): Promise<DetailedApplication> => {

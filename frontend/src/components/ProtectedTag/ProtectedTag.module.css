@@ -1,0 +1,20 @@
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--protected-border);
+  border-radius: 4px;
+  background-color: var(--protected-bg);
+  color: var(--protected-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.icon {
+  width: 11px;
+  height: 11px;
+}
