@@ -18,9 +18,12 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.CreditApplicationProtectedDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
+import se.comerit.resurs.persistence.ApplicationSignatureRepository;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -43,6 +46,8 @@ import static org.assertj.core.api.Assertions.*;
 class ApplicationServiceTests {
 
     private static final ContactDetails mockContacts = new ContactDetails("Chunky","Chunk@Jungle.DKI","000999999");
+    private static final CompanyValidationApiDTO.Signatory mockSignatory =
+            new CompanyValidationApiDTO.Signatory("198001011234", "Chunky", "VD", SigningRight.ALONE);
 
     private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
             .resolve("../../infra/seed.sql")
@@ -72,6 +77,9 @@ class ApplicationServiceTests {
     @Autowired
     private CreditApplicationRepository applicationRepository;
 
+    @Autowired
+    private ApplicationSignatureRepository signatureRepository;
+
     private Company testCompany;
 
     @Autowired
@@ -80,6 +88,7 @@ class ApplicationServiceTests {
     @BeforeEach
     void setUp() {
         auditEventRepository.deleteAll();
+        signatureRepository.deleteAll();
         applicationRepository.deleteAll();
         companyRepository.deleteAll();
 
@@ -97,7 +106,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_shouldPersistApplication() {
 
-        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
 
 
         assertThat(saved).isNotNull();
@@ -122,7 +131,7 @@ class ApplicationServiceTests {
 
         NewApplicationDTO dto = createApplicationDTO();
 
-        CreditApplicationDataObject saved = applicationService.saveApplication(dto,mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(dto,mockContacts, false, mockSignatory);
 
         assertThat(saved.purpose())
                 .isEqualTo(dto.purpose());
@@ -146,7 +155,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_whenSignatoryProtected_persistsProtectedIdentity() {
 
-        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, true);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, true, mockSignatory);
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
@@ -156,7 +165,7 @@ class ApplicationServiceTests {
     @Test
     void saveApplication_whenSignatoryNotProtected_persistsUnprotectedIdentity() {
 
-        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, false);
+        CreditApplicationDataObject saved = applicationService.saveApplication(createApplicationDTO(), mockContacts, false, mockSignatory);
 
         CreditApplication stored = applicationRepository.findById(saved.id()).orElseThrow();
 
@@ -225,7 +234,7 @@ class ApplicationServiceTests {
         );
 
         CreditApplicationDataObject saved =
-                applicationService.saveApplication(dto,mockContacts, false);
+                applicationService.saveApplication(dto,mockContacts, false, mockSignatory);
 
         assertThat(saved.orgNumber())
                 .isEqualTo("111111-2222");
@@ -258,7 +267,7 @@ class ApplicationServiceTests {
     void findApplicationByID_shouldReturnApplication() {
 //kolla över
         CreditApplicationDataObject saved =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
 
         CreditApplicationDataObject result =
                 applicationService.findApplicationByID(saved.id());
@@ -299,21 +308,21 @@ class ApplicationServiceTests {
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                ),mockContacts, false
+                ),mockContacts, false, mockSignatory
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "556677-8899",
                         "Test Company"
-                ),mockContacts, false
+                ),mockContacts, false, mockSignatory
         );
 
         applicationService.saveApplication(
                 newApplicationDTO(
                         "111111-2222",
                         "Other Company"
-                ),mockContacts, false
+                ),mockContacts, false, mockSignatory
         );
 
         List<CreditApplicationDataObject> applications =
@@ -345,11 +354,11 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnCompanyApplications() {
 //kolla över
         applicationService.saveApplication(
-                createApplicationDTO(),mockContacts, false
+                createApplicationDTO(),mockContacts, false, mockSignatory
         );
 
         applicationService.saveApplication(
-                createApplicationDTO(),mockContacts, false
+                createApplicationDTO(),mockContacts, false, mockSignatory
         );
 
         List<CreditApplicationDataObject> applications =
@@ -368,9 +377,9 @@ class ApplicationServiceTests {
     @Test
     void readApplicationsByCompanyDesc_shouldRespectPageSize() {
 //kolla över
-        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
-        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
-        applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
+        applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
 
         Pageable pageable = PageRequest.of(0, 2);
 
@@ -388,10 +397,10 @@ class ApplicationServiceTests {
     void readApplicationsByCompanyDesc_shouldReturnNewestFirst() {
 //kolla över
         CreditApplicationDataObject first =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
 
         CreditApplicationDataObject second =
-                applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
+                applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
 
         Page<CreditApplicationDataObject> applications =
                 applicationService.readApplicationsByCompanyDesc(
@@ -622,8 +631,8 @@ class ApplicationServiceTests {
     void regularCaseworkerCannotSeeProtectedApplications() {
         // Arrange: company has one regular and one protected application
 
-        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
-        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true);
+        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
+        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true, mockSignatory);
 
         // Act
         Page<CreditApplicationDataObject> result =
@@ -647,8 +656,8 @@ class ApplicationServiceTests {
     void certifiedCaseworkerCanSeeProtectedApplications() {
         // Arrange: company has one regular and one protected application
 
-        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false);
-        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true);
+        CreditApplicationDataObject regularApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, false, mockSignatory);
+        CreditApplicationDataObject protectedApp = applicationService.saveApplication(createApplicationDTO(),mockContacts, true, mockSignatory);
 
         // Act
         Page<CreditApplicationDataObject> result =

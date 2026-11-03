@@ -13,12 +13,14 @@ import se.comerit.resurs.dto.*;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
+import se.comerit.resurs.persistence.model.Signatory;
 import se.comerit.resurs.util.HMACHasher;
 import org.springframework.context.ApplicationEventPublisher;
 import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
@@ -45,9 +47,10 @@ public class ApplicationService {
     private final ScoringService scoringService;
     private final HMACHasher hmacHasher;
     private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationSigningService signingService;
 
 
-    public ApplicationService(ApplicationAccessPolicy accessPolicy, CacheManager cacheManager, CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
+    public ApplicationService(ApplicationAccessPolicy accessPolicy, CacheManager cacheManager, CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher, ApplicationSigningService signingService) {
         this.accessPolicy = accessPolicy;
         this.cacheManager = cacheManager;
         this.companyRepository = companyRepository;
@@ -59,18 +62,16 @@ public class ApplicationService {
         this.companyService = companyService;
         this.hmacHasher = hmacHasher;
         this.eventPublisher = eventPublisher;
+        this.signingService = signingService;
     }
 
     //Submit application
     @Transactional
     @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
-    public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected) {
+    public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected, CompanyValidationApiDTO.Signatory signatory) {
 
         CreditApplication creditApplication = new CreditApplication();
 
-        ////////////////
-        //Step 1,  check if company exists in DB, reuse if so.  create new entity otherwise.
-        /////////////////
         Optional<Company> companyOptional = companyRepository.findBySearchKeyOrgNumber(hmacHasher.encode(newApplication.org_number()));
         Company company;
         //persist the new company in DB
@@ -98,21 +99,26 @@ public class ApplicationService {
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
         creditApplication.setProtectedResource(signatoryProtected);
+        creditApplication.setRequiresCoSignature(signatory.requiresCoSigner());
 
+        // recordSignature kollar om personen som skickar in har signerat tidigare. Finns då sparat i SignatoryRepository annars sparar den användaren där.
+        //resolveApproval kollar om applicationStatus är approved och om den är fully signed via alone eller jointly. Sätter status till pending_co_signature om det är approved och är jointly.
+        //Annars är statusen som den var redan.
+            creditApplication.setStatus(signingService.resolveApprovalStatus(creditApplication, creditApplication.getStatus()));
+            CreditApplication saved = applicationRepository.save(creditApplication);
+            signingService.recordSignature(saved, signatory.personalNumber(), signatory.name());
 
-        CreditApplication saved = applicationRepository.save(creditApplication);
-
-        //loggar efter att application finns sparad i databas.
-        auditService.applicationCreated(saved);
-        if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
-            auditService.scoringRun(saved, newApplication.flagCount());
-        }
-        //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
-        //Mejlet skickas först efter commit
-        eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
-                saved.getId(), saved.getContactEmail(),
-                saved.getStatus()));
-        return new CreditApplicationDTO(saved);
+            //loggar efter att application finns sparad i databas.
+            auditService.applicationCreated(saved);
+            if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
+                auditService.scoringRun(saved, newApplication.flagCount());
+            }
+            //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
+            //Mejlet skickas först efter commit
+            eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                    saved.getId(), saved.getContactEmail(),
+                    saved.getStatus()));
+            return new CreditApplicationDTO(saved);
     }
 
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
@@ -215,7 +221,7 @@ public class ApplicationService {
         ApplicationStatus previousStatus = application.getStatus();
         // Skriver de nya resultatet på det befintliga ärendet, alltså skapas inget nytt
         // Ingen save() behövs då ärendet redan hanteras av JPA inuti @Transactional
-        application.setStatus(rescored.status());
+        application.setStatus(signingService.resolveApprovalStatus(application, rescored.status()));
         application.setDecision(rescored.decision());
         application.setDecisionReason(rescored.decision_reason());
         application.setScoringResult(rescored.scoring_result());

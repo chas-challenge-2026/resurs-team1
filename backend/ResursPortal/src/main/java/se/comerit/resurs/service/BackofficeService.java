@@ -49,16 +49,19 @@ public class BackofficeService {
 
     private final ApplicationAccessPolicy accessPolicy;
 
+    private final ApplicationSigningService signingService;
 
     @Autowired
     public BackofficeService(AuditService auditService, CacheManager cacheManager, CreditApplicationRepository creditRepo,
-                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher, ApplicationAccessPolicy accessPolicy) {
+                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher, ApplicationAccessPolicy accessPolicy,
+                             ApplicationSigningService signingService) {
         this.auditService = auditService;
         this.cacheManager = cacheManager;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
         this.eventPublisher = eventPublisher;
         this.accessPolicy = accessPolicy;
+        this.signingService = signingService;
     }
 
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
@@ -141,8 +144,12 @@ public class BackofficeService {
 
 
         ApplicationStatus previousStatus = application.getStatus();
-
-        application.setStatus(decision);
+        if (previousStatus == ApplicationStatus.PENDING_CO_SIGNATURE && decision == ApplicationStatus.APPROVED) {
+            throw new IllegalArgumentException(
+                    "Application " + applicationId + " is already approved and waiting for co-signature");
+        }
+        ApplicationStatus resolvedStatus = signingService.resolveApprovalStatus(application, decision);
+        application.setStatus(resolvedStatus);
         application.setDecision(decision.toString());
         application.setComment(comment == null || comment.isBlank() ? null : comment);
 
@@ -150,7 +157,7 @@ public class BackofficeService {
 
       // meddela kunden om beslutet
       eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
-              application.getId(), application.getContactEmail(), decision));
+              application.getId(), application.getContactEmail(), resolvedStatus));
 
         //Should we return something to the controller and by extention, the frontend? /Jonathan
         return;

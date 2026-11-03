@@ -109,14 +109,12 @@ public class CompanyValidationServiceTest {
     }
 
     @Test
-    void validateSignatory_shouldThrowRequiresJointSignature_whenPersonMayNotSignAlone() {
+    void validateSignatory_shouldReturnSignatory_whenPersonSignsJointly() {
         CompanyValidationService service = new CompanyValidationService(new StubClient(COMPANY), RESPONSE_VALIDATOR);
 
-        CompanyValidationFailedException thrown = assertThrows(
-                CompanyValidationFailedException.class,
-                () -> service.validateSignatory(COMPANY, SIGNS_JOINTLY));
+        CompanyValidationApiDTO.Signatory signatory = service.validateSignatory(COMPANY, SIGNS_JOINTLY);
 
-        assertEquals(CompanyValidationFailureReason.REQUIRES_JOINT_SIGNATURE, thrown.reason());
+        assertTrue(signatory.requiresCoSigner());
     }
 
     /** Svarar med det bolag testet skickar in, eller tomt när bolaget är null. */

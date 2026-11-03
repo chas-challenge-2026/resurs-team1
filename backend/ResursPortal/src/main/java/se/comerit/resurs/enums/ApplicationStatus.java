@@ -5,6 +5,6 @@ public enum ApplicationStatus {
     UNDER_REVIEW,
     APPROVED,
     REJECTED,
-    PENDING_SCORING
-
+    PENDING_SCORING,
+    PENDING_CO_SIGNATURE
 }

@@ -33,10 +33,6 @@ public class CompanyValidationService {
                 .orElseThrow(() -> new CompanyValidationFailedException(
                         CompanyValidationFailureReason.NOT_AUTHORIZED_SIGNATORY));
 
-        if (signatory.signingRight() != SigningRight.ALONE) {
-            throw new CompanyValidationFailedException(
-                    CompanyValidationFailureReason.REQUIRES_JOINT_SIGNATURE);
-        }
         return signatory;
     }
 }

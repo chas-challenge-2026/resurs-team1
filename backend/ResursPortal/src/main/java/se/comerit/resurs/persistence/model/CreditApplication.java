@@ -74,6 +74,11 @@ public class CreditApplication {
     @Column(nullable = false)
     private boolean protectedResource;
 
+    @Column(name = "requires_co_signature", nullable = false)
+    private boolean requiresCoSignature;
+
+
+
 
     public Integer getDurationMonths() {
         return durationMonths;
@@ -206,5 +211,13 @@ public class CreditApplication {
 
     public void setProtectedResource(boolean protectedResource) {
         this.protectedResource = protectedResource;
+    }
+
+    public boolean isRequiresCoSignature() {
+        return requiresCoSignature;
+    }
+
+    public void setRequiresCoSignature(boolean requiresCoSignature) {
+        this.requiresCoSignature = requiresCoSignature;
     }
 }

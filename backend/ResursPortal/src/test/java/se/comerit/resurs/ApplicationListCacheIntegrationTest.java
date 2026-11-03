@@ -22,7 +22,10 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.SigningRight;
+import se.comerit.resurs.persistence.ApplicationSignatureRepository;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -61,6 +64,8 @@ class ApplicationListCacheIntegrationTest {
     private static final String WORKER_EMAIL = "karin@resurs.se";
     private static final String WORKER_NAME = "Karin";
     private static final ContactDetails CONTACTS = new ContactDetails("Chunky", "Chunk@Jungle.DKI", "000999999");
+    private static final CompanyValidationApiDTO.Signatory SIGNATORY =
+            new CompanyValidationApiDTO.Signatory("198001011234", "Chunky", "VD", SigningRight.ALONE);
     private static final Pageable FIRST_PAGE = PageRequest.of(0, 10);
 
     @Autowired
@@ -82,6 +87,9 @@ class ApplicationListCacheIntegrationTest {
     private DocumentRepository documentRepository;
 
     @Autowired
+    private ApplicationSignatureRepository signatureRepository;
+
+    @Autowired
     @MockitoSpyBean
     private CreditApplicationRepository applicationRepository;
 
@@ -95,6 +103,7 @@ class ApplicationListCacheIntegrationTest {
     void setUp() {
         auditEventRepository.deleteAll();
         documentRepository.deleteAll();
+        signatureRepository.deleteAll();
         applicationRepository.deleteAll();
         companyRepository.deleteAll();
         applicationLists().clear();
@@ -278,7 +287,7 @@ class ApplicationListCacheIntegrationTest {
     }
 
     private CreditApplicationDataObject save(String orgNumber, ApplicationStatus status) {
-        return applicationService.saveApplication(newApplication(orgNumber, status), CONTACTS, false);
+        return applicationService.saveApplication(newApplication(orgNumber, status), CONTACTS, false, SIGNATORY);
     }
 
     private Long companyIdOf(CreditApplicationDataObject application) {

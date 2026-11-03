@@ -39,6 +39,11 @@ final class MockCompanyData {
             ), UPDATED_AT),
             "556000-4444", new CompanyValidationApiDTO("Karlssons Bygg AB", "556000-4444", List.of(
                     new Signatory("750312-1234", "Anders Karlsson", "Styrelseordförande", SigningRight.ALONE)
+            ), UPDATED_AT),
+
+            "556000-2222", new CompanyValidationApiDTO("Duo Konsult AB", "556000-2222", List.of(
+                    new Signatory("790505-2222", "Sara Lind", "Styrelseordförande", SigningRight.JOINTLY),
+                    new Signatory("810808-2222", "Peter Lind", "Styrelseledamot", SigningRight.JOINTLY)
             ), UPDATED_AT)
 
     );
@@ -107,6 +112,25 @@ final class MockCompanyData {
                     null,
                     null,
                     null
+            ),
+
+            "556000-2222", new CompanyFinancialApiDTO(
+                    new CompanyIncomeStatement(
+                            sek("12000000"),   // revenue
+                            sek("1800000"),    // operatingResult
+                            sek("300000")      // interestExpenses
+                    ),
+                    new CompanyBalanceSheet(
+                            sek("8000000"),    // equity
+                            sek("3000000"),    // currentAssets
+                            sek("20000000"),   // totalAssets
+                            sek("1500000"),    // shortTermLiabilities
+                            sek("10500000")    // longTermLiabilities
+                    ),
+                    new CompanyCashFlowStatement(
+                            sek("2000000"),    // operatingCashFlow
+                            sek("-1000000")    // investmentCashFlow
+                    )
             )
     );
 

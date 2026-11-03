@@ -24,7 +24,6 @@ public class Company {
     @Convert(converter = PiiAttributeConverter.class)
     private String companyName;
 
-
     @Column(name = "authorized_signatory")
     @Convert(converter = PiiAttributeConverter.class)
     private String authorizedSignatory;

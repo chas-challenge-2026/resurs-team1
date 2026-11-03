@@ -217,7 +217,7 @@ public class ScoringService {
 
 
 
-        return new NewApplicationDTO(requestedAmount, purpose,durationMonths,  decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), companyName, orgNumber, authorizedSignatory, state.getFlagCount());
+        return new NewApplicationDTO(requestedAmount, purpose, durationMonths,  decision.finalStatus, decision.finalDecision, state.getDecisionReason().toString(), state.getScoringLog().toString(), companyName, orgNumber, authorizedSignatory, state.getFlagCount());
 
     }
 

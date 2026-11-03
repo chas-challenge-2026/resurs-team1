@@ -11,8 +11,10 @@ import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
+import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.service.*;
@@ -93,8 +95,9 @@ public class DataBaseSeeder implements CommandLineRunner {
             CreditApplicationDataObject object = applicationService.saveApplication(
                     scoredApplication,
                     creditApplication.contactDetails,
-                    creditApplication.protectedResource
-            );
+                    creditApplication.protectedResource,
+                    new CompanyValidationApiDTO.Signatory("198001011234", "Anders Karlsson", "VD", SigningRight.ALONE));
+
 
             System.out.println(object);
         }

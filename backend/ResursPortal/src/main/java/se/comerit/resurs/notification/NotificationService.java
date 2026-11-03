@@ -37,6 +37,7 @@ public class NotificationService {
             case PENDING_DOCS -> "behöver kompletteras, logga in för att se vad som saknas";
             case APPROVED -> "har godkänts";
             case REJECTED -> "har avslagits";
+            case PENDING_CO_SIGNATURE -> "har beviljats och väntar på att en medsignerare signerar";
         };
         return "Hej! Din ansökan #" + event.applicationId() + " " + statusText
                 + ".\n\nLogga in i portalen för mer information.";

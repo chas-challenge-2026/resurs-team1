@@ -43,8 +43,17 @@ public class ApplicationController {
     private final ScoringService creditScoreService;
     private final ApplicationAccessPolicy accessPolicy;
     private final SparService sparService;
+    private final ApplicationSigningService signingService;
 
-    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService, ApplicationAccessPolicy accessPolicy, SparService sparService) {
+    public ApplicationController(CompanyValidationService validationService,
+                                 CompanyFinancialService financialService,
+                                 DocumentService documentService,
+                                 ApplicationService appService,
+                                 CompanyService companyService,
+                                 ScoringService creditScoreService,
+                                 ApplicationAccessPolicy accessPolicy,
+                                 SparService sparService,
+                                 ApplicationSigningService signingService) {
         this.validationService = validationService;
         this.financialService = financialService;
         this.documentService = documentService;
@@ -53,6 +62,7 @@ public class ApplicationController {
         this.creditScoreService = creditScoreService;
         this.accessPolicy = accessPolicy;
         this.sparService = sparService;
+        this.signingService = signingService;
     }
 
     // ============================================================
@@ -100,7 +110,7 @@ public class ApplicationController {
                     failedScoringStatus, "could not score", reason, null,
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
-        CreditApplicationDataObject application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected);
+        CreditApplicationDataObject application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected, signatory);
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
@@ -193,5 +203,13 @@ public class ApplicationController {
         CreditApplicationDataObject app = appService.findApplicationByID(id);
         accessPolicy.checkCanView(principal, app);
         return ResponseEntity.ok(appService.findComments(id));
+    }
+    @PreAuthorize("hasRole('COMPANY')")
+    @PostMapping("/{id}/sign")
+    public ResponseEntity<CreditApplicationDataObject> signApplication(@PathVariable("id") Long id,
+                                                                @AuthenticationPrincipal CompanyPrincipal principal) {
+        CreditApplicationDataObject app = appService.findApplicationByID(id);
+        accessPolicy.checkCanView(principal, app);
+        return ResponseEntity.ok(signingService.coSign(id, principal.personalNumber()));
     }
 }
