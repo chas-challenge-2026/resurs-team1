@@ -12,12 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.dto.AuditEventDTO;
-import se.comerit.resurs.dto.CreditApplicationDTO;
-import se.comerit.resurs.dto.DocumentDTO;
-import se.comerit.resurs.dto.PagedResult;
+import se.comerit.resurs.dto.*;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -155,7 +152,7 @@ public class BackofficeService {
     }
 
     //Fetch Details
-    public CreditApplicationDetails application_details(Long id){
+    public ApplicationWithDocumentsDTO application_details(Long id){
 
         CreditApplication application = creditRepo.findById(id).orElseThrow();
 
@@ -166,7 +163,7 @@ public class BackofficeService {
         List<DocumentDTO> linkedDocuments =
                 documentRepo.findByApplicationId(id).stream().map(DocumentDTO::new).toList();
 
-        return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
+        return new ApplicationWithDocumentsDTO(new CreditApplicationProtectedDTO(application),linkedDocuments);
     }
 
     @Transactional

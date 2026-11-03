@@ -12,10 +12,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.backoffice.ApplicationCommentRequest;
 import se.comerit.resurs.dto.backoffice.ApplicationWithFinancesDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.security.CaseWorkerPrincipal;
@@ -104,7 +104,7 @@ public class BackofficeController {
     public ResponseEntity<ApplicationWithFinancesDTO> viewApplicationDetail(
             @PathVariable("id") Long id
             ) {
-        CreditApplicationDetails details = service.application_details(id);
+        ApplicationWithDocumentsDTO details = service.application_details(id);
         Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
         /*
         Map<String, Object> app = apps.get(0);

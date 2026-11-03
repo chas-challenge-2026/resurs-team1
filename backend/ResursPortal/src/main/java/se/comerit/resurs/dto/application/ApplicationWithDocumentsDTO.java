@@ -15,10 +15,9 @@ public record ApplicationWithDocumentsDTO(
 
     public ApplicationWithDocumentsDTO(
             CreditApplication app,
-            List<Document> documents,
-            boolean protectedResource) {
+            List<Document> documents) {
         this(
-                protectedResource
+                app.isProtectedResource()
                         ? new CreditApplicationProtectedDTO(app)
                         : new CreditApplicationDTO(app),
                 documents.stream().map(DocumentDTO::new).toList()

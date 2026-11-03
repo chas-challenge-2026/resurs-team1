@@ -13,8 +13,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.AuditEventDTO;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
@@ -216,11 +216,11 @@ class BackofficeServiceTests {
 
         documentRepo.save(document);
 
-        CreditApplicationDetails result =
+        ApplicationWithDocumentsDTO result =
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
-        assertThat(result.application()).isNotNull();
+        assertThat(result.app()).isNotNull();
         assertThat(result.documents()).hasSize(1);
 
         assertThat(result.documents().getFirst().filename())
@@ -239,11 +239,11 @@ class BackofficeServiceTests {
         CreditApplication saved =
                 creditRepo.save(createApplication(ApplicationStatus.UNDER_REVIEW));
 
-        CreditApplicationDetails result =
+        ApplicationWithDocumentsDTO result =
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
-        assertThat(result.application()).isNotNull();
+        assertThat(result.app()).isNotNull();
         assertThat(result.documents()).isEmpty();
     }
 
