@@ -172,7 +172,7 @@ public class ApplicationService {
         ApplicationStatus previousStatus = application.getStatus();
         // Skriver de nya resultatet på det befintliga ärendet, alltså skapas inget nytt
         // Ingen save() behövs då ärendet redan hanteras av JPA inuti @Transactional
-        application.setStatus(rescored.status());
+        application.setStatus(signingService.resolveApprovalStatus(application, rescored.status()));
         application.setDecision(rescored.decision());
         application.setDecisionReason(rescored.decision_reason());
         application.setScoringResult(rescored.scoring_result());
