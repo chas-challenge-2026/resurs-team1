@@ -1,8 +1,10 @@
 package se.comerit.resurs.seed;
 
+import jakarta.xml.bind.ValidationException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import se.comerit.resurs.client.companyvalidation.RegistryResponseValidator;
 import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.CreditApplicationDataObject;
@@ -10,6 +12,7 @@ import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.service.*;
@@ -64,17 +67,28 @@ public class DataBaseSeeder implements CommandLineRunner {
             caseWorkerService.create(worker);
         }
 
+
+
         for (ApplicationSeed creditApplication : createApplicationSeeds()) {
-            NewApplicationDTO scoredApplication = scoringService.scoreFromFinancialObject(
-                    creditApplication.financials(),
-                    creditApplication.requestedAmount(),
-                    creditApplication.bransch(),
-                    creditApplication.orgNumber(),
-                    creditApplication.companyName(),
-                    creditApplication.authorizedSignatory(),
-                    creditApplication.purpose(),
-                    creditApplication.durationMonths()
-            );
+            NewApplicationDTO scoredApplication;
+            try{
+                CompanyFinancialApiDTO financials = financialService.fetchLatestAnnualReport(creditApplication.orgNumber).get();
+
+                scoredApplication = scoringService.scoreFromFinancialObject(
+                        financials,
+                        creditApplication.requestedAmount(),
+                        creditApplication.bransch(),
+                        creditApplication.orgNumber(),
+                        creditApplication.companyName(),
+                        creditApplication.authorizedSignatory(),
+                        creditApplication.purpose(),
+                        creditApplication.durationMonths());
+            } catch(InvalidRegistryResponseException ex){
+                scoredApplication = new NewApplicationDTO(creditApplication.requestedAmount(), creditApplication.purpose(), creditApplication.durationMonths(),
+                        ApplicationStatus.PENDING_DOCS, "could not score", "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in årsredovisning", null,
+                        creditApplication.companyName(), creditApplication.orgNumber(),  creditApplication.authorizedSignatory(), 0);
+            }
+
 
             CreditApplicationDataObject object = applicationService.saveApplication(
                     scoredApplication,
@@ -112,7 +126,7 @@ public class DataBaseSeeder implements CommandLineRunner {
 
     private List<ApplicationSeed> createApplicationSeeds(){
         return List.of(
-                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-1234").get(), //succeeds
+                new ApplicationSeed( //succeeds
                         BigDecimal.valueOf(500000.0),
                         "35.400 - Mäklare och agenter för el och naturgas",
                         "556000-1234",
@@ -121,7 +135,7 @@ public class DataBaseSeeder implements CommandLineRunner {
                         "Expansion av verksamhet", 6, false,
                         new ContactDetails("Anders Karlsson", "anders@fasenel.se", "0701234567")
                         ),
-                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-9999").get(), //Protected identity on signatory
+                new ApplicationSeed( //Protected identity on signatory
                         BigDecimal.valueOf(20000.0),
                         "46.310 - Partihandel med frukt och grönsaker",
                         "556000-9999",
@@ -129,7 +143,7 @@ public class DataBaseSeeder implements CommandLineRunner {
                         "681105-9999",
                         "Ny butik",12, true,
                         new ContactDetails("Erik Lindqvist", "erik@fruktgbg.se", "0702345678")),
-                new ApplicationSeed(financialService.fetchLatestAnnualReport("556000-7777").get(),
+                new ApplicationSeed(
                         BigDecimal.valueOf(1500000),
                         "20.591 - Sprängämnestillverkning",
                         "556000-7777",
@@ -142,7 +156,6 @@ public class DataBaseSeeder implements CommandLineRunner {
     }
 
     private record ApplicationSeed(
-            CompanyFinancialApiDTO financials,
             BigDecimal requestedAmount,
             String bransch,
             String orgNumber,

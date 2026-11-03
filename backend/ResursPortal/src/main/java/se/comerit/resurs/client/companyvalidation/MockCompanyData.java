@@ -102,24 +102,11 @@ final class MockCompanyData {
                     )
             ),
 
-            // Weak company: negative operating result and low equity ratio
+            // enskild firma med skyddad identitet därför ingen eller väldigt begränsad information
             "556000-9999", new CompanyFinancialApiDTO(
-                    new CompanyIncomeStatement(
-                            sek("2000000"),
-                            sek("-150000"),
-                            sek("90000")
-                    ),
-                    new CompanyBalanceSheet(
-                            sek("200000"),
-                            sek("600000"),
-                            sek("2500000"),
-                            sek("900000"),
-                            sek("1400000")
-                    ),
-                    new CompanyCashFlowStatement(
-                            sek("-100000"),
-                            sek("-50000")
-                    )
+                    null,
+                    null,
+                    null
             )
     );
 

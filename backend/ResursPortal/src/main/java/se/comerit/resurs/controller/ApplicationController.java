@@ -90,7 +90,7 @@ public class ApplicationController {
             String reason;
             if(signatoryProtected){
                 failedScoringStatus = ApplicationStatus.PENDING_DOCS;
-                reason = "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in ett eget utdrag";
+                reason = "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in årsredovisning";
             } else{
                 failedScoringStatus = ApplicationStatus.PENDING_SCORING;
                 reason = "Vår kreditupplysningstjänst är nere eller underlag saknas, invänta handläggare eller vänta på omprövning";
