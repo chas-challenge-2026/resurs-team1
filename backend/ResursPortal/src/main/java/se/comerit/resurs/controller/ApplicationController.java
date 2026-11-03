@@ -40,8 +40,17 @@ public class ApplicationController {
     private final ScoringService creditScoreService;
     private final ApplicationAccessPolicy accessPolicy;
     private final SparService sparService;
+    private final ApplicationSigningService signingService;
 
-    public ApplicationController(CompanyValidationService validationService, CompanyFinancialService financialService, DocumentService documentService, ApplicationService appService, CompanyService companyService, ScoringService creditScoreService, ApplicationAccessPolicy accessPolicy, SparService sparService) {
+    public ApplicationController(CompanyValidationService validationService,
+                                 CompanyFinancialService financialService,
+                                 DocumentService documentService,
+                                 ApplicationService appService,
+                                 CompanyService companyService,
+                                 ScoringService creditScoreService,
+                                 ApplicationAccessPolicy accessPolicy,
+                                 SparService sparService,
+                                 ApplicationSigningService signingService) {
         this.validationService = validationService;
         this.financialService = financialService;
         this.documentService = documentService;
@@ -50,6 +59,7 @@ public class ApplicationController {
         this.creditScoreService = creditScoreService;
         this.accessPolicy = accessPolicy;
         this.sparService = sparService;
+        this.signingService = signingService;
     }
 
     // ============================================================
@@ -174,5 +184,13 @@ public class ApplicationController {
         CreditApplicationDTO app = appService.findApplicationByID(id);
         accessPolicy.checkCanView(principal, app);
         return ResponseEntity.ok(appService.findComments(id));
+    }
+    @PreAuthorize("hasRole('COMPANY')")
+    @PostMapping("/{id}/sign")
+    public ResponseEntity<CreditApplicationDTO> signApplication(@PathVariable("id") Long id,
+                                                                @AuthenticationPrincipal CompanyPrincipal principal) {
+        CreditApplicationDTO app = appService.findApplicationByID(id);
+        accessPolicy.checkCanView(principal, app);
+        return ResponseEntity.ok(signingService.coSign(id, principal.personalNumber()));
     }
 }
