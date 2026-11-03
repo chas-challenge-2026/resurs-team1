@@ -85,8 +85,19 @@ public class ApplicationController {
             //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
             newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
         } catch (CompanyRegistryUnavailableException e){
+
+            ApplicationStatus failedScoringStatus;
+            String reason;
+            if(signatoryProtected){
+                failedScoringStatus = ApplicationStatus.PENDING_DOCS;
+                reason = "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in ett eget utdrag";
+            } else{
+                failedScoringStatus = ApplicationStatus.PENDING_SCORING;
+                reason = "Vår kreditupplysningstjänst är nere eller underlag saknas, invänta handläggare eller vänta på omprövning";
+            }
+
             newApplication = new NewApplicationDTO(submission.requestedAmount(), submission.purpose(), submission.durationMonths(),
-                    ApplicationStatus.PENDING_SCORING, null, null, null,
+                    failedScoringStatus, "could not score", reason, null,
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
         CreditApplicationDataObject application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected);
