@@ -14,6 +14,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
+import se.comerit.resurs.persistence.ApplicationSignatureRepository;
 import se.comerit.resurs.persistence.AuditEventRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
@@ -60,6 +61,8 @@ class ProtectedResourceQueriesTest {
                     );
 
     @Autowired
+    private ApplicationSignatureRepository signatureRepo;
+    @Autowired
     private CreditApplicationRepository creditRepo;
 
     @Autowired
@@ -81,6 +84,7 @@ class ProtectedResourceQueriesTest {
         // audit_events och documents har FK mot applications och måste tömmas först
         auditEventRepo.deleteAll();
         documentRepo.deleteAll();
+        signatureRepo.deleteAll();
         creditRepo.deleteAll();
         companyRepo.deleteAll();
 

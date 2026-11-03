@@ -18,6 +18,7 @@ import se.comerit.resurs.exception.auth.LoginFailedException;
 import se.comerit.resurs.exception.auth.LoginFailureReason;
 import se.comerit.resurs.exception.bankid.BankIdVerificationFailedException;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
+import se.comerit.resurs.persistence.ApplicationSignatureRepository;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
@@ -75,6 +76,8 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @Autowired
     private CaseWorkerRepository caseWorkerRepo;
     @Autowired
+    private ApplicationSignatureRepository signatureRepo;
+    @Autowired
     private CreditApplicationRepository creditRepo;
 
     @Autowired
@@ -84,6 +87,7 @@ private static final Path SEED_SQL = Paths.get("").toAbsolutePath()
     @BeforeEach
     void cleanDatabase() {
         documentRepo.deleteAll();
+        signatureRepo.deleteAllInBatch();
         creditRepo.deleteAllInBatch();
         companyRepo.deleteAllInBatch();
         caseWorkerRepo.deleteAll();
