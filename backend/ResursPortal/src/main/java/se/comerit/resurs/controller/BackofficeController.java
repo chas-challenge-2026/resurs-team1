@@ -107,9 +107,9 @@ public class BackofficeController {
         ApplicationWithDocumentsDTO details = service.application_details(id);
         Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
         /*
-        Map<String, Object> app = apps.get(0);
-        model.addAttribute("application", app);
-        model.addAttribute("auditLogRaw", app.get("auditLog"));
+        Map<String, Object> application = apps.get(0);
+        model.addAttribute("application", application);
+        model.addAttribute("auditLogRaw", application.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 

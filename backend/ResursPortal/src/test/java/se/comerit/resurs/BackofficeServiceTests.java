@@ -27,7 +27,6 @@ import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import se.comerit.resurs.persistence.model.Document;
 import se.comerit.resurs.service.BackofficeService;
-import se.comerit.resurs.dto.backoffice.ReviewInfo;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -220,7 +219,7 @@ class BackofficeServiceTests {
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
-        assertThat(result.app()).isNotNull();
+        assertThat(result.application()).isNotNull();
         assertThat(result.documents()).hasSize(1);
 
         assertThat(result.documents().getFirst().filename())
@@ -243,7 +242,7 @@ class BackofficeServiceTests {
                 backofficeService.application_details(saved.getId());
 
         assertThat(result).isNotNull();
-        assertThat(result.app()).isNotNull();
+        assertThat(result.application()).isNotNull();
         assertThat(result.documents()).isEmpty();
     }
 

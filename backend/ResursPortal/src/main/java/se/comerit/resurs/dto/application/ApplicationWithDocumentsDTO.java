@@ -10,7 +10,7 @@ import se.comerit.resurs.persistence.model.Document;
 import java.util.List;
 
 public record ApplicationWithDocumentsDTO(
-        CreditApplicationDataObject app,
+        CreditApplicationDataObject application,
         List<DocumentDTO> documents) {
 
     public ApplicationWithDocumentsDTO(
