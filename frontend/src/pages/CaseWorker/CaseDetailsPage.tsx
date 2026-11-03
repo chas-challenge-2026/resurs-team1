@@ -137,80 +137,53 @@ const CaseDetailsPage = () => {
       {view === "overview" &&
         <section className={s.contentWrapper}>
           <div className={s.splitColumns}>
-            
-          <Card>
-            <h3 className={`subtitle ${s.titleWithTag}`}>
-              Kontakt
-              {data.protectedResource && <ProtectedTag />}
-            </h3>
-            <DataList>
-              {/* protected case: value hidden until hover (desktop) or tap (mobile) */}
-              {data.protectedResource ? (
-                <>
-                  <DataListItem label="Namn" value={<ProtectedValue>{data.contactDetails.name}</ProtectedValue>} />
-                  <DataListItem label="E-postadress" value={<ProtectedValue>{data.contactDetails.email}</ProtectedValue>} />
-                  <DataListItem label="Telefonnummer" value={<ProtectedValue>{data.contactDetails.phoneNumber}</ProtectedValue>} />
-                </>
-              ) : (
-                <>
-                  <DataListItem label="Namn" value={data.contactDetails.name} />
-                  <DataListItem label="E-postadress" value={data.contactDetails.email} />
-                  <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
-                </>
-              )}
-            </DataList>
-            {data.protectedResource && (
-              <p className={s.protectedHintBelow}>Klicka på ett värde för att visa det.</p>
+            {data.scoringResult && (
+              <Card>
+                <h3 className="subtitle">Scoringresultat</h3>
+                <DataList>
+                  {SCORING_METRICS.map(({key, label}) => {
+                    const metric = getMetric(data.scoringResult ?? "", key)
+                    return(
+                      <DataListItem
+                        key={key}
+                        label={label}
+                        value={
+                          <div className={s.metricRow}>
+                            <span>{metric.value}</span>
+                            {metric.scoringStatus && (
+                              <span className={`${s.badge} ${STATUS_BADGE[metric.scoringStatus].className}`}>{STATUS_BADGE[metric.scoringStatus].label}</span>
+                            )}
+                          </div>
+                        }
+                      />
+                    )
+                  })}
+                </DataList>
+              </Card>
             )}
-          </Card>
 
-          {data.scoringResult && (
             <Card>
-              <h3 className="subtitle">Scoringresultat</h3>
-              <DataList>
-                {SCORING_METRICS.map(({key, label}) => {
-                  const metric = getMetric(data.scoringResult ?? "", key)
-                  return(
-                    <DataListItem
-                      key={key}
-                      label={label}
-                      value={
-                        <div className={s.metricRow}>
-                          <span>{metric.value}</span>
-                          {metric.scoringStatus && (
-                            <span className={`${s.badge} ${STATUS_BADGE[metric.scoringStatus].className}`}>{STATUS_BADGE[metric.scoringStatus].label}</span>
-                          )}
-                        </div>
-                      }
-                    />
-                  )
-                })}
-              </DataList>
+              <h3 className="subtitle">Ekonomi</h3>
+              {data.companyFinances ? (
+                <DataList>
+                  <DataListItem label="Omsättning" value={formatCurrency(data.companyFinances.incomeStatement.revenue)} />
+                  <DataListItem label="Rörelseresultat" value={formatCurrency(data.companyFinances.incomeStatement.operatingResult)} />
+                  <DataListItem label="Eget kapital" value={formatCurrency(data.companyFinances.balanceSheet.equity)} />
+                  <DataListItem label="Totalt kassaflöde" value={formatCurrency(data.companyFinances.cashFlowStatement.operatingCashFlow)} />
+                  <DataListItem label="Kortfristiga skulder" value={formatCurrency(data.companyFinances.balanceSheet.shortTermLiabilities)} />
+                </DataList>
+              ) : (
+                <p>Ingen årsredovisning hittades</p>
+              )}
             </Card>
-          )}
           </div>
-
-          <Card>
-            <h3 className="subtitle">Ekonomi</h3>
-            {data.companyFinances ? (
-              <DataList>
-                <DataListItem label="Omsättning" value={formatCurrency(data.companyFinances.incomeStatement.revenue)} />
-                <DataListItem label="Rörelseresultat" value={formatCurrency(data.companyFinances.incomeStatement.operatingResult)} />
-                <DataListItem label="Eget kapital" value={formatCurrency(data.companyFinances.balanceSheet.equity)} />
-                <DataListItem label="Totalt kassaflöde" value={formatCurrency(data.companyFinances.cashFlowStatement.operatingCashFlow)} />
-                <DataListItem label="Kortfristiga skulder" value={formatCurrency(data.companyFinances.balanceSheet.shortTermLiabilities)} />
-              </DataList>
-            ) : (
-              <p>Ingen årsredovisning hittades</p>
-            )}
-          </Card>
         </section>
       }
 
       {view === "manageCase" &&
         <section className={s.contentWrapper}>
           {data.status === "APPROVED" || data.status === "REJECTED" ? (
-            <Card>
+            <Card className={s.infoBox}>
               <p className={s.infoText}>
                 Det här ärendet är redan beslutat och kan inte längre ändras.
               </p>
@@ -310,6 +283,7 @@ const CaseDetailsPage = () => {
             )}
             </>
           )}
+
           <div className={s.splitColumns}>
             {auditLog && (
               <Card as="section">
@@ -318,16 +292,44 @@ const CaseDetailsPage = () => {
               </Card>
             )}
 
-            <Card>
-              <h3 className="subtitle">Dokument</h3>
-              {data.documents && data.documents.length > 0 ? (
-                data.documents.map((document) => (
-                  <AttachedFile key={document.id} document={document} />
-                ))
-              ) : (
-                <p>Inga uppladdade dokument</p>
-              )}
-            </Card>
+            <div className={s.rightWrapper}>
+              <Card>
+                <h3 className={`subtitle ${s.titleWithTag}`}>
+                  Kontakt
+                  {data.protectedResource && <ProtectedTag />}
+                </h3>
+                <DataList>
+                  {/* protected case: value hidden until hover (desktop) or tap (mobile) */}
+                  {data.protectedResource ? (
+                    <>
+                      <DataListItem label="Namn" value={<ProtectedValue>{data.contactDetails.name}</ProtectedValue>} />
+                      <DataListItem label="E-postadress" value={<ProtectedValue>{data.contactDetails.email}</ProtectedValue>} />
+                      <DataListItem label="Telefonnummer" value={<ProtectedValue>{data.contactDetails.phoneNumber}</ProtectedValue>} />
+                    </>
+                  ) : (
+                    <>
+                      <DataListItem label="Namn" value={data.contactDetails.name} />
+                      <DataListItem label="E-postadress" value={data.contactDetails.email} />
+                      <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
+                    </>
+                  )}
+                </DataList>
+                {data.protectedResource && (
+                  <p className={s.protectedHintBelow}>Klicka på ett värde för att visa det.</p>
+                )}
+              </Card>
+
+              <Card>
+                <h3 className="subtitle">Dokument</h3>
+                {data.documents && data.documents.length > 0 ? (
+                  data.documents.map((document) => (
+                    <AttachedFile key={document.id} document={document} />
+                  ))
+                ) : (
+                  <p>Inga uppladdade dokument</p>
+                )}
+              </Card>
+            </div>
           </div>
         </section>
       }

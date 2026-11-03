@@ -24,6 +24,11 @@
   font-weight: 500;
 }
 
+.infoBox {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
 .infoText {
   color: var(--text-muted);
 }
@@ -34,6 +39,13 @@
   flex-direction: column;
   gap: var(--space-base);
   padding: var(--space-base);
+  flex-wrap: wrap;
+}
+
+.rightWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
 }
 
 /* Manage split view */
