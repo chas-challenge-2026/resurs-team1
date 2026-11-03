@@ -191,8 +191,7 @@ class ApplicationControllerIntegrationTest {
                 .expectBody(CreditApplicationDTO.class)
                 .value(application -> {
                     assertThat(application.status()).isEqualTo(ApplicationStatus.PENDING_SCORING);
-                    assertThat(application.decision()).isNull();
-                    assertThat(application.decisionReason()).isNull();
+                    assertThat(application.decision()).isEqualTo("could not score");
                     assertThat(application.scoringResult()).isNull();
                     assertThat(application.companyName()).isEqualTo("Karlssons Bygg AB");
                     assertThat(application.authorizedSignatory()).isEqualTo("Anders Karlsson");
