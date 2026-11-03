@@ -1,5 +1,9 @@
 # Native continuous integration
 
+See the [Native overview](../native/README.md) for module documentation and JNA
+guides. The [developer guide](README.md) explains build settings, test coverage,
+troubleshooting and how to add tests.
+
 The `Native CI` GitHub Actions workflow compiles the native libraries, both demo
 programs and all registered tests, then runs the full CTest suite. Each relevant
 run uses two independent GitHub-hosted runners: Ubuntu 22.04 and Ubuntu 24.04,
@@ -72,8 +76,9 @@ Windows developers can continue using the existing Docker instructions in
 CI uses CMake/CTest directly on Ubuntu so that failures and reports are available
 as separate steps; it does not validate the Dockerfile or Windows DLLs.
 
-Tests subsequently added to CMake/CTest are picked up automatically. The CI
-branch does not depend on the pending native test or documentation branches.
+Tests subsequently added to CMake/CTest are picked up automatically. See the
+[test maintenance guide](README.md#add-and-maintain-tests) for registration,
+result formatting and the separate Docker build target list.
 
 ## Merge protection and deployment
 
@@ -83,13 +88,13 @@ check actually recorded by GitHub. Consider requiring branches to be up to date
 before merging so the checked merge includes the latest target-branch changes.
 If a merge queue is introduced later, add and validate its `merge_group` trigger.
 
-This change does not enable merge restrictions itself. It also does not change
-the existing infra guard or course deployment platform. According to `DRIFT.md`,
+The workflow does not configure merge restrictions. The existing infra guard
+and course deployment platform operate separately. According to [DRIFT.md](../DRIFT.md),
 pushes to `develop` deploy stage and pushes to `main` deploy production. A failing
 post-push CI run cannot stop a deployment already triggered by that same push;
 requiring checks before merging provides the protection.
 
-This first workflow covers native compilation and tests. Java/JNA integration,
+This workflow covers native compilation and tests. Java/JNA integration,
 backend/frontend tests, Windows builds, Release builds, sanitizer checks and
 Docker packaging can be added separately.
 

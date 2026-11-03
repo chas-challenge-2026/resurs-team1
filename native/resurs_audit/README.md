@@ -1,5 +1,7 @@
 # `resurs_audit` native module
 
+[Native overview](../README.md) | [Java/JNA integration](JNA_INTEGRATION.md)
+
 `resurs_audit` is a C++17 shared library for hashing, Ed25519 signing, and
 verification of ordered audit chains. It uses OpenSSL and is built as:
 

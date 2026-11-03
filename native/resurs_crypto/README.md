@@ -1,5 +1,7 @@
 # resurs_crypto native API
 
+[Native overview](../README.md) | [Java/JNA integration](JNA_INTEGRATION.md)
+
 `resurs_crypto` is a shared native library exposing AES-256-GCM encryption and
 decryption through a stable C ABI. It is intended to be loaded from Java through
 JNA. The authoritative function contract is documented in `wrapper.h`.

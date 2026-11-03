@@ -1,5 +1,7 @@
 # `resurs_crypto` JNA integration
 
+[Native overview](../README.md) | [Crypto API](README.md)
+
 This document is the integration handoff from the native team to the Java and
 deployment teams. The authoritative native API contract is
 [`wrapper.h`](wrapper.h). General native build instructions are available in

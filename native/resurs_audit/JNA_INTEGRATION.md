@@ -1,5 +1,7 @@
 # `resurs_audit` Java/JNA integration
 
+[Native overview](../README.md) | [Audit API](README.md)
+
 This is the integration handoff for Java and deployment teams. The native
 library exposes a small C-linkage ABI from [wrapper.h](wrapper.h); C++-specific
 details are documented separately in [README.md](README.md).
