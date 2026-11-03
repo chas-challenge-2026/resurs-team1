@@ -5,13 +5,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.MountableFile;
 import se.comerit.resurs.dto.ContactDetails;
-import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -117,7 +118,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void saveApplication_whenSignsAlone_keepsApprovedStatus() {
-        CreditApplicationDTO saved = submit(ALONE_ORG_NUMBER, ApplicationStatus.APPROVED, ANDERS);
+        CreditApplicationDataObject saved = submit(ALONE_ORG_NUMBER, ApplicationStatus.APPROVED, ANDERS);
 
         assertThat(saved.status()).isEqualTo(ApplicationStatus.APPROVED);
         assertThat(signatureRepository.countByApplicationId(saved.id())).isEqualTo(1);
@@ -125,7 +126,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void saveApplication_whenSignsJointlyAndApproved_waitsForCoSignature() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
         CreditApplication fromDatabase = applicationRepository.findById(saved.id()).orElseThrow();
         assertThat(fromDatabase.getStatus()).isEqualTo(ApplicationStatus.PENDING_CO_SIGNATURE);
@@ -135,14 +136,14 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void saveApplication_whenSignsJointlyAndUnderReview_keepsUnderReview() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
 
         assertThat(saved.status()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
     }
 
     @Test
     void saveApplication_whenSignsJointlyAndRejected_isRejectedDirectly() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.REJECTED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.REJECTED, SARA);
 
         assertThat(saved.status()).isEqualTo(ApplicationStatus.REJECTED);
     }
@@ -162,9 +163,9 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenPendingCoSignature_approvesApplication() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
-        CreditApplicationDTO signed = signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
+        CreditApplicationDataObject signed = signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
 
         assertThat(signed.status()).isEqualTo(ApplicationStatus.APPROVED);
         assertThat(applicationRepository.findById(saved.id()).orElseThrow().getStatus())
@@ -174,9 +175,9 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenUnderReview_recordsSignatureWithoutChangingStatus() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
 
-        CreditApplicationDTO signed = signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
+        CreditApplicationDataObject signed = signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
 
         assertThat(signed.status()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
         assertThat(signatureRepository.countByApplicationId(saved.id())).isEqualTo(2);
@@ -184,7 +185,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenSameSignatorySignsAgain_throws() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
         assertThatThrownBy(() -> signingService.coSign(saved.id(), SARA.personalNumber()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -193,7 +194,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenPersonIsNotSignatory_throws() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
         assertThatThrownBy(() -> signingService.coSign(saved.id(), ANDERS.personalNumber()))
                 .isInstanceOf(CompanyValidationFailedException.class);
@@ -202,7 +203,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenRejected_throws() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.REJECTED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.REJECTED, SARA);
 
         assertThatThrownBy(() -> signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -210,7 +211,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenAlreadyFullySigned_throws() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
         signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
 
         assertThatThrownBy(() -> signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER))
@@ -219,7 +220,7 @@ class ApplicationSigningIntegrationTest {
 
     @Test
     void coSign_whenSignsAlone_throws() {
-        CreditApplicationDTO saved = submit(ALONE_ORG_NUMBER, ApplicationStatus.APPROVED, ANDERS);
+        CreditApplicationDataObject saved = submit(ALONE_ORG_NUMBER, ApplicationStatus.APPROVED, ANDERS);
 
         assertThatThrownBy(() -> signingService.coSign(saved.id(), ANDERS.personalNumber()))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -230,8 +231,9 @@ class ApplicationSigningIntegrationTest {
     // ============================================================
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_whenApprovedWithoutCoSignature_waitsForCoSignature() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
 
         backofficeService.application_decision(saved.id(), ApplicationStatus.APPROVED, WORKER_EMAIL, WORKER_NAME, null);
 
@@ -240,8 +242,9 @@ class ApplicationSigningIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_whenApprovedAfterCoSignature_approvesDirectly() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.UNDER_REVIEW, SARA);
         signingService.coSign(saved.id(), PETER_PERSONAL_NUMBER);
 
         backofficeService.application_decision(saved.id(), ApplicationStatus.APPROVED, WORKER_EMAIL, WORKER_NAME, null);
@@ -251,8 +254,9 @@ class ApplicationSigningIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_whenPendingCoSignatureAndApprovedAgain_throws() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
         assertThatThrownBy(() -> backofficeService.application_decision(
                 saved.id(), ApplicationStatus.APPROVED, WORKER_EMAIL, WORKER_NAME, null))
@@ -260,8 +264,9 @@ class ApplicationSigningIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = {"ROLE_CASEWORKER"})
     void applicationDecision_whenPendingCoSignatureAndRejected_rejects() {
-        CreditApplicationDTO saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
+        CreditApplicationDataObject saved = submit(JOINT_ORG_NUMBER, ApplicationStatus.APPROVED, SARA);
 
         backofficeService.application_decision(saved.id(), ApplicationStatus.REJECTED, WORKER_EMAIL, WORKER_NAME, null);
 
@@ -269,7 +274,7 @@ class ApplicationSigningIntegrationTest {
                 .isEqualTo(ApplicationStatus.REJECTED);
     }
 
-    private CreditApplicationDTO submit(String orgNumber, ApplicationStatus status,
+    private CreditApplicationDataObject submit(String orgNumber, ApplicationStatus status,
                                         CompanyValidationApiDTO.Signatory signatory) {
         NewApplicationDTO application = new NewApplicationDTO(
                 new BigDecimal("250000"),

@@ -1,12 +1,15 @@
 package se.comerit.resurs.service;
 
 import jakarta.transaction.Transactional;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.dto.ContactDetails;
-import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.*;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -16,6 +19,7 @@ import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.persistence.model.Signatory;
 import se.comerit.resurs.util.HMACHasher;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,10 +30,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.NoSuchElementException;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 public class ApplicationService {
 
-
+    private final ApplicationAccessPolicy accessPolicy;
+    private final CacheManager cacheManager;
     private final AuditService auditService;
     private final CompanyFinancialService financialService;
     private final CompanyValidationService validationService;
@@ -43,7 +50,9 @@ public class ApplicationService {
     private final ApplicationSigningService signingService;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher, ApplicationSigningService signingService) {
+    public ApplicationService(ApplicationAccessPolicy accessPolicy, CacheManager cacheManager, CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher, ApplicationSigningService signingService) {
+        this.accessPolicy = accessPolicy;
+        this.cacheManager = cacheManager;
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -58,8 +67,8 @@ public class ApplicationService {
 
     //Submit application
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected, CompanyValidationApiDTO.Signatory signatory) {
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
+    public CreditApplicationDataObject saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected, CompanyValidationApiDTO.Signatory signatory) {
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -116,16 +125,20 @@ public class ApplicationService {
     kör scoring engine och placerar rätt värde till rättattribut
     */
 
-    @Cacheable(cacheNames = "applicationLists", key = "'org-' + #orgNumber + '-' + #pageable")
-    public List<CreditApplicationDTO> getApplicationsByOrgNumber(String orgNumber, Pageable pageable) {
+
+    public Page<CreditApplicationDataObject> getApplicationsByOrgNumber(String orgNumber, Pageable pageable) {
         if (orgNumber == null || orgNumber.isBlank()) {
             throw new IllegalArgumentException("orgNumber must not be blank");
         }
 
-        List<CreditApplicationDTO> applications = applicationRepository.findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hmacHasher.encode(orgNumber), pageable)
-                .stream()
-                .map(CreditApplicationDTO::new)
-                .toList();
+
+        Page<CreditApplicationDataObject> applications;
+        if(accessPolicy.canViewSensitiveData(orgNumber)){
+            applications = getApplicationsByOrgNumberAll(orgNumber,pageable);
+        } else {
+            applications = getApplicationsByOrgNumberRestricted(orgNumber, pageable);
+        }
+
 
         if (applications.isEmpty() && companyRepository.findBySearchKeyOrgNumber(
                 hmacHasher.encode(orgNumber)).isEmpty()) {
@@ -134,11 +147,47 @@ public class ApplicationService {
         return applications;
     }
 
+    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberAll(
+            String orgNumber, Pageable pageable) {
+
+        String key = "org-" + orgNumber + "-" + pageable;
+
+        return cacheManager.getCache("certifiedAccessApplications")
+                .get(key, () -> {
+                    byte[] hash = hmacHasher.encode(orgNumber);
+
+                    return applicationRepository
+                            .findByCompany_SearchKeyOrgNumberOrderByCreatedAtDesc(hash, pageable)
+                            .map(CreditApplicationProtectedDTO::new);
+                });
+    }
+
+    private Page<CreditApplicationDataObject> getApplicationsByOrgNumberRestricted(
+            String orgNumber, Pageable pageable) {
+
+        String key = "org-" + orgNumber + "-" + pageable;
+
+        return cacheManager.getCache("restrictedAccessApplications")
+                .get(key, () -> {
+                    byte[] hash = hmacHasher.encode(orgNumber);
+
+                    return applicationRepository
+                            .findByCompany_SearchKeyOrgNumberAndProtectedResourceFalseOrderByCreatedAtDesc(
+                                    hash, pageable)
+                            .map(CreditApplicationDTO::new);
+                });
+    }
+
     // Kör om scoring på ett ärende som redan finns och uppdaterar det
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
     public CreditApplicationDTO rescoreApplication(Long applicationId) {
         CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id " + applicationId);
+        }
+
 
         // Om en handläggare redan fattat ett beslut så får vi inte skriva över det
         // Tittar på auditloggen och inte på status, eftersom scoring också sätter APPROVED/REJECTED själv och
@@ -188,25 +237,95 @@ public class ApplicationService {
         return new CreditApplicationDTO(application);
     }
 
-    public CreditApplicationDTO findApplicationByID(Long id) {
-        return new CreditApplicationDTO(applicationRepository.findById(id).orElseThrow());
+    public CreditApplicationDataObject findApplicationByID (Long id){
+        CreditApplication app = applicationRepository.findById(id).orElseThrow();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if(app.isProtectedResource()){
+            if(!accessPolicy.canViewSensitiveData(app.getCompany().getOrg_number())){
+                throw new NoSuchElementException("No application with id " + id );
+            }
+            return new CreditApplicationProtectedDTO(app);
+        }
+        return new CreditApplicationDTO(app);
     }
 
-
-    public List<CreditApplicationDTO> readApplicationsByCompany(Long companyID) {
-        return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
+    //Currently tests only
+    public List<CreditApplicationDataObject> readApplicationsByCompany(Long companyID){
+        return applicationRepository.findByCompanyId(companyID)
+                .stream()
+                .filter(application ->
+                        accessPolicy.canViewSensitiveData(application.getCompany().getOrg_number())
+                                || !application.isProtectedResource())
+                .map(application -> application.isProtectedResource()
+                        ? new CreditApplicationProtectedDTO(application)
+                        : new CreditApplicationDTO(application))
+                .map(dto->(CreditApplicationDataObject) dto)
+                .toList();
     }
 
-    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID) {
-        return applicationRepository.findByCompanyId(companyID).stream().map(CreditApplicationDTO::new).toList();
+    //currently tests only
+    public List<CreditApplicationDataObject> readApplicationsByCompanyDesc(Long companyID){
+
+        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID)
+                .stream()
+                .filter(application ->
+                        accessPolicy.canViewSensitiveData(application.getCompany().getOrg_number())
+                                || !application.isProtectedResource())
+                .map(application -> application.isProtectedResource()
+                        ? new CreditApplicationProtectedDTO(application)
+                        : new CreditApplicationDTO(application))
+                .map(dto->(CreditApplicationDataObject) dto)
+                .toList();
+
+    }
+    public Page<CreditApplicationDataObject> readApplicationsByCompanyDesc(Long companyID, Pageable pageable) {
+
+        Page<CreditApplication> fetchedApps;
+        if(accessPolicy.canViewSensitiveData(companyRepository.findById(companyID).orElseThrow().getOrg_number())){
+            fetchedApps = applicationsByCompanyAll( companyID, pageable);
+        } else {
+            fetchedApps = applicationsByCompanyRestricted( companyID, pageable);
+        }
+
+        return fetchedApps.map(application -> application.isProtectedResource()
+                ? new CreditApplicationProtectedDTO(application)
+                : new CreditApplicationDTO(application));
     }
 
-    @Cacheable(cacheNames = "applicationLists", key = "'company-' + #companyID + '-' + #pageable")
-    public List<CreditApplicationDTO> readApplicationsByCompanyDesc(Long companyID, Pageable pageable) {
-        return applicationRepository.findByCompanyIdOrderByCreatedAtDesc(companyID, pageable).stream().map(CreditApplicationDTO::new).toList();
+    private Page<CreditApplication> applicationsByCompanyAll(
+            Long companyID, Pageable pageable) {
+
+        return cacheManager.getCache("certifiedAccessApplications")
+                .get("Company-" + companyID + "-" + pageable,
+                        () -> applicationRepository
+                                .findByCompanyIdOrderByCreatedAtDesc(companyID, pageable));
+    }
+
+    private Page<CreditApplication> applicationsByCompanyRestricted(
+            Long companyID, Pageable pageable) {
+
+        return cacheManager.getCache("restrictedAccessApplications")
+                .get("Company-" + companyID + "-" + pageable,
+                        () -> applicationRepository
+                                .findByCompanyIdAndProtectedResourceFalseOrderByCreatedAtDesc(
+                                        companyID, pageable));
     }
 
     public List<ApplicationCommentDTO> findComments(Long applicationId) {
+
+        CreditApplication app = applicationRepository.findById(applicationId).orElseThrow();
+
+        boolean canView = accessPolicy.canViewSensitiveData(app.getCompany().getOrg_number());
+
+        if(app.isProtectedResource() && !canView){
+            throw new NoSuchElementException("No application for that ID");
+        }
         return auditService.findComments(applicationId);
     }
+
+
+
+
+
 }

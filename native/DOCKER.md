@@ -1,5 +1,7 @@
 # Docker commands for native
 
+[Native overview](README.md) | [Build and test guide](../docs/README.md)
+
 Run these commands from the project root. Docker Desktop must be running.
 
 ## Supported Ubuntu build images
@@ -8,8 +10,10 @@ The Dockerfile accepts `UBUNTU_VERSION` as a build argument. Ubuntu 24.04 is
 the default used by the native team. Ubuntu 22.04 (Jammy) is also supported so
 the shared library can be verified against a runtime based on Jammy.
 
-Docker downloads the selected Ubuntu image automatically. Neither Ubuntu
-version needs to be installed on the host computer.
+Docker downloads the selected Ubuntu image if it is not available locally.
+Neither Ubuntu version needs to be installed on the host computer.
+The Dockerfile installs `build-essential`, CMake and the Ubuntu OpenSSL 3.x
+development package. Debug is the default build configuration.
 
 ## Build with Ubuntu 24.04
 

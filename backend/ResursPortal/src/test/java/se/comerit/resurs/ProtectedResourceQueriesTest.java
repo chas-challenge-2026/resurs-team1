@@ -131,7 +131,7 @@ class ProtectedResourceQueriesTest {
         CreditApplication normal = save(ApplicationStatus.UNDER_REVIEW, false);
         save(ApplicationStatus.UNDER_REVIEW, true);
 
-        List<CreditApplication> result =
+        Page<CreditApplication> result =
                 creditRepo.findByCompany_SearchKeyOrgNumberAndProtectedResourceFalseOrderByCreatedAtDesc(
                         hasher.encode(ORG_NUMBER), PageRequest.of(0, 10));
 

@@ -3,26 +3,28 @@ package se.comerit.resurs.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import se.comerit.resurs.dto.AuditEventDTO;
-import se.comerit.resurs.dto.CreditApplicationDTO;
-import se.comerit.resurs.dto.DocumentDTO;
-import se.comerit.resurs.dto.PagedResult;
-import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.CreditApplicationDetails;
-import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
-import se.comerit.resurs.dto.backoffice.ReviewInfo;
+import se.comerit.resurs.dto.*;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
+import se.comerit.resurs.dto.backoffice.*;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
 import se.comerit.resurs.persistence.model.CreditApplication;
 import org.springframework.context.ApplicationEventPublisher;
 import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
+import se.comerit.resurs.security.ApplicationAccessPolicy;
+
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * BackofficeService -> allt en handläggare behöver för att granska ansökningar
@@ -40,50 +42,107 @@ import java.util.List;
 public class BackofficeService {
 
     private final AuditService auditService;
+    private final CacheManager cacheManager;
     private final CreditApplicationRepository creditRepo;
     private final DocumentRepository documentRepo;
     private final ApplicationEventPublisher eventPublisher;
+
+    private final ApplicationAccessPolicy accessPolicy;
+
     private final ApplicationSigningService signingService;
 
     @Autowired
-    public BackofficeService(AuditService auditService, CreditApplicationRepository creditRepo,
-                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher,
+    public BackofficeService(AuditService auditService, CacheManager cacheManager, CreditApplicationRepository creditRepo,
+                             DocumentRepository documentRepo, ApplicationEventPublisher eventPublisher, ApplicationAccessPolicy accessPolicy,
                              ApplicationSigningService signingService) {
         this.auditService = auditService;
+        this.cacheManager = cacheManager;
         this.creditRepo = creditRepo;
         this.documentRepo = documentRepo;
         this.eventPublisher = eventPublisher;
+        this.accessPolicy = accessPolicy;
         this.signingService = signingService;
     }
 
     //Fetch all applications marked UNDER_REVIEW / Marked as DONE -Robin
     //Further requires indexation, and sorting options
-    @Cacheable(cacheNames = "applicationLists", key = "'review-' + #reviewPageable + '-' + #decidedPageable")
+
     public BackOfficeListsDTO applicationsForReview(
             @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-        PagedResult<ReviewInfo> underReview = PagedResult.from(
-                creditRepo.findByStatusInOrderByCreatedAtAsc(
-                        List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING,ApplicationStatus.PENDING_DOCS),
-                        reviewPageable)
-                        .map(ReviewInfo::new));
+        Page<ReviewListElement> reviewInfo;
+        Page<HistoricListElement> historicalReviewInfo;
+        PagedResult<ReviewListElement> underReview;
+        PagedResult<HistoricListElement> decidedReview;
+        List<ApplicationStatus> toBeReviewedStatuses = List.of(
+                ApplicationStatus.UNDER_REVIEW,
+                ApplicationStatus.PENDING_SCORING,
+                ApplicationStatus.PENDING_DOCS);
+        List<ApplicationStatus> hasBeenReviewedStatuses = List.of(
+                ApplicationStatus.APPROVED,
+                ApplicationStatus.REJECTED);
 
-        PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
-                creditRepo.findByStatusInOrderByCreatedAtAsc(
-                        List.of(ApplicationStatus.APPROVED, ApplicationStatus.REJECTED),
-                        decidedPageable)
-                        .map(HistoricalReviewInfo::new));
+
+        if(accessPolicy.caseworkerHasSpecialAccess()){
+            reviewInfo = findByStatusAll(toBeReviewedStatuses,reviewPageable).map(ReviewProtectedInfo::new);
+            historicalReviewInfo = findByStatusAll(hasBeenReviewedStatuses,decidedPageable).map(HistoricalReviewProtectedInfo::new);
+
+            underReview = PagedResult.from(
+                    reviewInfo);
+
+            decidedReview = PagedResult.from(
+                    historicalReviewInfo);
+
+
+        } else {
+            reviewInfo = findByStatusRestricted(toBeReviewedStatuses,reviewPageable).map(ReviewInfo::new);
+            historicalReviewInfo = findByStatusRestricted(hasBeenReviewedStatuses,decidedPageable).map(HistoricalReviewInfo::new);
+
+            underReview = PagedResult.from(
+                    reviewInfo);
+
+            decidedReview = PagedResult.from(
+                    historicalReviewInfo);
+        }
 
 
         return new BackOfficeListsDTO(decidedReview,underReview);
     }
 
+    private Page<CreditApplication> findByStatusRestricted(
+            List<ApplicationStatus> statuses, Pageable pageable) {
+
+        String key = "review-" + statuses + "-" + pageable;
+
+        return cacheManager.getCache("restrictedAccessApplications")
+                .get(key, () -> creditRepo
+                        .findByStatusInAndProtectedResourceFalseOrderByCreatedAtAsc(
+                                statuses, pageable));
+    }
+
+    private Page<CreditApplication> findByStatusAll(
+            List<ApplicationStatus> statuses, Pageable pageable) {
+
+        String key = "review-" + statuses + "-" + pageable;
+
+        return cacheManager.getCache("certifiedAccessApplications")
+                .get(key, () -> creditRepo
+                        .findByStatusInOrderByCreatedAtAsc(statuses, pageable));
+    }
+
+
     //Decision,  Calls other services or the application directly to update the status and updated att fields. (Updated at might be automated in postgress)
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
     public void application_decision(Long applicationId,ApplicationStatus decision,String workerEmail,String workerName, String comment){
 
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); // throws NoSuchElement
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
+
         ApplicationStatus previousStatus = application.getStatus();
         if (previousStatus == ApplicationStatus.PENDING_CO_SIGNATURE && decision == ApplicationStatus.APPROVED) {
             throw new IllegalArgumentException(
@@ -105,19 +164,28 @@ public class BackofficeService {
     }
 
     //Fetch Details
-    public CreditApplicationDetails application_details(Long id){
+    public ApplicationWithDocumentsDTO application_details(Long id){
 
         CreditApplication application = creditRepo.findById(id).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+ id);
+        }
+
         List<DocumentDTO> linkedDocuments =
                 documentRepo.findByApplicationId(id).stream().map(DocumentDTO::new).toList();
 
-        return new CreditApplicationDetails(new CreditApplicationDTO(application),linkedDocuments);
+        return new ApplicationWithDocumentsDTO(new CreditApplicationProtectedDTO(application),linkedDocuments);
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
     public void application_comment(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         application.setComment(comment);
 
         auditService.commentAdded(application, workerEmail, workerName, comment);
@@ -126,16 +194,26 @@ public class BackofficeService {
     //Hämtar hela auditloggen för ett ärende, äldsta händelsen först
     // Kollar först att ärendet finns, annars hade ett okänt id gett en tom lista istället för 404
     public List<AuditEventDTO> application_audit_log(Long applicationId) {
-        creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+        CreditApplication application = creditRepo.findById(applicationId).orElseThrow(); //throws NoSuchElement -> 404
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         return auditService.findAuditEventsByApplicationID(applicationId);
     }
 
     //Handläggaren ber kunden komplettera: ärendet får status PENDING_DOCS och texten sparas som senaste kommentar,
     // så att kunden kan se vad som saknas
     @Transactional
-    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    @CacheEvict(cacheNames = {"restrictedAccessApplications", "certifiedAccessApplications"}, allEntries = true)
     public void application_request_documents(Long applicationId, String comment, String workerEmail, String workerName) {
         CreditApplication application = creditRepo.findById(applicationId).orElseThrow();
+
+        if(!accessPolicy.caseworkerCanReadResource(application)){
+            throw new NoSuchElementException("No application with id "+applicationId);
+        }
+
         ApplicationStatus previousStatus = application.getStatus();
 
         //Ett avgjort ärende kan inte kompletteras

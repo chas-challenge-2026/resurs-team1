@@ -1,14 +1,17 @@
 package se.comerit.resurs.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
 import se.comerit.resurs.dto.DocumentDTO;
 import se.comerit.resurs.dto.application.*;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
@@ -67,7 +70,7 @@ public class ApplicationController {
     // ============================================================
     @PreAuthorize("hasRole('COMPANY')")
     @PostMapping("/apply")
-    public ResponseEntity<CreditApplicationDTO> submitApplication(
+    public ResponseEntity<CreditApplicationDataObject> submitApplication(
 
            @Valid @RequestBody ApplicationSubmission submission,
            @AuthenticationPrincipal CompanyPrincipal principal) {
@@ -92,11 +95,22 @@ public class ApplicationController {
             //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
             newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
         } catch (CompanyRegistryUnavailableException e){
+
+            ApplicationStatus failedScoringStatus;
+            String reason;
+            if(signatoryProtected){
+                failedScoringStatus = ApplicationStatus.PENDING_DOCS;
+                reason = "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in årsredovisning";
+            } else{
+                failedScoringStatus = ApplicationStatus.PENDING_SCORING;
+                reason = "Vår kreditupplysningstjänst är nere eller underlag saknas, invänta handläggare eller vänta på omprövning";
+            }
+
             newApplication = new NewApplicationDTO(submission.requestedAmount(), submission.purpose(), submission.durationMonths(),
-                    ApplicationStatus.PENDING_SCORING, null, null, null,
+                    failedScoringStatus, "could not score", reason, null,
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
-        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected, signatory);
+        CreditApplicationDataObject application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected, signatory);
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================
@@ -121,9 +135,14 @@ public class ApplicationController {
     @PreAuthorize("hasAnyRole('COMPANY', 'CASEWORKER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationWithDocumentsDTO> viewApplication(@PathVariable("id") Long id,
-                                                                       @AuthenticationPrincipal Object principal) {
-        CreditApplicationDTO app = appService.findApplicationByID(id);
-        accessPolicy.checkCanView(principal, app);
+                                                                       @AuthenticationPrincipal Authentication authentication) {
+        CreditApplicationDataObject app = appService.findApplicationByID(id);
+        if(!accessPolicy.canViewSensitiveData(app.orgNumber())){
+            throw new NoSuchElementException();
+        }
+
+
+
 
         // Fetch documents for this application
         List<DocumentDTO> docs = documentService.findByApplicationId(id);
@@ -135,18 +154,18 @@ public class ApplicationController {
     // ============================================================
     @PreAuthorize("hasRole('COMPANY')")
     @GetMapping()
-    public ResponseEntity<List<CreditApplicationDTO>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal, Pageable pageable) {
+    public ResponseEntity<Page<CreditApplicationDataObject>> listApplications(@AuthenticationPrincipal CompanyPrincipal principal, Pageable pageable) {
             // Get companyId via orgNumber — no caching, hits DB every time
             Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
-        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID, pageable);
+        Page<CreditApplicationDataObject> apps = appService.readApplicationsByCompanyDesc(companyID, pageable);
 
         return ResponseEntity.ok(apps);
 
     }
     @PreAuthorize("hasRole('CASEWORKER')")
     @GetMapping("/company")
-    public ResponseEntity<List<CreditApplicationDTO>> listApplicationsByOrgNumber(
+    public ResponseEntity<Page<CreditApplicationDataObject>> listApplicationsByOrgNumber(
             @RequestParam("orgNumber") String orgNumber, Pageable pageable) {
         return ResponseEntity.ok(appService.getApplicationsByOrgNumber(orgNumber, pageable));
     }
@@ -156,15 +175,15 @@ public class ApplicationController {
     // ============================================================
     @PreAuthorize("hasRole('COMPANY')")
     @GetMapping("/dashboard")
-    public ResponseEntity<List<ApplicationShortDTO>> dashboard(
+    public ResponseEntity<Page<ApplicationShortDTO>> dashboard(
             @AuthenticationPrincipal CompanyPrincipal principal, Pageable pageable) {
 
         Long companyID = companyService.getCompanyFromOrgNumber(principal.orgNumber()).id();
 
         // Count applications by status
-        List<CreditApplicationDTO> apps = appService.readApplicationsByCompanyDesc(companyID,pageable);
+        Page<CreditApplicationDataObject> apps = appService.readApplicationsByCompanyDesc(companyID,pageable);
 
-        return ResponseEntity.ok(apps.stream().map(ApplicationShortDTO::new).toList());
+        return ResponseEntity.ok(apps.map(ApplicationShortDTO::new));
     }
 
 
@@ -172,7 +191,7 @@ public class ApplicationController {
     // Ingen body behövs eftersom allt som behövs ligger redan sparat på ärendet
     @PostMapping("rescore/{id}")
     @PreAuthorize("hasRole('CASEWORKER')")
-    public ResponseEntity<CreditApplicationDTO> rescore(@PathVariable("id") Long id) {
+    public ResponseEntity<CreditApplicationDataObject> rescore(@PathVariable("id") Long id) {
         return ResponseEntity.ok(appService.rescoreApplication(id));
     }
 
@@ -181,15 +200,15 @@ public class ApplicationController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<ApplicationCommentDTO>> listComments(@PathVariable("id") Long id,
                                                                     @AuthenticationPrincipal Object principal) {
-        CreditApplicationDTO app = appService.findApplicationByID(id);
+        CreditApplicationDataObject app = appService.findApplicationByID(id);
         accessPolicy.checkCanView(principal, app);
         return ResponseEntity.ok(appService.findComments(id));
     }
     @PreAuthorize("hasRole('COMPANY')")
     @PostMapping("/{id}/sign")
-    public ResponseEntity<CreditApplicationDTO> signApplication(@PathVariable("id") Long id,
+    public ResponseEntity<CreditApplicationDataObject> signApplication(@PathVariable("id") Long id,
                                                                 @AuthenticationPrincipal CompanyPrincipal principal) {
-        CreditApplicationDTO app = appService.findApplicationByID(id);
+        CreditApplicationDataObject app = appService.findApplicationByID(id);
         accessPolicy.checkCanView(principal, app);
         return ResponseEntity.ok(signingService.coSign(id, principal.personalNumber()));
     }

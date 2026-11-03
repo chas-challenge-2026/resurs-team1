@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom"
+import { FiLock } from "react-icons/fi"
 import type { CaseListItem } from "../../api/applicationApi"
 import { ICONS, STATUS_LABELS } from "../../constants/constants"
 import { formatCurrency, formatDate } from "../../utils/formatters"
@@ -10,7 +11,7 @@ interface SidebarCaseCardProps {
 }
 
 const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
-  const { id, status, companyName, requestedAmount, createdAt } = application
+  const { id, status, companyName, requestedAmount, createdAt, protectedResource } = application
   const StatusIcon = ICONS[status]
 
   return(
@@ -18,6 +19,13 @@ const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
       to={`/arenden/${id}`}
       className={({ isActive }) => isActive ? `${s.card} ${s.active}` : s.card}
     >
+      {protectedResource && (
+        // folded corner
+        <span className={s.protectedCorner}>
+          <FiLock className={s.protectedIcon} aria-hidden />
+        </span>
+      )}
+
       <div className={s.row}>
         <span className={s.company} title={companyName}>{companyName}</span>
         <span className={s.amount}>{formatCurrency(requestedAmount)}</span>

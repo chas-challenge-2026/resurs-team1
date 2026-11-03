@@ -7,6 +7,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.CreditApplicationDataObject;
+import se.comerit.resurs.dto.CreditApplicationProtectedDTO;
 import se.comerit.resurs.dto.application.ApplicationSignatureDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
@@ -75,7 +77,7 @@ public class ApplicationSigningService {
 
    @Transactional
     @CacheEvict(cacheNames = "applicationLists", allEntries = true)
-    public CreditApplicationDTO coSign(Long applicationId, String personalNumber){
+    public CreditApplicationDataObject coSign(Long applicationId, String personalNumber){
        CreditApplication application = applicationRepository.findById(applicationId).orElseThrow();
        if (application.getStatus() == ApplicationStatus.REJECTED) {
            throw new IllegalArgumentException("Application " + applicationId + " is rejected and can not be signed");
@@ -96,7 +98,9 @@ public class ApplicationSigningService {
            eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
                    application.getId(), application.getContactEmail(), application.getStatus()));
        }
-       return new CreditApplicationDTO(application);
+       return application.isProtectedResource()
+               ? new CreditApplicationProtectedDTO(application)
+               : new CreditApplicationDTO(application);
    }
 
     private boolean hasSigned(Long applicationId, String personalNumber) {

@@ -1,0 +1,22 @@
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-base);
+  background-color: var(--protected-bg);
+  color: var(--protected-text);
+  border-top: 1px solid var(--protected-border);
+  border-bottom: 1px solid var(--protected-border);
+  font-size: var(--font-size-sm);
+}
+
+.icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
