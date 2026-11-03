@@ -59,15 +59,20 @@ CREATE TABLE applications (
     protected_resource BOOLEAN NOT NULL DEFAULT FALSE,
     requires_co_signature BOOLEAN NOT NULL DEFAULT FALSE
 );
+CREATE TABLE signatories (
+    id BIGSERIAL PRIMARY KEY,
+    personal_number bytea NOT NULL,
+    search_key_personal_number bytea NOT NULL UNIQUE,
+    name bytea NOT NULL
+);
 
 CREATE TABLE application_signatures (
     id BIGSERIAL PRIMARY KEY,
     application_id INT NOT NULL REFERENCES applications(id),
-    personal_number bytea NOT NULL,
-    search_key_personal_number bytea NOT NULL,
+    signatory_id BIGINT NOT NULL REFERENCES signatories(id),
     signer_name bytea NOT NULL,
     signed_at TIMESTAMPTZ NOT NULL,
-    UNIQUE (application_id, search_key_personal_number)
+    UNIQUE (application_id, signatory_id)
 );
 
 CREATE TABLE documents (
