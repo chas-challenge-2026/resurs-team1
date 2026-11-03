@@ -86,7 +86,7 @@ public class ApplicationController {
                     ApplicationStatus.PENDING_SCORING, null, null, null,
                    company.companyName(), submission.orgNumber(), signatory.name(), 0);
         }
-        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected);
+        CreditApplicationDTO application = appService.saveApplication(newApplication, submission.contactDetails(), signatoryProtected, signatory);
         //I moved this to Application service, it does not fetch the log and update it as its unneccesary when we create the log either way.
         // TODOs are found in the corresponding lines
         // ===========================================================

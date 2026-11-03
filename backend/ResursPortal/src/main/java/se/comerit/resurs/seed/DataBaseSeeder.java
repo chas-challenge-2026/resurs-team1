@@ -6,7 +6,9 @@ import org.springframework.stereotype.Component;
 import se.comerit.resurs.dto.ContactDetails;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.caseworker.CreateCaseWorkerRequest;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.enums.SigningRight;
 import se.comerit.resurs.persistence.CaseWorkerRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.service.ApplicationService;
@@ -60,7 +62,7 @@ public class DataBaseSeeder implements CommandLineRunner {
         }
 
         for(NewApplicationDTO creditApplication:seedApplications ){
-            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false);
+            applicationService.saveApplication(creditApplication,new ContactDetails("Anders Karlsson","Anka@Email.se","707333333333"), false, new CompanyValidationApiDTO.Signatory("198001011234", "Anders Karlsson", "VD", SigningRight.ALONE));
         }
 
         workerRoles.forEach((email,roles) -> {

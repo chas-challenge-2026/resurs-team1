@@ -157,14 +157,12 @@ public class GlobalExceptionHandler {
 
         HttpStatus status = switch (ex.reason()) {
             case COMPANY_NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case NOT_AUTHORIZED_SIGNATORY, REQUIRES_JOINT_SIGNATURE -> HttpStatus.FORBIDDEN;
+            case NOT_AUTHORIZED_SIGNATORY -> HttpStatus.FORBIDDEN;
         };
 
         String message = switch (ex.reason()) {
             case COMPANY_NOT_FOUND -> "No company is registered with that organisation number";
             case NOT_AUTHORIZED_SIGNATORY -> "You are not a registered signatory for this company";
-            case REQUIRES_JOINT_SIGNATURE ->
-                    "This company must be signed for jointly and cannot be signed by one person alone";
         };
 
         ApiError body = new ApiError(Instant.now(), ex.reason().name(), message, null);

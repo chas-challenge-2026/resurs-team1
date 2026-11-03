@@ -10,11 +10,13 @@ import se.comerit.resurs.dto.CreditApplicationDTO;
 import se.comerit.resurs.dto.application.ApplicationCommentDTO;
 import se.comerit.resurs.dto.application.NewApplicationDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CompanyRepository;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.model.Company;
 import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.persistence.model.Signatory;
 import se.comerit.resurs.util.HMACHasher;
 import org.springframework.context.ApplicationEventPublisher;
 import se.comerit.resurs.notification.ApplicationStatusChangedEvent;
@@ -38,9 +40,10 @@ public class ApplicationService {
     private final ScoringService scoringService;
     private final HMACHasher hmacHasher;
     private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationSigningService signingService;
 
 
-    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher) {
+    public ApplicationService(CompanyRepository companyRepository, CreditApplicationRepository applicationRepository, AuditService auditService, CompanyFinancialService financialService, CompanyValidationService validationService, ScoringService scoringService, CompanyService companyService, HMACHasher hmacHasher, ApplicationEventPublisher eventPublisher, ApplicationSigningService signingService) {
         this.companyRepository = companyRepository;
         this.applicationRepository = applicationRepository;
         this.auditService = auditService;
@@ -50,12 +53,13 @@ public class ApplicationService {
         this.companyService = companyService;
         this.hmacHasher = hmacHasher;
         this.eventPublisher = eventPublisher;
+        this.signingService = signingService;
     }
 
     //Submit application
     @Transactional
     @CacheEvict(cacheNames = "applicationLists", allEntries = true)
-    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected) {
+    public CreditApplicationDTO saveApplication(NewApplicationDTO newApplication, ContactDetails contactDetails, boolean signatoryProtected, CompanyValidationApiDTO.Signatory signatory) {
 
         CreditApplication creditApplication = new CreditApplication();
 
@@ -86,21 +90,26 @@ public class ApplicationService {
         creditApplication.setContactNumber(contactDetails.phoneNumber());
         creditApplication.setContactName(contactDetails.name());
         creditApplication.setProtectedResource(signatoryProtected);
+        creditApplication.setRequiresCoSignature(signatory.requiresCoSigner());
 
+        // recordSignature kollar om personen som skickar in har signerat tidigare. Finns då sparat i SignatoryRepository annars sparar den användaren där.
+        //resolveApproval kollar om applicationStatus är approved och om den är fully signed via alone eller jointly. Sätter status till pending_co_signature om det är approved och är jointly.
+        //Annars är statusen som den var redan.
+            creditApplication.setStatus(signingService.resolveApprovalStatus(creditApplication, creditApplication.getStatus()));
+            CreditApplication saved = applicationRepository.save(creditApplication);
+            signingService.recordSignature(saved, signatory.personalNumber(), signatory.name());
 
-        CreditApplication saved = applicationRepository.save(creditApplication);
-
-        //loggar efter att application finns sparad i databas.
-        auditService.applicationCreated(saved);
-        if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
-            auditService.scoringRun(saved, newApplication.flagCount());
-        }
-        //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
-        //Mejlet skickas först efter commit
-        eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
-                saved.getId(), saved.getContactEmail(),
-                saved.getStatus()));
-        return new CreditApplicationDTO(saved);
+            //loggar efter att application finns sparad i databas.
+            auditService.applicationCreated(saved);
+            if (saved.getStatus() != ApplicationStatus.PENDING_SCORING) {
+                auditService.scoringRun(saved, newApplication.flagCount());
+            }
+            //Bekräftelse till kunden (och eventuellt ett automatiskt beslut)
+            //Mejlet skickas först efter commit
+            eventPublisher.publishEvent(new ApplicationStatusChangedEvent(
+                    saved.getId(), saved.getContactEmail(),
+                    saved.getStatus()));
+            return new CreditApplicationDTO(saved);
     }
 
     /*hämtar mockad information som matchar "bolagsApi" som i sin tur hämtar ifrån bolagsverket.
