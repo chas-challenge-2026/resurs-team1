@@ -13,6 +13,6 @@ import se.comerit.resurs.dto.PagedResult;
  */
 
 public record BackOfficeListsDTO(
-        PagedResult<HistoricalReviewInfo> decidedApplications,
-        PagedResult<ReviewInfo> reviewApplications)
+        PagedResult<HistoricListElement> decidedApplications,
+        PagedResult<ReviewListElement> reviewApplications)
 {}

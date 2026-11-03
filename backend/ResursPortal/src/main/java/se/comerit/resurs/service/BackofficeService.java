@@ -14,9 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import se.comerit.resurs.dto.*;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
-import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
-import se.comerit.resurs.dto.backoffice.HistoricalReviewInfo;
-import se.comerit.resurs.dto.backoffice.ReviewInfo;
+import se.comerit.resurs.dto.backoffice.*;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.persistence.CreditApplicationRepository;
 import se.comerit.resurs.persistence.DocumentRepository;
@@ -69,8 +67,10 @@ public class BackofficeService {
     public BackOfficeListsDTO applicationsForReview(
             @Qualifier Pageable reviewPageable, @Qualifier Pageable decidedPageable) {
 
-        Page<CreditApplication> reviewInfo;
-        Page<CreditApplication> historicalReviewInfo;
+        Page<ReviewListElement> reviewInfo;
+        Page<HistoricListElement> historicalReviewInfo;
+        PagedResult<ReviewListElement> underReview;
+        PagedResult<HistoricListElement> decidedReview;
         List<ApplicationStatus> toBeReviewedStatuses = List.of(
                 ApplicationStatus.UNDER_REVIEW,
                 ApplicationStatus.PENDING_SCORING,
@@ -81,21 +81,26 @@ public class BackofficeService {
 
 
         if(accessPolicy.caseworkerHasSpecialAccess()){
-            reviewInfo = findByStatusAll(toBeReviewedStatuses,reviewPageable);
-            historicalReviewInfo = findByStatusAll(hasBeenReviewedStatuses,decidedPageable);
+            reviewInfo = findByStatusAll(toBeReviewedStatuses,reviewPageable).map(ReviewProtectedInfo::new);
+            historicalReviewInfo = findByStatusAll(hasBeenReviewedStatuses,decidedPageable).map(HistoricalReviewProtectedInfo::new);
+
+            underReview = PagedResult.from(
+                    reviewInfo);
+
+            decidedReview = PagedResult.from(
+                    historicalReviewInfo);
+
+
         } else {
-            reviewInfo = findByStatusRestricted(toBeReviewedStatuses,reviewPageable);
-            historicalReviewInfo = findByStatusRestricted(hasBeenReviewedStatuses,decidedPageable);
+            reviewInfo = findByStatusRestricted(toBeReviewedStatuses,reviewPageable).map(ReviewInfo::new);
+            historicalReviewInfo = findByStatusRestricted(hasBeenReviewedStatuses,decidedPageable).map(HistoricalReviewInfo::new);
+
+            underReview = PagedResult.from(
+                    reviewInfo);
+
+            decidedReview = PagedResult.from(
+                    historicalReviewInfo);
         }
-
-
-        PagedResult<ReviewInfo> underReview = PagedResult.from(
-                reviewInfo
-                        .map(ReviewInfo::new));
-
-        PagedResult<HistoricalReviewInfo> decidedReview = PagedResult.from(
-                historicalReviewInfo
-                        .map(HistoricalReviewInfo::new));
 
 
         return new BackOfficeListsDTO(decidedReview,underReview);

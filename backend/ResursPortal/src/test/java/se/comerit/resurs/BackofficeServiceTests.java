@@ -16,6 +16,7 @@ import se.comerit.resurs.dto.AuditEventDTO;
 import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
 import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
 import se.comerit.resurs.dto.backoffice.ReviewInfo;
+import se.comerit.resurs.dto.backoffice.ReviewListElement;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.enums.AuditAction;
 import se.comerit.resurs.persistence.AuditEventRepository;
@@ -196,7 +197,7 @@ class BackofficeServiceTests {
                 PageRequest.of(0,20),PageRequest.of(0,20));
 
         assertThat(result.reviewApplications().content())
-                .extracting(ReviewInfo::status)
+                .extracting(ReviewListElement::status)
                 .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_SCORING);
         assertThat(result.decidedApplications().content()).hasSize(1);
     }
@@ -460,7 +461,7 @@ class BackofficeServiceTests {
                 PageRequest.of(0, 20), PageRequest.of(0, 20));
 
         assertThat(result.reviewApplications().content())
-                .extracting(ReviewInfo::status)
+                .extracting(ReviewListElement::status)
                 .containsExactlyInAnyOrder(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.PENDING_DOCS);
     }
     //---------------

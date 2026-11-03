@@ -17,7 +17,7 @@ import java.time.Instant;
  */
 
 public record ReviewInfo(
-        long id,
+        Long id,
         BigDecimal requestedAmount,
         String purpose,
         Instant createdAt,
@@ -26,7 +26,7 @@ public record ReviewInfo(
         String decisionReason,
         String companyName,
         String orgNumber
-) {
+) implements ReviewListElement{
     public ReviewInfo(CreditApplication application) {
         this(application.getId(),
                 application.getRequestedAmount(),
