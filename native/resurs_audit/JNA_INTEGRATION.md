@@ -2,33 +2,63 @@
 
 [Native overview](../README.md) | [Audit API](README.md)
 
-This is the integration handoff for Java and deployment teams. The native
-library exposes a small C-linkage ABI from [wrapper.h](wrapper.h); C++-specific
-details are documented separately in [README.md](README.md).
+This guide describes the native contract and the implemented Java integration.
+The native library exposes a small C-linkage ABI from [wrapper.h](wrapper.h);
+C++-specific details are documented separately in [README.md](README.md).
+
+## Backend implementation
+
+The backend already implements this bridge:
+
+| Source | Responsibility |
+|---|---|
+| [NativeSignatureInterface](../../backend/ResursPortal/src/main/java/se/comerit/resurs/jna/NativeSignatureInterface.java) | JNA declarations for the four exported functions, using `BaseTSD.SIZE_T` for native `size_t`. |
+| [JnaConfig](../../backend/ResursPortal/src/main/java/se/comerit/resurs/jna/JnaConfig.java) | Loads `resurs_audit` and provides the interface as a Spring bean. |
+| [JNASignatureComponent](../../backend/ResursPortal/src/main/java/se/comerit/resurs/jna/JNASignatureComponent.java) | Canonicalizes signing input, calls native and creates the contiguous verification array. |
+| [NativeAuditMapper](../../backend/ResursPortal/src/main/java/se/comerit/resurs/jna/NativeAuditMapper.java) and [NativeAuditEntryStruct](../../backend/ResursPortal/src/main/java/se/comerit/resurs/jna/NativeAuditEntryStruct.java) | Recreate canonical bytes, retain their JNA `Memory` and map the native entry layout. |
+| [AuditService](../../backend/ResursPortal/src/main/java/se/comerit/resurs/service/AuditService.java) and [AuditSigningService](../../backend/ResursPortal/src/main/java/se/comerit/resurs/service/AuditSigningService.java) | Set chain links, persist signed events, query entries in sequence order and map verification results. |
+
+The signed object is defined by
+[AuditEventSignaturePayloadDTO](../../backend/ResursPortal/src/main/java/se/comerit/resurs/dto/audit/AuditEventSignaturePayloadDTO.java):
+`schemaVersion`, `eventId`, `applicationId`, `sequenceNumber`, `occurredAt`,
+`action`, `actor`, `data` and `previousHash`. It excludes `currentHash`,
+`signature` and `signingKeyId`. Both signing and verification serialize this
+DTO with the configured Jackson mapper, canonicalize it with
+`org.erdtman.jcs.JsonCanonicalizer` and encode it as UTF-8. Verification
+reconstructs the bytes from persisted values rather than storing canonical
+bytes separately.
+
+The component uses the Base64-decoded `encryption.hashKey` configuration value
+as the raw 32-byte Ed25519 private key and derives its public key for verification.
+This path currently uses one configured signing key; it does not select keys
+by `signingKeyId`. Key rotation and key-ID persistence remain application
+responsibilities. A non-zero hash-and-sign result currently becomes a generic
+`JnaSigningException`; verification codes are mapped in `AuditSigningService`.
 
 ## Implementation summary
 
-Implement the Java integration in this order:
+The Java/native flow is:
 
-1. Create the unsigned audit-entry object. Include `sequenceNumber`,
+1. Determine the chain position and link first. For the first entry, use
+   sequence number 1 and 32 zero bytes as `previousHash`. For every later entry,
+   use the next sequence number and the preceding entry's `currentHash`.
+2. Create the unsigned audit-entry object. Include `sequenceNumber`,
    `previousHash`, and every application field that must be protected. Do not
    include `currentHash` or `signature`.
-2. Canonicalize the complete object with an RFC 8785 implementation. Sorting
+3. Canonicalize the complete object with an RFC 8785 implementation. Sorting
    the JSON properties alone is not sufficient.
-3. Convert the canonical result to a UTF-8 `byte[]`. If the canonicalization
+4. Convert the canonical result to a UTF-8 `byte[]`. If the canonicalization
    library already returns bytes, use them directly.
-4. Call `wrapper_hash_and_sign` with the canonical bytes, private key, output
+5. Call `wrapper_hash_and_sign` with the canonical bytes, private key, output
    buffers, and every corresponding length. Store `currentHash` and `signature`
    only when the returned result is `0`.
-5. For the first entry, use 32 zero bytes as `previousHash`. For every later
-   entry, use the preceding entry's `currentHash`.
 6. Preserve the exact canonical bytes, or preserve immutable source values
    from which Java can reproduce exactly the same bytes during verification.
 7. To verify the log, load the complete chain beginning with sequence number 1
    and order it by ascending `sequenceNumber`.
-8. Build one contiguous JNA `AuditEntry` array with the canonical bytes and
-   stored values, then call `wrapper_verify_chain` with the public key and its
-   length.
+8. Build one contiguous native `AuditEntry` array using Java's
+   `NativeAuditEntryStruct`, with canonical bytes and stored values, then call
+   `wrapper_verify_chain` with the public key and its length.
 9. Treat `VerifyChainResult.resultCode == 0` as success and every other value
    as failure. Read `index` only for the entry-specific codes documented below.
 
@@ -54,11 +84,17 @@ prebuilt/win32-x86-64/resurs_audit.dll
 Load the platform library without its prefix or extension:
 
 ```java
-Native.load("resurs_audit", ResursAuditLibrary.class);
+Native.load("resurs_audit", NativeSignatureInterface.class);
 ```
 
-The Java application owns library placement, extraction from a JAR if used,
-and configuration of `jna.library.path` or another native search location.
+The backend packages copies under
+`src/main/resources/linux-x86-64/libresurs_audit.so` and
+`src/main/resources/win32-x86-64/resurs_audit.dll`. JNA can extract the matching
+platform resource when loading from the classpath or JAR; see
+[JNA's loading implementation](https://github.com/java-native-access/jna/blob/5.19.1/src/com/sun/jna/NativeLibrary.java).
+An external directory can instead be configured with `jna.library.path`.
+The application owns packaging and must keep resource copies aligned with the
+selected prebuilts. Native CI does not update them.
 
 ## Supported exported functions
 
@@ -156,23 +192,17 @@ struct VerifyChainResult
 
 JNA must model `size_t` using a native-size integer. Do not map it to
 `NativeLong`: C `long` is 32 bits on 64-bit Windows while `size_t` is 64 bits.
-One portable mapping is:
+The backend uses `com.sun.jna.platform.win32.BaseTSD.SIZE_T`. Despite its
+package name, this integer type uses the native pointer width and is used for
+the supported x86-64 Linux and Windows mappings. A custom unsigned
+`IntegerType` based on `Native.SIZE_T_SIZE` is another possible mapping.
+
+The production structure has this field layout. Its full implementation also
+retains the canonical-data `Memory` allocation and implements `AutoCloseable`:
 
 ```java
-public final class SizeT extends IntegerType {
-    public SizeT() {
-        this(0);
-    }
+import com.sun.jna.platform.win32.BaseTSD.SIZE_T;
 
-    public SizeT(long value) {
-        super(Native.SIZE_T_SIZE, value, true);
-    }
-}
-```
-
-A structure mapping can follow this shape:
-
-```java
 @Structure.FieldOrder({
     "canonicalData",
     "canonicalDataLength",
@@ -181,9 +211,9 @@ A structure mapping can follow this shape:
     "currentHash",
     "sequenceNumber"
 })
-public class AuditEntry extends Structure {
+public class NativeAuditEntryStruct extends Structure {
     public Pointer canonicalData;
-    public SizeT canonicalDataLength;
+    public SIZE_T canonicalDataLength;
     public byte[] signature = new byte[64];
     public byte[] previousHash = new byte[32];
     public byte[] currentHash = new byte[32];
@@ -207,44 +237,53 @@ the native call returns. Entries must be stored as one contiguous JNA structure
 array in the exact field order above. Validate JNA structure sizes and offsets
 on both Windows x86-64 and Linux x86-64 in Java integration tests.
 
-## Suggested JNA interface
+For the documented x86-64 layout, `AuditEntry` is 152 bytes with field offsets
+`0, 8, 16, 80, 112, 144` in the order shown above. `VerifyChainResult` is 16
+bytes with `result_code` at offset 0 and `index` at offset 8; both structures
+have 8-byte alignment. Native tests check these values on the native side.
+
+## JNA interface
+
+The backend interface has these signatures. Its instance is supplied by
+`JnaConfig`, so the interface does not declare a separate static singleton.
 
 ```java
-public interface ResursAuditLibrary extends Library {
-    ResursAuditLibrary INSTANCE =
-            Native.load("resurs_audit", ResursAuditLibrary.class);
+import com.sun.jna.Library;
+import com.sun.jna.platform.win32.BaseTSD.SIZE_T;
 
+public interface NativeSignatureInterface extends Library {
     int generate_private_key(
             byte[] outputPrivateKey,
-            SizeT outputPrivateKeyLength);
+            SIZE_T outputPrivateKeyLength);
 
     int get_public_key(
             byte[] privateKey,
-            SizeT privateKeyLength,
+            SIZE_T privateKeyLength,
             byte[] outputPublicKey,
-            SizeT outputPublicKeyLength);
+            SIZE_T outputPublicKeyLength);
 
     int wrapper_hash_and_sign(
             byte[] canonicalData,
-            SizeT canonicalDataLength,
+            SIZE_T canonicalDataLength,
             byte[] privateKey,
-            SizeT privateKeyLength,
+            SIZE_T privateKeyLength,
             byte[] outputHash,
-            SizeT outputHashLength,
+            SIZE_T outputHashLength,
             byte[] outputSignature,
-            SizeT outputSignatureLength);
+            SIZE_T outputSignatureLength);
 
     VerifyChainResult wrapper_verify_chain(
-            AuditEntry[] entries,
-            SizeT entryCount,
+            NativeAuditEntryStruct[] entries,
+            SIZE_T entryCount,
             byte[] publicKey,
-            SizeT publicKeyLength);
+            SIZE_T publicKeyLength);
 }
 ```
 
-This is a suggested mapping, not Java-owned production code. The Java team
-owns the final interface, memory-lifetime handling, error mapping, and
-integration tests.
+The Java team owns this interface, memory-lifetime handling, error mapping and
+integration tests. `JNASignatureComponent` uses `Structure.toArray` to allocate
+contiguous entries and closes their canonical-data allocations after the native
+verification call returns.
 
 ## Creating and verifying an entry
 
@@ -298,6 +337,8 @@ The verifier requires:
 
 Pagination or a partial range such as sequence numbers 21 through 40 cannot be
 passed directly to the current verifier.
+Selecting entries for one application is the caller's responsibility; native
+does not parse or compare the `applicationId` inside canonical JSON.
 
 ## Result-code handling
 
@@ -342,6 +383,9 @@ match the native interface exactly. Treat every non-zero value as failure.
 
 The hash may already have been written before a later signing error occurs.
 Java must nevertheless ignore both output buffers unless the result is `0`.
+Thrown hashing or allocation failures map to `HASH_AND_SIGN_INTERNAL_ERROR`
+(`-10`). `HASH_AND_SIGN_HASHING_FAILED` (`-4`) is returned only for a non-zero
+result from the internal hash helper.
 
 ### Chain verification
 
@@ -361,10 +405,17 @@ Java must nevertheless ignore both output buffers unless the result is `0`.
 | `-11` | `VERIFY_CHAIN_FAILED_TO_CONVERT_PUBLIC_KEY` | The public key could not be converted to an OpenSSL Ed25519 key. | No |
 | `-12` | `VERIFY_CHAIN_RESULT_INTERNAL_ERROR` | An exception or other internal failure was contained by the native boundary. | No |
 
-When `index` is valid, it is the zero-based position of the first failing entry
-in the supplied array. It is not the entry's sequence number. Native sets the
-field to zero for non-entry-specific results, but Java must not interpret that
+When `index` is valid, it is the zero-based position of the entry that failed
+in the reported validation or verification stage. It is not the entry's
+sequence number. Native sets the field to zero for non-entry-specific results,
+but Java must not interpret that
 zero as a failing entry.
+
+The wrapper validates every entry's canonical-data pointer and length before
+starting cryptographic verification. Therefore a validation error in a later
+entry can be returned before a chain or signature error in an earlier one.
+After validation, verification stops at the first failed chain/hash/signature
+check in ascending array order.
 
 The misspelled native name `MISSMATCH` is retained for compatibility. Java may
 use clearer constant names internally if the numeric values remain identical.
@@ -404,13 +455,19 @@ native and Java migrations.
 
 ## Deployment and compatibility
 
-The Linux library depends on compatible versions of OpenSSL `libcrypto`,
-libstdc++, libgcc, and glibc. The selected shared Linux prebuilt is built on
-Ubuntu 22.04 for compatibility with Ubuntu 22.04 and newer tested runtimes. A
+The source requires OpenSSL 3.x. The dynamically linked Linux library depends
+on compatible versions of OpenSSL `libcrypto.so.3`, libstdc++, libgcc and glibc.
+Build the shared Linux prebuilt on Ubuntu 22.04 when distributing one binary
+for both supported Ubuntu releases, and verify it on each target runtime. A
 binary built on Ubuntu 24.04 must not be assumed to load on Ubuntu 22.04.
 
-A 64-bit JVM requires an x86-64 native library. The application should run a
-smoke test that loads the exact packaged prebuilt and calls the API on every
+The provided x86-64 libraries require an x86-64 JVM. The Windows prebuilt links
+OpenSSL statically and depends on the x64 MSVC runtime and Windows system
+libraries. Other Windows builds may require matching OpenSSL runtime DLLs;
+check the actual file with `dumpbin /dependents`.
+
+The application should run a smoke test that loads the exact packaged prebuilt
+and calls the API on every
 supported operating system; native C++ tests alone do not prove the JNA
 structure mapping and resource packaging.
 

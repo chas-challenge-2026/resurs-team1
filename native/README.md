@@ -2,7 +2,8 @@
 
 The native part of Resurs contains two C++17 shared libraries called from Java
 through JNA: `resurs_crypto` for AES-256-GCM encryption and `resurs_audit` for
-SHA-256 hashing, Ed25519 signing and audit-chain verification. Both use OpenSSL.
+SHA-256 hashing, Ed25519 signing and audit-chain verification. Both require
+OpenSSL 3.x.
 
 This README is the starting point for native development. Use the module guides
 for API details and the build/test guides for configuration, CI and troubleshooting.
@@ -53,7 +54,7 @@ additional trusted information needed to detect removal of the chain's tail.
 
 [CMakeLists.txt](CMakeLists.txt) defines both libraries, optional demos and the
 CTest test executables. A direct native build requires a C++17 compiler,
-CMake 3.20 or later and OpenSSL development files. The CI commands that produce
+CMake 3.20 or later and OpenSSL 3.x development files. The CI commands that produce
 JUnit XML require CMake 3.21 or later.
 
 For local Linux verification through Docker, run from the repository root with
@@ -67,6 +68,7 @@ The script builds and tests both Ubuntu 22.04 and 24.04 in Debug mode. On Window
 start Docker Desktop first. For individual Docker commands that also work in
 PowerShell, see the [Docker guide](DOCKER.md). For direct CMake/CTest commands,
 see the [developer guide](../docs/README.md#run-locally).
+For native Windows builds, see [Windows with Visual Studio](../docs/README.md#windows-with-visual-studio).
 
 The four CTest registrations cover crypto behavior, audit behavior and required
 exported functions in each built library. Native CI configures, compiles and

@@ -82,11 +82,14 @@ tests actually ran.
 
 [native/CMakeLists.txt](../native/CMakeLists.txt) defines the libraries,
 dependencies, demos and CTest registrations. The project requires CMake 3.20 or
-later and C++17. The CI command's JUnit reporting requires CMake 3.21 or later.
+later, C++17 and OpenSSL 3.x development files. The source uses OpenSSL 3 APIs;
+`find_package(OpenSSL REQUIRED)` currently does not enforce that minimum version,
+so finding an older OpenSSL package is not enough to build the project. The CI
+command's JUnit reporting requires CMake 3.21 or later.
 
 | Setting | Value in Native CI | Meaning |
 |---|---|---|
-| `CMAKE_BUILD_TYPE` | `Debug` | Builds with debug information and keeps the audit tests' `assert` checks active. |
+| `CMAKE_BUILD_TYPE` | `Debug` | Selects the Debug configuration for the single-configuration Linux build. |
 | `BUILD_TESTING` | `ON` | Builds and registers the test executables. |
 | `RESURS_BUILD_CRYPTO_DEMO` | `ON` | Includes the crypto demo in the build. |
 | `RESURS_BUILD_AUDIT_DEMO` | `ON` | Includes the audit demo in the build. |
@@ -96,6 +99,12 @@ The libraries link against OpenSSL Crypto. CMake enables compiler warnings with
 `-Wall -Wextra -Wpedantic`, or `/W4` with MSVC, for the libraries and test
 executables. Warnings are not generally treated as errors, so a passing build
 does not mean the compiler reported no warnings.
+
+The audit test harness replaces standard `assert` with always-active checks,
+so its checks and native calls run in both Debug and Release. Native CI runs
+Debug; Release is a separate distribution-build check. With Visual Studio's
+multi-configuration generator, select the configuration using `--config` when
+building and `-C` when running CTest, as shown below.
 
 ## What the tests check
 
@@ -111,7 +120,8 @@ tests or checks.
 
 The symbol tests check that functions can be found by their expected names. They
 do not run a JVM or verify the types and memory handling in Java declarations.
-The audit tests check structure layout on the native side.
+The audit tests check structure layout on the native side. Symbol tests require
+the listed exports to exist; they do not reject additional exported symbols.
 
 The audit suite also checks a limitation: a valid prefix of a chain can still
 verify after the tail has been removed. Detecting this requires the application
@@ -195,6 +205,28 @@ and reports failure if either version fails. It tests Linux builds even when
 the host runs Windows. For PowerShell commands, individual Docker builds,
 demos and optional audit sanitizers, see the [Docker guide](../native/DOCKER.md).
 
+### Windows with Visual Studio
+
+Use an x64 Visual Studio C++ toolchain, CMake and vcpkg with OpenSSL 3.x. Run
+from the repository root. Replace the vcpkg path with your installation and
+select an installed Visual Studio generator listed by `cmake --help`; this
+example uses Visual Studio 18 2026:
+
+```powershell
+cmake -S native -B build/native-windows -G "Visual Studio 18 2026" -A x64 "-DCMAKE_TOOLCHAIN_FILE=C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBUILD_TESTING=ON -DRESURS_BUILD_CRYPTO_DEMO=ON -DRESURS_BUILD_AUDIT_DEMO=ON
+cmake --build build/native-windows --config Debug --parallel 2
+ctest --test-dir build/native-windows -C Debug --output-on-failure --no-tests=error --timeout 120
+```
+
+`CMAKE_BUILD_TYPE` does not select a configuration for this generator. To verify
+a Release build, build with `--config Release` and run CTest with `-C Release`.
+The DLLs are placed under the build directory's `Debug/` or `Release/` folder.
+
+The `x64-windows-static` triplet links OpenSSL statically. The distributed
+Windows DLLs still depend on the x64 MSVC runtime and Windows system libraries.
+A build using dynamic OpenSSL also needs matching OpenSSL runtime DLLs. Inspect
+the dependencies of the actual file with `dumpbin /dependents`.
+
 ## Troubleshoot a failed run
 
 Open the workflow run and start with the first failed step in the affected Ubuntu
@@ -245,8 +277,8 @@ registered CTest executable has a 120-second timeout.
    [native/Dockerfile](../native/Dockerfile) so the Docker workflow also builds
    them before CTest runs. CI uses the default build without this target list.
 5. Run configure and build again, check registrations with `ctest --show-only`
-   and run the tests. Keep Debug for the audit suite's `assert` checks; a Release
-   run cannot replace that verification.
+   and run the tests. Use Debug for the normal CI-equivalent pass and Release
+   when verifying distribution builds. Audit requirements remain active in both.
 
 When public functions change, review the corresponding symbol test and Java/JNA
 contract as well. When build settings, environments or report formats change,

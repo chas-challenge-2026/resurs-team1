@@ -12,6 +12,7 @@ verification of ordered audit chains. It uses OpenSSL and is built as:
 
 Java/JNA consumers should start with [JNA_INTEGRATION.md](JNA_INTEGRATION.md).
 The authoritative exported API is declared in [wrapper.h](wrapper.h).
+The implementation requires OpenSSL 3.x development files.
 
 ## Public native ABI
 
@@ -71,15 +72,21 @@ struct AuditEntry
 `wrapper_verify_chain` therefore expects a complete chain for one application,
 sorted by ascending sequence number. A page or partial chain beginning at a
 number other than 1 will fail verification.
+The caller must select entries for one application; native does not parse or
+compare the `applicationId` inside canonical JSON.
 
-For every entry, verification checks in this order:
+The wrapper first validates the top-level arguments and all entries'
+canonical-data pointers and lengths. It then imports the public key. For every
+entry, cryptographic verification checks in this order:
 
 1. The previous-hash link.
 2. `sequenceNumber == array index + 1`.
 3. The SHA-256 hash of the canonical bytes.
 4. The Ed25519 signature of `currentHash`.
 
-Verification stops on the first failure.
+Verification stops on the first failure in that stage. Because entry-data
+validation runs first for the entire array, a later entry's invalid pointer or
+length can be reported before an earlier entry's chain or signature error.
 
 ### Canonical-data contract
 
@@ -171,6 +178,10 @@ unless the complete operation returns `HASH_AND_SIGN_ALL_OK`.
 | `-9` | `HASH_AND_SIGN_SIGNING_INTERNAL_ERROR` | Signing returned an unexpected result. |
 | `-10` | `HASH_AND_SIGN_INTERNAL_ERROR` | An exception or other internal failure was contained. |
 
+Thrown hashing or allocation failures map to `HASH_AND_SIGN_INTERNAL_ERROR`
+(`-10`). `HASH_AND_SIGN_HASHING_FAILED` (`-4`) is returned only for a non-zero
+result from the internal hash helper.
+
 ### Chain verification
 
 | Value | Name | Meaning | `index` valid? |
@@ -234,8 +245,8 @@ cmake --build build/audit-debug \
            resurs_audit_demo \
   --parallel
 ctest --test-dir build/audit-debug \
-  -R resurs_audit_tests \
-  --output-on-failure
+  -R '^resurs_audit_.*tests$' \
+  --output-on-failure --no-tests=error
 ```
 
 For an additional Linux memory-safety and undefined-behavior check, build the
@@ -255,7 +266,8 @@ Build distribution binaries separately with `CMAKE_BUILD_TYPE=Release` after
 the Debug tests pass. A direct CMake distribution build may use
 `BUILD_TESTING=OFF`; the Dockerfile keeps tests enabled while producing the
 library. Linux builds have been verified in Ubuntu 22.04 and 24.04 containers,
-and Windows builds with MSVC x64.
+and Windows builds with MSVC x64. For Visual Studio's multi-configuration
+commands, see [Windows with Visual Studio](../../docs/README.md#windows-with-visual-studio).
 
 When one Linux binary must run on both supported Ubuntu releases, build the
 distribution `.so` in Ubuntu 22.04:
@@ -306,6 +318,10 @@ must support both Ubuntu 22.04 and 24.04. A library built on a newer Linux
 release must not be assumed to work on an older runtime. Platform-specific
 files in `artifacts/` are intermediate build outputs and are not distribution
 files.
+
+The backend packages copies under `src/main/resources/linux-x86-64/` and
+`src/main/resources/win32-x86-64/`. Keep those copies aligned with the selected
+native prebuilts. Native CI builds from source and does not update either set.
 
 The prebuilt files are part of the public integration contract. Rebuild and
 replace both platform files after changing any exported parameter, result type,

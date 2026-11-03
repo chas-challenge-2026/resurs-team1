@@ -4,7 +4,8 @@
 
 `resurs_crypto` is a shared native library exposing AES-256-GCM encryption and
 decryption through a stable C ABI. It is intended to be loaded from Java through
-JNA. The authoritative function contract is documented in `wrapper.h`.
+JNA. The authoritative function contract is documented in [wrapper.h](wrapper.h).
+Building the implementation requires OpenSSL 3.x development files.
 
 ## Public ABI
 
@@ -18,7 +19,7 @@ Both functions return a `CryptoStatus` value:
 | Value | Name | Meaning |
 |---:|---|---|
 | `0` | `CRYPTO_OK` | Operation completed successfully. |
-| `-1` | `CRYPTO_INVALID_ARGUMENT` | A pointer, length, or key length is invalid. |
+| `-1` | `CRYPTO_INVALID_ARGUMENT` | A pointer is null, an input-data length is not positive, another length is negative, or the key length is not 32. |
 | `-2` | `CRYPTO_INVALID_BUFFER_SIZE` | A data output buffer is too small, or an IV/tag length is not the required exact size. |
 | `-3` | `CRYPTO_AUTHENTICATION_FAILED` | Ciphertext authentication failed. |
 | `-4` | `CRYPTO_INTERNAL_ERROR` | The native crypto operation failed internally. |
@@ -36,7 +37,7 @@ only consume output buffers after `CRYPTO_OK`.
 
 ## Build and test
 
-From the `native` directory:
+For a single-configuration Linux build, run from the `native` directory:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
@@ -45,8 +46,13 @@ ctest --test-dir build --output-on-failure -R resurs_crypto
 ```
 
 On Linux this produces `libresurs_crypto.so`. On Windows it produces
-`resurs_crypto.dll`. Internal C++ symbols are hidden on platforms that support
-symbol visibility; the two C ABI functions are explicitly exported.
+`resurs_crypto.dll`; follow the [Windows build instructions](../../docs/README.md#windows-with-visual-studio)
+for Visual Studio's configuration selection.
+
+CMake hides implementation symbols by default and explicitly exports the two
+supported C ABI functions. Compiler-generated weak/template symbols can still
+appear in Linux export tables; they are not supported entry points. The symbol
+test checks required functions are present, not that all other symbols are absent.
 
 ### Docker builds for Linux
 
@@ -64,7 +70,7 @@ docker build --build-arg UBUNTU_VERSION=22.04 -t resurs-crypto-jammy ./native
 ```
 
 Both builds run the crypto behavior tests and the exported-symbol test. See
-`native/DOCKER.md` for demo, test, and operating-system verification commands.
+[the Docker guide](../DOCKER.md) for demo, test, and operating-system verification commands.
 
 Distribute the `.so` built for the same Ubuntu release as the consuming
 application's runtime, or for an older compatible release. A library built on
@@ -82,6 +88,18 @@ cmake --build build --target resurs_crypto_demo
 
 The example encrypts data with a generated IV and then decrypts it through the
 same public C API.
+
+## Prebuilt libraries and Java integration
+
+Selected x86-64 distribution libraries are tracked under
+`prebuilt/linux-x86-64/libresurs_crypto.so` and
+`prebuilt/win32-x86-64/resurs_crypto.dll`. The backend packages a copy of each
+under `src/main/resources/linux-x86-64/` and `src/main/resources/win32-x86-64/`.
+Updating source or running Native CI does not replace these files automatically.
+
+The Java bridge is implemented by `NativeCryptographerInterface` and
+`JNAEncryptionComponent`. See the [JNA integration guide](JNA_INTEGRATION.md)
+for source links, resource loading and the backend's encrypted payload format.
 
 ## Standardized AES-GCM verification
 
@@ -113,7 +131,8 @@ used by JNA.
 - Persist the IV and tag together with the ciphertext; all three are required
   for decryption.
 - Never reuse an IV with the same key. The encrypt function generates the IV to
-  prevent callers from accidentally reusing one.
+  avoid caller-supplied IV reuse. It uses random generation, not a persistent
+  uniqueness registry.
 - Treat `CRYPTO_AUTHENTICATION_FAILED` as an invalid or tampered encrypted
   value. Do not use the plaintext output buffer after any error.
 - Key storage and lifecycle are owned by the calling application and must be
