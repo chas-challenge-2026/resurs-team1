@@ -35,58 +35,6 @@ storage, and chain ordering. Native owns hashing, signing, and verification;
 it does not parse or modify the JSON. The following sections provide the exact
 JNA mappings, buffer sizes, and result codes.
 
-## Important update for existing Java work
-
-The native boundary has changed since the previous version of this document.
-If Java development has already started, update the integration as follows:
-
-1. `generate_private_key` now returns a result code and receives the output
-   buffer length.
-2. `get_public_key` now receives both the private-key length and the public-key
-   output-buffer length. It also has detailed result codes.
-3. `wrapper_hash_and_sign` now receives the hash and signature output-buffer
-   lengths. It also has detailed validation and operation result codes.
-4. `wrapper_verify_chain` has the same four parameters, but its numeric result
-   codes have changed because validation errors were added before the existing
-   verification errors.
-5. Every exported function validates its normal pointers and buffer sizes
-   before using them. Java must still allocate and retain valid native memory.
-6. Output buffers are usable only when the function reports success. Ignore
-   all output buffers after any non-zero result.
-7. Native exceptions are handled inside the exported functions and are
-   translated to result codes; no C++ exception is allowed across JNA.
-8. Replace the packaged `.dll` and `.so` together with the Java declarations.
-   Old binaries must not be used with the new declarations, or conversely.
-
-The parameter changes can be summarized as:
-
-| Function | Previous contract | Current contract |
-|---|---|---|
-| `generate_private_key` | Output buffer only; no result | Adds output length and returns `int` |
-| `get_public_key` | Private-key and output buffers | Adds both buffer lengths and detailed `int` result |
-| `wrapper_hash_and_sign` | No output-buffer lengths | Adds hash and signature buffer lengths and detailed `int` result |
-| `wrapper_verify_chain` | Four parameters | Same parameters; expanded and renumbered result codes |
-
-Existing verification constants must be updated as follows:
-
-| Existing meaning | Previous value | Current value |
-|---|---:|---:|
-| Previous-hash mismatch | `-1` | `-6` |
-| Sequence-number mismatch | `-2` | `-7` |
-| Current-hash mismatch | `-3` | `-8` |
-| Verification initialization failure | `-4` | `-9` |
-| Invalid signature/verification failure | `-5` | `-10` |
-| Public-key conversion failure | `-6` | `-11` |
-
-Values `-1` through `-5` are now input-validation results, and `-12` is the
-new internal verification error. Do not keep the previous numeric mapping.
-
-Native-only safety changes were also made. OpenSSL key objects are now released
-through native ownership, verification accepts only OpenSSL's explicit success
-result, returned verification indexes are initialized, and the public boundary
-contains exceptions. These changes do not add Java work beyond using the new
-signatures, lengths, result codes, and rebuilt libraries described above.
-
 ## Library names and packaged files
 
 | Platform | File | JNA load name |
