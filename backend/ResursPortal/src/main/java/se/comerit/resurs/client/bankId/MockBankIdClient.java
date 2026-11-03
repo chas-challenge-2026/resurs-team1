@@ -25,7 +25,9 @@ public class MockBankIdClient implements BankIdClient {
             "820624-5678", "Maria Svensson",
             "660930-7777","Johan Berg",
             "710214-7777", "Eva Berg",
-            "681105-9999", "Erik Lindqvist"
+            "681105-9999", "Erik Lindqvist",
+            "790505-2222", "Sara Lind",
+            "810808-2222", "Peter Lind"
     );
 
     @Override
