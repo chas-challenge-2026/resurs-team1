@@ -153,13 +153,13 @@ export interface DetailedApplication {
 export const APPLICATIONS_PAGE_SIZE = 5
 
 export const getApplications = async (page: number): Promise<Application[]> => {
-  const response = await api.get<Application[]>("/application", { params: { page, size: APPLICATIONS_PAGE_SIZE } })
-  return response.data
+  const response = await api.get<{ content: Application[] }>("/application", { params: { page, size: APPLICATIONS_PAGE_SIZE } })
+  return response.data.content
 }
 
 export const getCompanyApplications = async (orgNumber: string, page: number): Promise<Application[]> => {
-  const response = await api.get<Application[]>("/application/company", {params: {orgNumber, page, size: 20}})
-  return response.data
+  const response = await api.get<{ content: Application[] }>("/application/company", {params: {orgNumber, page, size: 20}})
+  return response.data.content
 }
 
 export const getApplicationById = async (id: number): Promise<Application> => {
