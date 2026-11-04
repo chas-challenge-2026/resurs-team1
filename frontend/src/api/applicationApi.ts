@@ -165,7 +165,7 @@ export const getCompanyApplications = async (orgNumber: string, page: number): P
 export const getApplicationById = async (id: number): Promise<Application> => {
   const response = await api.get(`application/${id}`)
   return {
-    ...response.data.app,
+    ...response.data.application,
     documents: response.data.documents,
   }
 }
