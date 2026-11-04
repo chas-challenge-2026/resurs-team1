@@ -18,6 +18,7 @@ import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
 import se.comerit.resurs.dto.companyvalidation.CompanyValidationApiDTO;
 import se.comerit.resurs.enums.ApplicationStatus;
 import se.comerit.resurs.exception.companyvalidation.CompanyRegistryUnavailableException;
+import se.comerit.resurs.exception.companyvalidation.InvalidRegistryResponseException;
 import se.comerit.resurs.security.ApplicationAccessPolicy;
 import se.comerit.resurs.security.CompanyPrincipal;
 import se.comerit.resurs.service.*;
@@ -94,7 +95,7 @@ public class ApplicationController {
 
             //#TODO CHANGE BRANCH TO BE FETCHED FROM VALIDATION SERVICE
             newApplication = creditScoreService.scoreFromFinancialObject(financials, submission.requestedAmount(), "bransch", submission.orgNumber(), company.companyName(), signatory.name(), submission.purpose(), submission.durationMonths());
-        } catch (CompanyRegistryUnavailableException e){
+        } catch (CompanyRegistryUnavailableException | InvalidRegistryResponseException e ){
 
             ApplicationStatus failedScoringStatus;
             String reason;
