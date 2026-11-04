@@ -1,0 +1,175 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.titleGroup {
+  display: flex;
+  gap: var(--space-base);
+  align-items: center;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: fit-content;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.backButton:hover {
+  color: var(--text-main);
+}
+
+.description {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Info Card Header */
+.infoHeader {
+  flex-direction: row;
+  align-items: center;
+}
+
+.iconWrapper {
+  display: none;
+  flex-shrink: 0;
+}
+
+.pageHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+
+.pageHeader > * {
+  grid-column: 1;
+}
+
+/* stands on the cards top edge */
+.mascot {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: end;
+  height: 80px;
+  margin-bottom: calc(-1 * var(--space-base) - 6px);
+  position: relative;
+  z-index: 1;
+}
+
+.infoTitle {
+  font-weight: 500;
+}
+
+.infoSubtitle {
+  color: var(--text-muted);
+}
+
+/* Info Card Body */
+.infoBody {
+  gap: var(--space-sm);
+}
+
+/* "Drop zone" */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  border: 1px dashed var(--dropzone-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-lg) var(--space-base);
+}
+
+.dropzone:hover,
+.dropzone:focus-visible {
+  border-color: var(--dropzone-border-hover);
+  background-color: var(--dropzone-bg-hover);
+}
+
+.dropzoneIcon {
+  font-size: 24px;
+  color: var(--brand-primary);
+}
+
+.dropzoneTitle {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: var(--font-size-sm);
+}
+
+.dropzoneHint {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Warning Card Footer */
+.warningFooter {
+  flex-direction: column;
+  gap: var(--space-base);
+  align-items: start;
+}
+
+.actionGroup {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.attachButton {
+  display: flex;
+  border-style: dashed;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Rejected list */
+.reasonList {
+  list-style: none;
+  padding-top: var(--space-xs);
+}
+
+.reasonItem {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Rejected comment box */
+.commentBox {
+  margin-top: var(--space-base);
+  padding: var(--space-sm);
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  text-align: left;
+}
+
+.commentLabel {
+  font-size: var(--font-size-sm) !important;
+  letter-spacing: 0.03em !important;
+}
+
+.commentText {
+  color: var(--text-main);
+  white-space: pre-wrap; 
+}
+
+@media (min-width: 768px) {
+  .iconWrapper {
+    display: block;
+    aspect-ratio: 1 / 1;
+    background-color: var(--brand-primary-light);
+    padding: var(--space-xs);
+    border-radius: var(--radius-pill);
+    font-size: 24px;
+    color: var(--brand-primary);
+  }
+}

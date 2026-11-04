@@ -1,154 +1,148 @@
 package se.comerit.resurs.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpSession;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import se.comerit.resurs.dto.AuditEventDTO;
+import se.comerit.resurs.dto.CreditApplicationDTO;
+import se.comerit.resurs.dto.application.ApplicationWithDocumentsDTO;
+import se.comerit.resurs.dto.backoffice.ApplicationCommentRequest;
+import se.comerit.resurs.dto.backoffice.ApplicationWithFinancesDTO;
+import se.comerit.resurs.dto.backoffice.BackOfficeListsDTO;
+import se.comerit.resurs.dto.companyvalidation.CompanyFinancialApiDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.security.CaseWorkerPrincipal;
+import se.comerit.resurs.service.ApplicationService;
+import se.comerit.resurs.service.BackofficeService;
+import se.comerit.resurs.service.CompanyFinancialService;
+
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+
 
 /**
  * BackofficeController – Handläggargränssnitt för manuell granskning.
  *
+ * Ansvarar för: att ta emot förfrågningar om att se ansökningar, fatta beslut, se detaljer,
+ * och kommentera ett ärende samt att skicka vidare sidnummer/sidstorlek till BackofficeService.
+ * Controllern kan också köra om scoring på ett ärende.
+ *
  * Anti-patterns:
  *  - JdbcTemplate direkt i kontrollern
- *  - Audit log uppdateras via JSON string manipulation
+ *  - Audit log uppdateras via JSON string manipulation / gammalt, utbytt mot Jackson
  *  - Ingen e-postnotifiering vid beslut
  *  - Session check copy-pasteat
- *  - Ingen pagination — hämtar ALLA ansökningar i REVIEW
  */
-@Controller
+@PreAuthorize("hasRole('CASEWORKER')")
+@RestController
+@RequestMapping("/api/backoffice")
 public class BackofficeController {
 
+    private final BackofficeService service;
+    private final CompanyFinancialService financeService;
+
     @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @GetMapping("/backoffice")
-    public String backofficeOverview(HttpSession session, Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        // Hämtar ALLA UNDER_REVIEW — ingen pagination, ingen sortering, inget index
-        // TODO: lägg till pagination och index på status-kolumnen
-        List<Map<String, Object>> reviewApps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.created_at, " +
-            "a.scoring_result, a.decision_reason, c.company_name, c.org_number " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id " +
-            "WHERE a.status = 'UNDER_REVIEW' ORDER BY a.created_at ASC"
-        );
-
-        // Also get approved/rejected for history — same query pattern, no reuse
-        List<Map<String, Object>> decidedApps = jdbcTemplate.queryForList(
-            "SELECT a.id, a.requested_amount, a.purpose, a.status, a.decision, a.created_at, " +
-            "a.updated_at, c.company_name, c.org_number " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id " +
-            "WHERE a.status IN ('APPROVED', 'REJECTED') ORDER BY a.updated_at DESC LIMIT 20"
-        );
-
-        model.addAttribute("reviewApplications", reviewApps);
-        model.addAttribute("decidedApplications", decidedApps);
-        model.addAttribute("workerName", session.getAttribute("workerName"));
-        model.addAttribute("reviewCount", reviewApps.size());
-        return "backoffice";
+    public BackofficeController(BackofficeService service, CompanyFinancialService financeService) {
+        this.service = service;
+        this.financeService = financeService;
     }
 
-    @PostMapping("/backoffice/decide")
-    public String decide(@RequestParam("applicationId") Long applicationId,
-                         @RequestParam("decision") String decision,
-                         @RequestParam(value = "comment", defaultValue = "") String comment,
-                         HttpSession session,
-                         Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
+    @GetMapping
+    public ResponseEntity<BackOfficeListsDTO> backofficeOverview(
+            @Qualifier("review") Pageable reviewPageable, @Qualifier("decided") Pageable decidedPageable) {
 
-        if (!"APPROVED".equals(decision) && !"REJECTED".equals(decision)) {
-            return "redirect:/backoffice";
+
+        BackOfficeListsDTO applicationLists = service.applicationsForReview(
+                reviewPageable, decidedPageable);
+
+        /* old thymeleaf model implementation,  kept temporarily as documentation for whats delivered to frontend
+        model.addAttribute("reviewApplications", applicationLists.reviewApplications());
+        model.addAttribute("decidedApplications", applicationLists.decidedApplications());
+        model.addAttribute("workerName", session.getAttribute("workerName"));
+        model.addAttribute("reviewCount", applicationLists.reviewApplications().size());
+        return "backoffice";
+        */
+        return ResponseEntity.ok(applicationLists);
+
+    }
+
+    @PostMapping("/decide")
+    public ResponseEntity<Void> decide(@RequestParam("applicationId") Long applicationId,
+                                       @RequestParam("decision") String decision,
+                                       @RequestParam(value = "comment", defaultValue = "") String comment,
+                                       @AuthenticationPrincipal CaseWorkerPrincipal principal
+                                       ) {
+
+
+        //Any status other than Approved or Rejected results in a redirection.
+        //Update: REST-APIs should respond with bad request. /Jonathan
+        if (!ApplicationStatus.APPROVED.toString().equals(decision)
+                && !ApplicationStatus.REJECTED.toString().equals(decision)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        String workerName = (String) session.getAttribute("workerName");
-        String newStatus = "APPROVED".equals(decision) ? "APPROVED" : "REJECTED";
+        String workerName = principal.name();
+        String workerEmail = principal.email();
+        ApplicationStatus newStatus = ApplicationStatus.valueOf(decision);
 
-        // Update application status and decision
-        jdbcTemplate.update(
-            "UPDATE applications SET status = ?, decision = ?, updated_at = NOW() WHERE id = ?",
-            newStatus,
-            decision,
-            applicationId
-        );
-
-        // Append to audit log JSON blob — same string manipulation as elsewhere
-        // No email notification sent — TODO: skicka e-post till företaget
-        String auditEntry = "{\"ts\":\"" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            + "\",\"action\":\"MANUAL_DECISION\",\"decision\":\"" + decision
-            + "\",\"worker\":\"" + workerName.replace("\"", "'") + "\""
-            + (comment.isEmpty() ? "" : ",\"comment\":\"" + comment.replace("\"", "'") + "\"")
-            + "}";
-
-        String currentLog = jdbcTemplate.queryForObject(
-            "SELECT audit_log FROM applications WHERE id = ?",
-            String.class,
-            applicationId
-        );
-
-        String updatedLog;
-        if (currentLog == null || currentLog.equals("[]")) {
-            updatedLog = "[" + auditEntry + "]";
-        } else {
-            updatedLog = currentLog.substring(0, currentLog.lastIndexOf("]")) + "," + auditEntry + "]";
-        }
-
-        jdbcTemplate.update(
-            "UPDATE applications SET audit_log = ? WHERE id = ?",
-            updatedLog,
-            applicationId
-        );
+        service.application_decision(applicationId,newStatus,workerEmail, workerName,comment);
 
         // No email notification — TODO: implement email via Spring Mail in v2
         // TODO: notify company via email when decision is made
 
-        return "redirect:/backoffice";
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/backoffice/application/{id}")
-    public String viewApplicationDetail(
-            @RequestParam(value = "id", required = false) Long pathId,
-            @org.springframework.web.bind.annotation.PathVariable("id") Long id,
-            HttpSession session,
-            Model model) {
-        // Session check copy-pasted in every method — should be an interceptor
-        if (session.getAttribute("userId") == null) return "redirect:/login";
-        if (!"caseWorker".equals(session.getAttribute("role"))) return "redirect:/login";
-
-        List<Map<String, Object>> apps = jdbcTemplate.queryForList(
-            "SELECT a.*, c.company_name, c.org_number, c.authorized_signatory " +
-            "FROM applications a JOIN companies c ON a.company_id = c.id WHERE a.id = ?",
-            id
-        );
-
-        if (apps.isEmpty()) {
-            return "redirect:/backoffice";
+    @GetMapping("/application/{id}")
+    public ResponseEntity<ApplicationWithFinancesDTO> viewApplicationDetail(
+            @PathVariable("id") Long id
+            ) {
+        ApplicationWithDocumentsDTO details = service.application_details(id);
+        CompanyFinancialApiDTO finances;
+        try{
+            finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber()).orElseThrow();
+        } catch (Exception e) {
+            finances = null;
         }
 
-        Map<String, Object> app = apps.get(0);
-        model.addAttribute("application", app);
-        model.addAttribute("auditLogRaw", app.get("audit_log"));
+        /*
+        Map<String, Object> application = apps.get(0);
+        model.addAttribute("application", application);
+        model.addAttribute("auditLogRaw", application.get("auditLog"));
         model.addAttribute("workerName", session.getAttribute("workerName"));
+        */
 
-        List<Map<String, Object>> docs = jdbcTemplate.queryForList(
-            "SELECT * FROM documents WHERE application_id = ? ORDER BY uploaded_at DESC",
-            id
-        );
-        model.addAttribute("documents", docs);
+        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances));
+    }
 
-        return "backoffice_detail";
+    @PostMapping("/application/{id}/comment")
+    public ResponseEntity<Void> commentApplication(@PathVariable("id") Long id,
+                                                   @Valid @RequestBody ApplicationCommentRequest request,
+                                                   @AuthenticationPrincipal CaseWorkerPrincipal principal) {
+        service.application_comment(id, request.comment(), principal.email(), principal.name());
+        return ResponseEntity.ok().build();
+    }
+
+    // GET /api/backoffice/application/{id}/audit
+    //Hela auditloggen för ett ärende, bara handläggare kan göra det, eftersom klassen har @PreAuthorize
+    @GetMapping("/application/{id}/audit")
+    public ResponseEntity<List<AuditEventDTO>> auditLog(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(service.application_audit_log(id));
+    }
+
+    // POST /api/backoffice/application/{id}/request-documents
+    @PostMapping("/application/{id}/request-documents")
+    public ResponseEntity<Void> requestDocuments(@PathVariable("id") Long id,
+                                                   @Valid @RequestBody ApplicationCommentRequest request,
+                                                   @AuthenticationPrincipal CaseWorkerPrincipal principal) {
+        service.application_request_documents(id, request.comment(), principal.email(), principal.name());
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,0 +1,183 @@
+cmake_minimum_required(VERSION 3.20)
+project(resurs_native VERSION 0.1.0 LANGUAGES CXX)
+
+find_package(OpenSSL REQUIRED)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(RESURS_AUDIT_ENABLE_SANITIZERS
+    "Enable AddressSanitizer and UndefinedBehaviorSanitizer for audit targets"
+    OFF)
+
+function(enable_resurs_audit_sanitizers target)
+    if(NOT RESURS_AUDIT_ENABLE_SANITIZERS)
+        return()
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${target} PRIVATE
+            -fsanitize=address,undefined
+            -fno-omit-frame-pointer)
+        target_link_options(${target} PRIVATE
+            -fsanitize=address,undefined)
+    else()
+        message(FATAL_ERROR
+            "RESURS_AUDIT_ENABLE_SANITIZERS requires GCC or Clang")
+    endif()
+endfunction()
+
+function(add_resurs_module target source module_directory)
+    add_library(${target} SHARED ${source})
+    target_include_directories(${target} PUBLIC ${module_directory})
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /W4)
+    else()
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+endfunction()
+
+add_resurs_module(resurs_crypto
+    resurs_crypto/resurs_crypto.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/resurs_crypto)
+target_sources(resurs_crypto PRIVATE resurs_crypto/wrapper.cpp)
+# resurs_crypto.h exposes OpenSSL EVP types, so consumers of that public
+# header also need OpenSSL's include directories and link requirements.
+target_link_libraries(resurs_crypto PUBLIC OpenSSL::Crypto)
+target_compile_definitions(resurs_crypto PRIVATE RESURS_CRYPTO_BUILDING_DLL)
+set_target_properties(resurs_crypto PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN YES)
+
+option(RESURS_BUILD_CRYPTO_DEMO
+    "Build the resurs_crypto demo executable"
+    OFF)
+
+if(RESURS_BUILD_CRYPTO_DEMO)
+    add_executable(resurs_crypto_demo
+        resurs_crypto/main.cpp)
+    target_link_libraries(resurs_crypto_demo PRIVATE resurs_crypto)
+    target_include_directories(resurs_crypto_demo PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_crypto)
+endif()
+
+add_resurs_module(resurs_audit
+    resurs_audit/resurs_audit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+target_sources(resurs_audit PRIVATE resurs_audit/wrapper.cpp)
+target_link_libraries(resurs_audit PRIVATE OpenSSL::Crypto)
+target_compile_definitions(resurs_audit PRIVATE RESURS_AUDIT_BUILDING_DLL)
+enable_resurs_audit_sanitizers(resurs_audit)
+set_target_properties(resurs_audit PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN YES)
+
+option(RESURS_BUILD_AUDIT_DEMO
+    "Build the resurs_audit demo executable"
+    OFF)
+
+if(RESURS_BUILD_AUDIT_DEMO)
+    add_executable(resurs_audit_demo
+        resurs_audit/Main.cpp)
+    target_link_libraries(resurs_audit_demo PRIVATE resurs_audit)
+    target_include_directories(resurs_audit_demo PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+    enable_resurs_audit_sanitizers(resurs_audit_demo)
+endif()
+
+include(GNUInstallDirs)
+install(TARGETS resurs_crypto resurs_audit
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+include(CTest)
+
+if(BUILD_TESTING)
+
+    # ============================================================
+    # Crypto tests
+    # ============================================================
+
+    add_executable(resurs_crypto_tests
+        tests/resurs_crypto_tests.cpp
+        resurs_crypto/resurs_crypto.cpp)
+
+    target_link_libraries(resurs_crypto_tests
+        PRIVATE
+        resurs_crypto
+        OpenSSL::Crypto)
+
+    target_include_directories(resurs_crypto_tests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_crypto)
+
+    if(MSVC)
+        target_compile_options(resurs_crypto_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_crypto_tests PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic)
+    endif()
+
+    add_test(
+        NAME resurs_crypto_tests
+        COMMAND resurs_crypto_tests)
+
+
+    # ============================================================
+    # Audit tests
+    # ============================================================
+
+    add_executable(resurs_audit_tests
+        tests/resurs_audit_tests.cpp)
+
+    target_link_libraries(resurs_audit_tests
+        PRIVATE
+        resurs_audit
+        OpenSSL::Crypto)
+
+    target_include_directories(resurs_audit_tests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/resurs_audit)
+    enable_resurs_audit_sanitizers(resurs_audit_tests)
+
+    if(MSVC)
+        target_compile_options(resurs_audit_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_audit_tests PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic)
+    endif()
+
+    add_test(
+        NAME resurs_audit_tests
+        COMMAND resurs_audit_tests)
+
+    add_executable(resurs_crypto_symbol_tests
+        tests/resurs_crypto_symbol_tests.cpp)
+    target_link_libraries(resurs_crypto_symbol_tests PRIVATE ${CMAKE_DL_LIBS})
+    if(MSVC)
+        target_compile_options(resurs_crypto_symbol_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_crypto_symbol_tests PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME resurs_crypto_symbol_tests
+        COMMAND resurs_crypto_symbol_tests $<TARGET_FILE:resurs_crypto>)
+
+    add_executable(resurs_audit_symbol_tests
+        tests/resurs_audit_symbol_tests.cpp)
+    target_link_libraries(resurs_audit_symbol_tests PRIVATE ${CMAKE_DL_LIBS})
+    enable_resurs_audit_sanitizers(resurs_audit_symbol_tests)
+    if(MSVC)
+        target_compile_options(resurs_audit_symbol_tests PRIVATE /W4)
+    else()
+        target_compile_options(resurs_audit_symbol_tests PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME resurs_audit_symbol_tests
+        COMMAND resurs_audit_symbol_tests $<TARGET_FILE:resurs_audit>)
+
+endif()

@@ -1,0 +1,11 @@
+build/
+build-devcontainer/
+vcpkg_installed/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+*.o
+*.obj
+*.so
+*.dll
+*.exe

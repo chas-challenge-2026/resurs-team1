@@ -1,0 +1,82 @@
+/* value and blurr effect are stacked in same grid cell so they move togeather */
+.wrapper {
+  display: inline-grid;
+  border-radius: 4px;
+  /* reset the default button look */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.wrapper > * {
+  grid-area: 1 / 1;
+}
+
+.value {
+  filter: blur(7px);
+  opacity: 0.5;
+  user-select: none;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.mask {
+  justify-self: end;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px dashed var(--protected-border);
+  border-radius: 4px;
+  background-color: var(--protected-bg);
+  color: var(--protected-text);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* revealed after a tap/click (all devices) */
+.revealed .value {
+  filter: none;
+  opacity: 1;
+  user-select: text;
+}
+
+.revealed .mask {
+  opacity: 0;
+}
+
+/* hover only on devices with a real mouse,
+   phones keep :hover "stuck" after a tap, which would break tap-to-hide */
+@media (hover: hover) {
+  .wrapper:hover .value {
+    filter: none;
+    opacity: 1;
+    user-select: text;
+  }
+
+  .wrapper:hover .mask {
+    opacity: 0;
+  }
+}
+
+.wrapper:focus-visible {
+  outline: 2px solid var(--protected-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .value,
+  .mask {
+    transition: none;
+  }
+}

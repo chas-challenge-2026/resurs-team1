@@ -1,0 +1,60 @@
+import axios, { AxiosError } from "axios"
+import { queryClient } from "./queryClient"
+
+
+export interface ApiErrorPayload {
+  status?: number
+  message: string
+  fieldErrors?: Record<string, string>
+  code?: string
+  originalError: AxiosError<ApiErrorPayload>
+}
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  timeout: 10000,
+})
+
+export const handleResponseError = (error: AxiosError<ApiErrorPayload>) => {
+  const status = error.response?.status
+  const isLoginRequest = error.config?.url?.includes("/login")
+  
+  let fallbackMessage = "Ett oväntat fel uppstod. Försök igen senare."
+  
+  if (!error.response) {
+    fallbackMessage = "Kunde inte ansluta till servern. Kontrollera din internetanslutning."
+  } else if (status === 401 && !isLoginRequest) {
+    queryClient.setQueryData(["me"], null)
+    const currentPath = window.location.pathname
+    const isCaseWorkerLoginRoute = currentPath.startsWith("/handlaggare")
+    const targetRedirect = isCaseWorkerLoginRoute ? "/handlaggare" : "/"
+
+    if (currentPath !== targetRedirect) {
+      window.location.href = targetRedirect
+    }
+    return Promise.reject(error)
+  } else if (status === 401 && isLoginRequest) {
+    fallbackMessage = "Felaktiga inloggningsuppgifter."
+  } else if (status === 403) {
+    fallbackMessage = "Du saknar behörighet att utföra denna åtgärd."
+  } else if (status === 404) {
+    fallbackMessage = "Den begärda resursen kunde inte hittas."
+  } else if (status && status >= 500) {
+    fallbackMessage = "Ett serverfel uppstod. Vänligen försök igen om en stund."
+  }
+  
+  const normalizedError = {
+    status,
+    message: fallbackMessage,
+    fieldErrors: error.response?.data?.fieldErrors,
+    code: error.response?.data?.code,
+    originalError: error,
+  }
+  
+  return Promise.reject(normalizedError)
+}
+
+api.interceptors.response.use((response) => response, handleResponseError)
+
+export default api

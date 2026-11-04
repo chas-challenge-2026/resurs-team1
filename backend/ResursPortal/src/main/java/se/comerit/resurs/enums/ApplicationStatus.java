@@ -1,0 +1,10 @@
+package se.comerit.resurs.enums;
+
+public enum ApplicationStatus {
+    PENDING_DOCS,
+    UNDER_REVIEW,
+    APPROVED,
+    REJECTED,
+    PENDING_SCORING,
+    PENDING_CO_SIGNATURE
+}

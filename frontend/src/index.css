@@ -1,0 +1,296 @@
+:root {
+  /* PRIMITIVES - Raw colors - do not use in components */
+  --color-white-50: #FFFFFF;
+  --color-white-75: #F8F8F8;
+  --color-white-100: #F3F3F3;
+
+  --color-teal-30: #F2F7F7;
+  --color-teal-50: #EAF4F4;
+  --color-teal-500: #26938f;
+  --color-teal-600: #117069;
+  --color-teal-700: #006464;
+  --color-teal-800: #0E5D57;
+
+  --color-navy-50: #E9EDF6;
+  --color-navy-800: #2B3E6E;
+
+  --color-amber-30: #f5f1ee;
+  --color-amber-50: #F7F0EB;
+  --color-amber-100: #FBF1DF;
+  --color-amber-200: #dccfb5;
+  --color-amber-500: #E08E21;
+  --color-amber-700: #B4711A;
+  --color-amber-900: #82451E;
+
+  --color-red-50: #FAEAE9;
+  --color-red-600: #A5231F;
+  --color-red-800: #8C1D19;
+
+  --color-grey-50: #F7FAFA;
+  --color-grey-100: #EFF1F4;
+  --color-grey-200: #EAEDF3;
+  --color-grey-300: #D9D9D9;
+  --color-grey-600: #666666;
+  --color-grey-900: #393838;
+
+  /* SEMANTICS COLORS - Use in components */
+  /* Brand / Theme */
+  --brand-primary-extra-light: var(--color-teal-30);
+  --brand-primary-light: var(--color-teal-50);
+  --brand-primary: var(--color-teal-600);
+  --brand-primary-dark: var(--color-teal-700);
+
+  /* Backgrounds */
+  --bg-app: var(--color-grey-50);
+  --bg-surface: var(--color-white-50);
+  --bg-subtle: var(--color-grey-100);
+  --divider: var(--color-grey-300);
+
+  /* Header */
+  --header-bg: var(--bg-surface);
+  --header-border: var(--divider);
+  --header-role-text: var(--color-amber-900);
+
+  /* Cards */
+  --card-bg: var(--bg-surface);
+  --card-bg-secondary: var(--bg-app);
+  --card-border: var(--divider);
+  --card-accent-color: var(--brand-primary);
+  --card-secondary-accent: var(--color-navy-800);
+
+  /* Text */
+  --text-main: var(--color-grey-900);
+  --text-muted: var(--color-grey-600);
+
+  /* Forms */
+  --input-bg: var(--bg-surface);
+  --input-border: var(--divider);
+  --input-border-focus: var(--brand-primary);
+  --input-placeholder:  var(--color-grey-600);
+  --input-error-border: var(--status-error-border);
+
+  /* Buttons */
+  --btn-primary-bg: var(--brand-primary);
+  --btn-primary-hover: var(--brand-primary-dark);
+  --btn-primary-text: var(--color-white-50);
+  --btn-disabled-bg: var(--color-grey-200);
+  --btn-disabled-text: var(--color-grey-600);
+
+  --btn-secondary-bg: var(--bg-surface);
+  --btn-secondary-text: var(--brand-primary-dark);
+  --btn-secondary-border: var(--brand-primary-dark);
+  --btn-secondary-hover-bg: var(--color-teal-500);
+  --btn-secondary-hover-text: var(--bg-surface);
+
+  --btn-ghost-text: var(--color-grey-600);
+  --btn-ghost-hover-bg: var(--color-grey-200);
+  --btn-ghost-hover-text: var(--color-grey-900);
+
+  --btn-approve: var(--color-teal-600);
+  --btn-request-info: var(--color-amber-700);
+  --btn-reject: var(--color-red-600);
+  --btn-neutral: var(--color-grey-900); 
+
+  /* Buttongroup */
+  --btn-group-border: var(--color-grey-300);
+  --btn-group-active-bg: var(--brand-primary);
+  --btn-group-active-text: var(--color-white-50);
+
+  /* Dropzone */
+  --dropzone-bg: var(--brand-primary-light);
+  --dropzone-border: var(--divider);
+  --dropzone-bg-hover: var(--brand-primary-light);
+  --dropzone-border-hover: var(--brand-primary);
+
+  /* Sidebar Case Card */
+  --sidebar-card-bg: var(--color-white-100);
+  --sidebar-card-border: var(--brand-primary);
+  --sidebar-card-bg-hover: var(--color-white-75);
+
+  /* File */
+  --file-bg: var(--color-grey-50);
+  --file-hover: var(--color-grey-100);
+
+  /* Timeline */
+  --timeline-border: var(--brand-primary);
+  --timeline-bg: var(--bg-subtle);
+
+  /* Badges */
+  --badge-success-bg: var(--color-teal-50);
+  --badge-success-border: var(--color-teal-600);
+  --badge-success-text: var(--color-teal-800);
+
+  --badge-neutral-bg: var(--color-navy-50);
+  --badge-neutral-text: var(--color-navy-800);
+
+  --badge-warning-bg: var(--color-amber-100);
+  --badge-warning-border: var(--color-amber-700);
+  --badge-warning-text: var(--color-amber-900);
+
+  --badge-error-bg: var(--color-red-50);
+  --badge-error-border: var(--color-red-600);
+  --badge-error-text: var(--color-red-800);
+
+  /* Protected identity (dog-ear, reminder, hidden values) */
+  --protected-accent: var(--color-grey-900);
+  --protected-on-accent: var(--color-white-50);
+  --protected-bg: var(--color-grey-100);
+  --protected-border: var(--color-grey-300);
+  --protected-text: var(--color-grey-900);
+
+  /* Toggle switch */
+  --toggle-bg: var(--color-white-100);
+  --toggle-active-bg: var(--bg-surface);
+  --toggle-accent-active-border: var(--color-grey-600);
+  --toggle-accent-active-text: var(--color-grey-900);
+
+  /* Globals */
+  --status-success-text: var(--color-teal-800);
+
+  --status-warning-bg: var(--color-amber-100);
+  --status-warning-border: var(--color-amber-200);
+  --status-warning-text: var(--color-amber-900);
+
+  --status-error-text: var(--color-red-600);
+  --status-error-border: var(--color-red-600);
+
+  --status-info-bg: var(--brand-primary-light);
+  --status-info-border: var(--brand-primary);
+
+  --icon-bg: var(--brand-primary);
+  --link-text: var(--brand-primary-dark);
+
+  /* Spacing */
+  --space-xs:   0.5rem;  /* 8px */
+  --space-sm:   0.75rem; /* 12px */
+  --space-base: 1rem;    /* 16px */
+  --space-md:   1.25rem; /* 20px */
+  --space-lg:   1.75rem; /* 28px */
+  --space-xl:   2.5rem;  /* 40px */
+
+  /* Radius */
+  --radius-xs: 8px;
+  --radius-sm: 16px;
+  --radius-base: 24px;
+  --radius-pill: 999px;
+
+  /* Font size */
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.5rem;
+  --font-size-title: 2rem;
+}
+
+.theme-caseworker {
+  --brand-primary-extra-light: var(--color-amber-30);
+  --brand-primary-light: var(--color-amber-50);
+  --brand-primary: var(--color-amber-700);
+  --brand-primary-dark: var(--color-amber-900);
+
+  --bg-app: var(--color-white-75);
+  --btn-secondary-hover-bg: var(--color-amber-500);
+}
+
+/* Resets */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* System adjustments (iOS scale fix & smooth scroll) */
+html {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  scroll-behavior: smooth;
+}
+
+/* Core body defaults */
+body {
+  background-color: var(--bg-app);
+  min-height: 100vh;
+  font-size: var(--font-size-base);
+  color: var(--text-main);
+  line-height: 1.5;
+  text-rendering: optimizeSpeed;
+}
+
+body:has([class*="overlay"]) {
+  overflow: hidden;
+}
+
+/* Fix responsive media layout breaking */
+img, picture, video, canvas, svg {
+  max-width: 100%;
+  display: block;
+}
+
+/* Prevent forms/buttons from breaking typography */
+input, button, textarea, select {
+  font: inherit;
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.subtitle {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.input-base {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background-color: var(--input-bg);
+  border: 2px solid var(--input-border);
+  border-radius: var(--radius-sm);
+}
+
+.input-base:focus-visible {
+  outline: none;
+  border-color: var(--input-border-focus);
+}
+
+.error-border {
+  border-color: var(--input-error-border);
+}
+
+.information-text {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.input-sm {
+  height: 36px;
+}
+
+.input-md {
+  height: 48px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --space-xs: 0.5rem;   /* 8px */
+    --space-sm: 1rem;     /* 16px */
+    --space-base: 1.5rem; /* 24px */
+    --space-md: 2rem;     /* 32px */
+    --space-lg: 2.5rem;   /* 40px */
+    --space-xl: 4rem;     /* 64px */
+  }
+
+  .input-sm {
+    height: 40px;
+  }
+
+  .input-md {
+    height: 60px;
+  }
+}

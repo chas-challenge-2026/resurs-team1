@@ -1,0 +1,130 @@
+/* Top section */
+.topSection {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+}
+
+.topWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  padding: var(--space-base);
+}
+
+.applicationRefWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.applicationRef {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.infoBox {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.infoText {
+  color: var(--text-muted);
+}
+
+/* Content section */
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  padding: var(--space-base);
+  flex-wrap: wrap;
+}
+
+.rightWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+/* Manage split view */
+.splitColumns {
+  display: grid;
+  gap: var(--space-base);
+  align-items: start; 
+}
+
+@media (min-width: 1050px) {
+  .splitColumns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.actionsWrapper {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.actionButton {
+  flex: 1;
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.addingTitle {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+}
+
+.addingFooter {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Scoring styling */
+.metricRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badgeOk {
+  background-color: var(--badge-success-bg);
+  color: var(--badge-success-text);
+}
+
+.badgeFlagged {
+  background-color: var(--badge-warning-bg);
+  color: var(--badge-warning-text);
+}
+
+.badgeReject {
+  background-color: var(--badge-error-bg);
+  color: var(--badge-error-text);
+}
+/* Protected identity */
+.titleWithTag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.protectedHintBelow {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}

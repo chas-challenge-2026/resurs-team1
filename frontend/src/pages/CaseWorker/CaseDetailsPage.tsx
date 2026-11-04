@@ -1,0 +1,340 @@
+import { useState } from "react"
+import { useParams } from "react-router-dom"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber } from "../../utils/domainFormatters"
+import { getMetric } from "../../utils/scoringConverter"
+import { useBackofficeApplication, useDecideApplication, useRequestInformation } from "../../hooks/useApplication"
+import { useAuditLog } from "../../hooks/useAudit"
+import type { Decision } from "../../api/applicationApi"
+import type { ScoringStatus, BadgeConfig } from "../../types/scoring"
+import ToggleSwitch, { type SwitchOption } from "../../components/ToggleSwitch/ToggleSwitch"
+import { Card, CardFooter } from "../../components/Card/Card"
+import { DataList, DataListItem } from "../../components/DataList/DataList"
+import ApplicationSummary from "../../components/ApplicationSummary/ApplicationSummary"
+import StatusTag from "../../components/StatusTag/StatusTag"
+import ProtectedNotice from "../../components/ProtectedNotice/ProtectedNotice"
+import ProtectedValue from "../../components/ProtectedValue/ProtectedValue"
+import ProtectedTag from "../../components/ProtectedTag/ProtectedTag"
+import AttachedFile from "../../components/AttachedFile/AttachedFile"
+import Button from "../../components/Button/Button"
+import TextArea from "../../components/Textarea/Textarea"
+import Loading from "../../components/Loading/Loading"
+import NotFoundPage from "../NotFound/NotFoundPage"
+import s from "./CaseDetailsPage.module.css"
+import InputError from "../../components/InputError/InputError"
+import Timeline from "../../components/Timeline/Timeline"
+import { toast } from "sonner"
+
+type viewOptions = "overview" | "manageCase"
+
+const options: SwitchOption<viewOptions>[] = [
+  { label: "Översikt", value: "overview" },
+  { label: "Hantera ärende", value: "manageCase" },
+]
+
+const STATUS_BADGE: Record<ScoringStatus, BadgeConfig> = {
+  REJECT: { label: "Avvisad", className: s.badgeReject},
+  FLAGGED: { label: "Flaggad", className: s.badgeFlagged},
+  OK: { label: "Normal", className: s.badgeOk},
+  GOOD: { label: "God", className: s.badgeOk}
+}
+
+// keys must match the backend scoring log exactly
+const SCORING_METRICS = [
+  { key: "kreditPoäng", label: "Kreditpoäng" },
+  { key: "soliditet", label: "Soliditet" },
+  { key: "likviditetsgrad", label: "Likviditetsgrad" },
+  { key: "skuldsättningsgrad", label: "Skuldsättningsgrad" },
+  { key: "ränteTäckning", label: "Räntetäckningsgrad" },
+]
+
+type ActionType = "approve" | "requestDocs" | "reject" | null
+
+const CaseDetailsPage = () => {
+  const [view, setView] = useState<viewOptions>("overview")
+  const [ activeAction, setActiveAction ] = useState<ActionType>(null)
+  const { id } = useParams()
+  const applicationId = Number(id)
+
+  const [comment, setComment] = useState("")
+  const { data, isPending, isError, error } = useBackofficeApplication(applicationId)
+  const { data: auditLog } = useAuditLog(applicationId)
+  const decide = useDecideApplication()
+  const request = useRequestInformation()
+
+  const handleDecision = (decision: Decision, comment = "") => {
+    decide.mutate({ id: applicationId, decision, comment }, {
+      onSuccess: () => {
+        setActiveAction(null)
+        setComment("")
+        if(decision === "APPROVED") {
+          toast("Ärendet har godkänts")
+        } else if (decision === "REJECTED") {
+          toast("Ärendet har avvisats")
+        }
+      },
+    })
+  }
+  
+  const handleRequest = (comment: string) => {
+    request.mutate({id: applicationId, comment}, {
+      onSuccess: () => {
+        setActiveAction(null)
+        setComment("")
+        toast("Förfrågan om komplettering har skickats till kunden")
+      }
+    })
+  }
+
+  const handleActionToggle = (action: ActionType) => {
+    if(action === activeAction) {
+      setActiveAction(null)
+      setComment("")
+      return
+    }
+    setActiveAction(action)
+    setComment("")
+  }
+
+  if (isPending) return <Loading size="lg" label="Hämtar ärende..." centerOnPage delay />
+
+  if (isError) {
+    if(error.status === 404) {
+      return (
+        <NotFoundPage
+          description = "Ärendet du söker finns inte, kontrollera att du har skrivit in rätt ärendenummer eller länk. Fungerar det fortfarande inte? Då kan ärendet ha blivit borttaget eller arkiverat. Försök hitta ärendet du söker via ärendelistan."
+          showRedirectButton = {false}
+          showMascot = {false}
+        />
+      )
+    }
+    return <div className={s.centerWrapper}><p>{error.message}</p></div>
+  }
+
+  return(
+    <>
+      <section className={s.topSection}>
+        <div className={s.topWrapper}>
+          <div>
+            <div className={s.applicationRefWrapper}>
+              <h2 className={s.applicationRef}>{formatReferenceNumber(data.id)}</h2>
+              <StatusTag status={data.status} />
+            </div>
+
+            <div>
+              <p className="title">{data.companyName}</p>
+              <p className={s.infoText}>Org.nr {data.orgNumber} · Inkommet {formatDate(data.createdAt)}</p>
+            </div>
+          </div>
+          <ApplicationSummary application={data} amountBackground="neutral" durationColor="neutral" />
+        </div>
+
+        <ToggleSwitch variant="accent" name="view" options={options} selectedValue={view} onChange={(newView) => setView(newView)} />
+      </section>
+
+      {data.protectedResource && <ProtectedNotice />}
+
+      {view === "overview" &&
+        <section className={s.contentWrapper}>
+          <div className={s.splitColumns}>
+            {data.scoringResult && (
+              <Card>
+                <h3 className="subtitle">Scoringresultat</h3>
+                <DataList>
+                  {SCORING_METRICS.map(({key, label}) => {
+                    const metric = getMetric(data.scoringResult ?? "", key)
+                    return(
+                      <DataListItem
+                        key={key}
+                        label={label}
+                        value={
+                          <div className={s.metricRow}>
+                            <span>{metric.value}</span>
+                            {metric.scoringStatus && (
+                              <span className={`${s.badge} ${STATUS_BADGE[metric.scoringStatus].className}`}>{STATUS_BADGE[metric.scoringStatus].label}</span>
+                            )}
+                          </div>
+                        }
+                      />
+                    )
+                  })}
+                </DataList>
+              </Card>
+            )}
+
+            <Card>
+              <h3 className="subtitle">Ekonomi</h3>
+              {data.companyFinances ? (
+                <DataList>
+                  <DataListItem label="Omsättning" value={formatCurrency(data.companyFinances.incomeStatement.revenue)} />
+                  <DataListItem label="Rörelseresultat" value={formatCurrency(data.companyFinances.incomeStatement.operatingResult)} />
+                  <DataListItem label="Eget kapital" value={formatCurrency(data.companyFinances.balanceSheet.equity)} />
+                  <DataListItem label="Totalt kassaflöde" value={formatCurrency(data.companyFinances.cashFlowStatement.operatingCashFlow)} />
+                  <DataListItem label="Kortfristiga skulder" value={formatCurrency(data.companyFinances.balanceSheet.shortTermLiabilities)} />
+                </DataList>
+              ) : (
+                <p>Ingen årsredovisning hittades</p>
+              )}
+            </Card>
+          </div>
+        </section>
+      }
+
+      {view === "manageCase" &&
+        <section className={s.contentWrapper}>
+          {data.status === "APPROVED" || data.status === "REJECTED" ? (
+            <Card className={s.infoBox}>
+              <p className={s.infoText}>
+                Det här ärendet är redan beslutat och kan inte längre ändras.
+              </p>
+            </Card>
+          ) : (
+            <>
+            <div className={s.actionsWrapper}>
+              <Button
+                variant="secondary"
+                color="var(--btn-approve)"
+                className={s.actionButton}
+                active={activeAction === "approve"}
+                onClick={() => handleActionToggle("approve")}
+              >
+                Godkänn
+              </Button>
+              <Button 
+                variant="secondary"
+                color="var(--btn-request-info)"
+                className={s.actionButton}
+                active={activeAction === "requestDocs"}
+                onClick={() => handleActionToggle("requestDocs")}
+              >
+                Komplettera
+              </Button>
+              <Button
+                variant="secondary" 
+                color="var(--btn-reject)"
+                className={s.actionButton}
+                active={activeAction === "reject"}
+                onClick={() => handleActionToggle("reject")}
+              >
+                Avvisa
+              </Button>
+            </div>
+
+            {activeAction === "approve" && (
+              <Card as="section">
+                <div className={s.textContainer}>
+                  <h3 className={s.addingTitle}>Vill du godkänna ärendet?</h3>
+                  <p>Kontrollera att uppgifterna och eventuella kompletteringar är granskade. Ingen kommentar krävs.</p>
+                </div>
+                {decide.isError && <InputError errorMsg={decide.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleDecision("APPROVED")} disabled={decide.isPending}>
+                    Godkänn ärendet
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {activeAction === "requestDocs" && (
+              <Card as="section">
+                <h3 className={s.addingTitle}>Beskriv vilket dokument du behöver från kunden</h3>
+                <TextArea 
+                  id="message"
+                  label="message"
+                  placeholder="T.ex. årsredovisning, kontoutdrag, offert..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                {request.isError && <InputError errorMsg={request.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleRequest(comment)} disabled={request.isPending || !comment.trim()}>
+                    Skicka förfrågan
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {activeAction === "reject" && (
+              <Card as="section">
+                <h3 className={s.addingTitle}>Skriv en kommentar till varför ärendet avvisas</h3>
+                <TextArea
+                  id="message"
+                  label="message"
+                  placeholder="Beskriv anledningen till avslaget..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                {decide.isError && <InputError errorMsg={decide.error.message} />}
+                <CardFooter className={s.addingFooter}>
+                  <Button onClick={() => handleDecision("REJECTED", comment)} disabled={decide.isPending || !comment.trim()}>
+                    Avvisa ärendet
+                  </Button>
+                  <Button variant="secondary" onClick={() => setActiveAction(null)}>
+                    Avbryt
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+            </>
+          )}
+
+          <div className={s.splitColumns}>
+            {auditLog && (
+              <Card as="section">
+                <h3 className="subtitle">Händelser</h3>
+                <Timeline events={auditLog} />
+              </Card>
+            )}
+
+            <div className={s.rightWrapper}>
+              <Card>
+                <h3 className={`subtitle ${s.titleWithTag}`}>
+                  Kontakt
+                  {data.protectedResource && <ProtectedTag />}
+                </h3>
+                <DataList>
+                  {/* protected case: value hidden until hover (desktop) or tap (mobile) */}
+                  {data.protectedResource ? (
+                    <>
+                      <DataListItem label="Namn" value={<ProtectedValue>{data.contactDetails.name}</ProtectedValue>} />
+                      <DataListItem label="E-postadress" value={<ProtectedValue>{data.contactDetails.email}</ProtectedValue>} />
+                      <DataListItem label="Telefonnummer" value={<ProtectedValue>{data.contactDetails.phoneNumber}</ProtectedValue>} />
+                    </>
+                  ) : (
+                    <>
+                      <DataListItem label="Namn" value={data.contactDetails.name} />
+                      <DataListItem label="E-postadress" value={data.contactDetails.email} />
+                      <DataListItem label="Telefonnummer" value={data.contactDetails.phoneNumber} />
+                    </>
+                  )}
+                </DataList>
+                {data.protectedResource && (
+                  <p className={s.protectedHintBelow}>Klicka på ett värde för att visa det.</p>
+                )}
+              </Card>
+
+              <Card>
+                <h3 className="subtitle">Dokument</h3>
+                {data.documents && data.documents.length > 0 ? (
+                  data.documents.map((document) => (
+                    <AttachedFile key={document.id} document={document} />
+                  ))
+                ) : (
+                  <p>Inga uppladdade dokument</p>
+                )}
+              </Card>
+            </div>
+          </div>
+        </section>
+      }
+    </>
+  )
+}
+
+export default CaseDetailsPage

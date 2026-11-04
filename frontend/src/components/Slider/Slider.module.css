@@ -1,0 +1,133 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.inputWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  overflow: hidden;
+  height: 48px;
+  border-style: dashed !important;
+  padding: 0 var(--space-xs);
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--brand-primary);
+}
+
+.hiddenSizer,
+.numberInput,
+.unitSuffix {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+}
+
+.hiddenSizer {
+  visibility: hidden;
+  white-space: pre;
+  height: 0;
+}
+
+.numberInput {
+  position: absolute;
+  inset: 0; 
+  padding: 0 var(--space-xs);
+  border: none;
+  outline: none;
+  background-color: transparent;
+  margin: 0;
+}
+
+.unitSuffix {
+  pointer-events: none;
+}
+
+.valueDisplayButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+  border-bottom: 1px dashed var(--text-muted);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.rangeInput {
+  appearance: none;
+  outline: none;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  margin: var(--space-xs) 0;
+  cursor: pointer;
+}
+
+/* Style for (Thumb) in Webkit (Chrome/Safari/Edge) */
+.rangeInput::-webkit-slider-thumb  {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  cursor: pointer;
+  filter: drop-shadow(rgba(52, 58, 64, 0.5) 0px 2px 8px);
+}
+
+/* Style for thumb in Firefox */
+.rangeInput::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  filter: drop-shadow(rgba(52, 58, 64, 0.5) 0px 2px 8px);
+  cursor: pointer;
+}
+
+.rangeInput:active::-webkit-slider-thumb {
+  outline: 3px solid var(--brand-primary);
+}
+
+.rangeInput:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--brand-primary);
+}
+
+.rangeInput:active::-moz-range-thumb {
+  outline: 3px solid var(--brand-primary);
+}
+
+.rangeInput:focus-visible::-moz-range-thumb {
+  outline: 3px solid var(--brand-primary);
+}
+
+.footerLabels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+  .hiddenSizer {
+    padding-right: var(--space-base);
+  }
+
+  .inputWrapper {
+    height: 60px;
+    padding: 0 var(--space-base);
+  }
+
+  .numberInput {
+    padding: 0 var(--space-base);
+    font-size: 1.5rem;
+  }
+
+  .unitSuffix {
+    font-size: 1.5rem;
+    padding-right: var(--space-xs);
+  }
+}

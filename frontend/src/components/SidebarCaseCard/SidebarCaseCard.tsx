@@ -1,0 +1,50 @@
+import { NavLink } from "react-router-dom"
+import { FiLock } from "react-icons/fi"
+import type { CaseListItem } from "../../api/applicationApi"
+import { ICONS, STATUS_LABELS } from "../../constants/constants"
+import { formatCurrency, formatDate } from "../../utils/formatters"
+import { formatReferenceNumber } from "../../utils/domainFormatters"
+import s from "./SidebarCaseCard.module.css"
+
+interface SidebarCaseCardProps {
+  application: CaseListItem
+}
+
+const SidebarCaseCard = ({ application }: SidebarCaseCardProps) => {
+  const { id, status, companyName, requestedAmount, createdAt, protectedResource } = application
+  const StatusIcon = ICONS[status]
+
+  return(
+    <NavLink
+      to={`/arenden/${id}`}
+      className={({ isActive }) => isActive ? `${s.card} ${s.active}` : s.card}
+    >
+      {protectedResource && (
+        // folded corner
+        <span className={s.protectedCorner}>
+          <FiLock className={s.protectedIcon} aria-hidden />
+        </span>
+      )}
+
+      <div className={s.row}>
+        <span className={s.company} title={companyName}>{companyName}</span>
+        <span className={s.amount}>{formatCurrency(requestedAmount)}</span>
+      </div>
+
+      <div className={s.row}>
+        <span className={s.reference}>
+          <StatusIcon
+            className={`${s.icon} ${s[status]}`}
+            role="img"
+            aria-label={STATUS_LABELS[status]}
+            title={STATUS_LABELS[status]}
+          />
+          {formatReferenceNumber(id)}
+        </span>
+        <span className={s.date}>{formatDate(createdAt)}</span>
+      </div>
+    </NavLink>
+  )
+}
+
+export default SidebarCaseCard

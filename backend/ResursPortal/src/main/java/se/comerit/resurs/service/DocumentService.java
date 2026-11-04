@@ -1,0 +1,156 @@
+package se.comerit.resurs.service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import se.comerit.resurs.dto.DocumentDTO;
+import se.comerit.resurs.enums.ApplicationStatus;
+import se.comerit.resurs.exception.DocumentStorageException;
+import se.comerit.resurs.persistence.CreditApplicationRepository;
+import se.comerit.resurs.persistence.model.CreditApplication;
+import se.comerit.resurs.persistence.model.Document;
+import se.comerit.resurs.persistence.DocumentRepository;
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+/**
+ * DocumentService hanterar affärslogiken för dokumentuppladdning och nedladdning.
+ *
+ * Ansvarar för: validera filtyp, spara filen på disk och skapa en databaspost för den,
+ * uppdatera audit-loggen och flytta ansökans status till UNDER_REVIEW vid behov.
+ *
+ * Inte ansvarig för: HTTP-hantering (session, statuskoder, JSON) -> det sköts av DocumentController.
+ * /Robin
+ */
+
+@Service
+public class DocumentService {
+    // Uploads dir — /tmp rensas vid omstart, ingen persistent lagring
+    // TODO: använd ett persistent filsystem eller S3 i v2
+    private static final String UPLOAD_DIR = "/tmp/uploads/"; //known bug #9, change to persistent storaging
+
+    private final AuditService auditService;
+    private final DocumentRepository documentRepository;
+    private final CreditApplicationRepository creditApplicationRepository;
+
+    @Autowired
+    public DocumentService(AuditService auditService, DocumentRepository documentRepository, CreditApplicationRepository creditApplicationRepository) {
+        this.auditService = auditService;
+        this.documentRepository = documentRepository;
+        this.creditApplicationRepository = creditApplicationRepository;
+    }
+    public List<DocumentDTO> findByApplicationId(Long applicationId) {
+        creditApplicationRepository.findById(applicationId)
+                .orElseThrow(
+                        ()-> new NoSuchElementException(
+                                "Application not found")
+                );
+
+        return documentRepository.findByApplicationId(applicationId).stream().map(DocumentDTO::new).toList();
+    }
+
+    // Utan transactional så sparas document, audit-log och status var för sig till databasen, helt oberoende
+    // av varandra, om det skulle krascha mitt i så lämnas inkonsekvent data, samma bugg som i known-bugs.md #5.
+    @Transactional
+    @CacheEvict(cacheNames = "applicationLists", allEntries = true)
+    public void uploadDocument(Long applicationId, String docType, MultipartFile file) {
+        if (applicationId == null) {
+            throw new IllegalArgumentException("Application ID must not be null.");
+        }
+        if (docType == null || docType.isBlank()) {
+            throw new IllegalArgumentException("Document type must not be empty.");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("No chosen file.");
+        }
+        validateFileType(file);
+        CreditApplication application = creditApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NoSuchElementException("Application not found."));
+
+        String originalFilename = file.getOriginalFilename();
+        String storedFilename = applicationId + "_" + originalFilename;
+
+
+        File target = new File(UPLOAD_DIR, storedFilename);
+
+        //Wrapping it all in a try/Catch block which always returns a runtimeException.
+        //Cleans up the file on both IO and Runtime Exceptions.
+        //Tosses runtime exceptions upwards while wrapping IOExceptions in DocumentStorageException
+        try{
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists() && !uploadDir.mkdirs()) {
+                throw new IOException("Could not create upload directory.");
+            }
+
+            file.transferTo(target);
+
+            // Store filename in DB — file path is /tmp which is not persistent
+            // TODO: implement PDF parsing in v2 (see native/README.md)
+            // The file is saved but its contents are never read or validated
+            Document document = new Document();
+            document.setApplication(application);
+            document.setFilename(storedFilename);
+            document.setDoc_type(docType);
+            document.setUploadedAt(Instant.now());
+            documentRepository.save(document);
+
+
+            auditService.documentUploaded(application, originalFilename, docType);
+
+            //När kunden har skickat in något efter att handläggaren begärt komplettering är det handläggarens tur igen
+            //markUnderReview ändrar bara status om ärendet är PENDING_DOCS, så andra ärenden påverkas INTE
+            markUnderReview(application);
+
+        } catch (IOException e) {
+            undoFileUpload(target);
+            throw new DocumentStorageException("Failed to store document.", e);
+        } catch (RuntimeException e) {
+            undoFileUpload(target);
+            throw e;
+        }
+
+    }
+
+    private void undoFileUpload(File file){
+        if (file.exists() && !file.delete()) {
+            // Optional Log in case file was not removed
+        }
+    }
+
+    public File resolveFileForDownload(Long documentId) {
+        return documentRepository.findById(documentId)
+                .map(document -> new File(UPLOAD_DIR + document.getFilename()))
+                .filter(File::exists)
+                .orElse(null);
+    }
+
+    private void validateFileType(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        boolean allowed = filename != null && filename.toLowerCase().endsWith(".pdf");
+        if (!allowed) {
+            throw new IllegalArgumentException("Only PDF-files are accepted.");
+        }
+    }
+
+    private void markUnderReview(CreditApplication application) {
+        if (application.getStatus() == ApplicationStatus.PENDING_DOCS) {
+            application.setStatus(ApplicationStatus.UNDER_REVIEW);
+            creditApplicationRepository.save(application);
+        }
+    }
+
+
+
+    // Out commented old code, this is with jdbc
+    //Replace with ApplicationRepository when issue #120 is done
+//    private void markUnderReview(Long applicationId) {
+//        jdbcTemplate.update(
+//                "UPDATE applications SET status = 'UNDER_REVIEW', " +
+//                        "updated_at = NOW() WHERE id = ? AND status = 'PENDING_DOCS'", applicationId);
+//    }
+
+}

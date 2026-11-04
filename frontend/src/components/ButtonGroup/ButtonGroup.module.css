@@ -1,0 +1,54 @@
+.fieldset {
+  border: none;
+}
+
+.label {
+  padding-bottom: var(--space-xs);
+}
+
+.group {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.button {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  transition: all 0.2s;
+  border: 1px solid var(--btn-group-border);
+  color: var(--text-main);
+  font-weight: 500;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.button:active {
+  transform: scale(0.98);
+  filter: brightness(0.9);
+}
+
+.isSelected {
+  background-color: var(--btn-group-active-bg);
+  border-color: var(--btn-group-active-bg);
+  color: var(--btn-group-active-text);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+/* the real input is hidden, so its focus ring goes on the visible button */
+.button:has(.hiddenInput:focus-visible) {
+  outline: 2px solid var(--btn-group-active-bg);
+  outline-offset: 2px;
+}

@@ -1,118 +1,89 @@
 package se.comerit.resurs.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import se.comerit.resurs.dto.auth.*;
+import se.comerit.resurs.security.CaseWorkerPrincipal;
+import se.comerit.resurs.security.CompanyPrincipal;
+import se.comerit.resurs.security.SessionAuthenticator;
+import se.comerit.resurs.service.AuthService;
+
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-@Controller
+
+
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final AuthService authService;
+    private final SessionAuthenticator sessionAuthenticator;
+    private final HttpServletRequest httpServletRequest;
 
-    @GetMapping("/")
-    public String root() { return "redirect:/login"; }
 
-    @GetMapping("/login")
-    public String loginPage(HttpSession session, Model model) {
-        if (session.getAttribute("userId") != null) {
-            String role = (String) session.getAttribute("role");
-            if ("caseWorker".equals(role)) {
-                return "redirect:/backoffice";
-            }
-            return "redirect:/apply";
-        }
-        model.addAttribute("error", null);
-        return "login";
+    public AuthController(AuthService authService, SessionAuthenticator sessionAuthenticator, HttpServletRequest httpServletRequest) {
+        this.authService = authService;
+        this.sessionAuthenticator = sessionAuthenticator;
+        this.httpServletRequest = httpServletRequest;
+
     }
 
-    // BankID mock — hardcoded org numbers, real BankID integration skipped
-    // TODO: replace with real BankID integration
-    @PostMapping("/login/company")
-    public String loginCompany(@RequestParam("orgNumber") String orgNumber,
-                               HttpSession session,
-                               Model model) {
-        // TODO: replace with real BankID integration
-        if (orgNumber.equals("556000-1234") || orgNumber.equals("556000-5678")) {
-            // BankID authentication successful (mock)
-            // Look up company in DB
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT * FROM companies WHERE org_number = '" + orgNumber + "'"
-            );
-            if (rows.isEmpty()) {
-                model.addAttribute("error", "Företaget hittades inte i systemet.");
-                model.addAttribute("activeTab", "company");
-                return "login";
-            }
-            Map<String, Object> company = rows.get(0);
-            session.setAttribute("userId", company.get("id"));
-            session.setAttribute("role", "company");
-            session.setAttribute("orgNumber", orgNumber);
-            session.setAttribute("companyName", company.get("company_name"));
-            session.setAttribute("companyId", company.get("id"));
-            return "redirect:/apply";
-        } else {
-            // Not in whitelist — BankID mock rejects
-            model.addAttribute("error", "BankID-autentisering misslyckades. Org.nummer ej godkänt.");
-            model.addAttribute("activeTab", "company");
-            return "login";
+    @GetMapping("/me")
+    public ResponseEntity<CurrentUserResponse>me(Authentication authentication){
+
+        //separate roles from the authorities
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring(5))
+                .collect(Collectors.toSet());
+
+
+        if (authentication.getPrincipal() instanceof CaseWorkerPrincipal worker) {
+            return ResponseEntity.ok(new CurrentUserResponse(
+                    worker.id(), roles, worker.name(), null));
         }
+
+        if (authentication.getPrincipal() instanceof CompanyPrincipal company) {
+            return ResponseEntity.ok(new CurrentUserResponse(
+                    null, roles, company.companyName(), company.orgNumber()));
+        }
+
+        throw new IllegalStateException(
+                "Unknown principal type: " + authentication.getPrincipal().getClass());
     }
 
-    // Case worker login with MD5 password — SQL built with string concat (injection surface)
-    // TODO: parameterize this query and use bcrypt
-    @PostMapping("/login/caseWorker")
-    public String loginCaseWorker(@RequestParam("email") String email,
-                                  @RequestParam("password") String password,
-                                  HttpSession session,
-                                  Model model) {
-        String md5 = md5Hash(password);
-        // SQL injection surface: email is directly concatenated
-        String sql = "SELECT * FROM case_workers WHERE email = '" + email + "' AND password_md5 = '" + md5 + "'";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-        if (!rows.isEmpty()) {
-            Map<String, Object> worker = rows.get(0);
-            session.setAttribute("userId", worker.get("id"));
-            session.setAttribute("role", "caseWorker");
-            session.setAttribute("workerName", worker.get("name"));
-            session.setAttribute("workerEmail", worker.get("email"));
-            return "redirect:/backoffice";
-        } else {
-            model.addAttribute("error", "Felaktigt användarnamn eller lösenord.");
-            model.addAttribute("activeTab", "caseWorker");
-            return "login";
+
+        //session.setattribute tas bort efter spring security har filter
+        @PostMapping("/login/company")
+    public ResponseEntity<CompanyLoginResponse>loginCompany(
+                @Valid @RequestBody CompanyLoginRequest request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse
+                ){
+            CompanyLoginResponse response = authService.loginCompany(request.orgNumber(), request.personalNumber());
+            CompanyPrincipal principal = new CompanyPrincipal(response.orgNumber(), response.companyName(), request.personalNumber());
+            sessionAuthenticator.authenticate(principal, Set.of(SessionAuthenticator.COMPANY), httpServletRequest, httpServletResponse );
+            return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/login/caseworker")
+        public ResponseEntity<CaseWorkerLoginResponse>loginCaseWorker(@Valid @RequestBody CaseWorkerLoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse){
+            CaseWorkerLoginResponse response = authService.loginCaseWorker(request.email(), request.password());
+            CaseWorkerPrincipal principal = new CaseWorkerPrincipal(
+                    response.userId(),
+                    response.name(),
+                    response.email());
+            sessionAuthenticator.authenticate(principal, response.roles(), servletRequest, servletResponse);
+
+            return ResponseEntity.ok(response);
         }
     }
 
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/login";
-    }
-
-    // MD5 — weak, but matches DB seed
-    // TODO: migrate to bcrypt before go-live
-    private String md5Hash(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(input.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 not available", e);
-        }
-    }
-}

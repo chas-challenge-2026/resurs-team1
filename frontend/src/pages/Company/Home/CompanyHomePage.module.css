@@ -1,0 +1,141 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: var(--space-lg);
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 600;
+}
+
+.subTitle {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.actionsContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  /* room for the cat, the subtitle runs full width on mobile */
+  margin-top: var(--space-xl);
+}
+
+/* leans on the first card from behind */
+.mascot {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  right: var(--space-lg);
+  height: 64px;
+  pointer-events: none;
+}
+
+.action {
+  flex: 1;
+  /* grey top border showed as a light line between the cat and the accent */
+  border-top: var(--action-color);
+}
+
+.action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* lift the cat with the card it leans on, so they lift at the same time */
+.actionsContainer:has(.actionPrimary:hover) .mascot {
+  transform: translateY(-2px);
+}
+
+.action:hover .link {
+  text-underline-offset: 3px;
+}
+
+.actionPrimary {
+  --action-color: var(--card-accent-color);
+}
+
+.actionSecondary {
+  --action-color: var(--card-secondary-accent);
+}
+
+.action .label,
+.action .link {
+  color: var(--action-color);
+}
+
+.label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.link {
+  font-weight: 500;
+}
+
+.cardTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--divider);
+}
+
+.supportText {
+  color: var(--text-muted);
+}
+
+.supportLink {
+  color: var(--link-text);
+  white-space: nowrap;
+}
+
+.supportLink:hover {
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+@media (min-width: 768px) {
+  .wrapper {
+    min-height: calc(100vh - 64px);
+    justify-content: center;
+    gap: var(--space-lg);
+  }
+
+  .actionsContainer {
+    flex-direction: row;
+    margin-top: 0;
+  }
+
+  /* first card now ends at the middle, minus half the gap */
+  .mascot {
+    right: calc(50% + var(--space-base) / 2 + var(--space-lg));
+    height: 88px;
+  }
+
+  .action {
+    flex: 1;
+  }
+}
+
+/* fixes cat coliding with text */
+@media (max-width: 1000px) {
+  .actionsContainer {
+    margin-top: var(--space-xl);
+  }
+}

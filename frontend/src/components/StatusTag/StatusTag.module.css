@@ -1,0 +1,79 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--st-fg);
+  background-color: var(--st-bg);
+  border-left: 3px solid var(--st-base);
+  border-radius: 0 4px 4px 0;
+}
+
+.icon {
+  flex: none;
+}
+
+.uppercase {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Sizes */
+.sm {
+  gap: 5px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.sm .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.md {
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.md .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.lg {
+  gap: 7px;
+  padding: 6px 13px;
+  font-size: 14px;
+}
+
+.lg .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.PENDING_DOCS {
+  --st-base: var(--badge-warning-border);
+  --st-bg: var(--badge-warning-bg);
+  --st-fg: var(--badge-warning-text);
+}
+
+.UNDER_REVIEW {
+  --st-base: var(--badge-neutral-text);
+  --st-bg: var(--badge-neutral-bg);
+  --st-fg: var(--badge-neutral-text);
+}
+
+.APPROVED {
+  --st-base: var(--badge-success-border);
+  --st-bg: var(--badge-success-bg);
+  --st-fg: var(--badge-success-text);
+}
+
+.REJECTED {
+  --st-base: var(--badge-error-border);
+  --st-bg: var(--badge-error-bg);
+  --st-fg: var(--badge-error-text);
+}

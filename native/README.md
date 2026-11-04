@@ -1,143 +1,107 @@
-# native/, C/C++ Moduler för v2
+# Native modules
 
-Denna katalog innehåller (i v2) C/C++ nativmodulerna som anropas från Java via JNA (Java Native Access).
+The native part of Resurs contains two C++17 shared libraries called from Java
+through JNA: `resurs_crypto` for AES-256-GCM encryption and `resurs_audit` for
+SHA-256 hashing, Ed25519 signing and audit-chain verification. Both require
+OpenSSL 3.x.
 
-## Planerade moduler
+This README is the starting point for native development. Use the module guides
+for API details and the build/test guides for configuration, CI and troubleshooting.
 
-### 1. PII-kryptering: `libresurs_crypto.so`
+## Documentation
 
-AES-256-GCM kryptering av känsliga uppgifter (org.nr, personuppgifter, finansiell info) på hot path.
+| Area | Module documentation | Java integration |
+|---|---|---|
+| Encryption: `resurs_crypto` | [Crypto README](resurs_crypto/README.md) | [Crypto JNA integration](resurs_crypto/JNA_INTEGRATION.md) |
+| Audit: `resurs_audit` | [Audit README](resurs_audit/README.md) | [Audit JNA integration](resurs_audit/JNA_INTEGRATION.md) |
 
-**Syfte:** I v1 lagras firmanamn, organisationsnummer och firmatecknare i klartext (`ApplicationController.java`, kommentar: `// TODO: encrypt PII before go-live`). Nyckeln ska lagras separat från databasen, inte i samma förvaringsutrymme som ciphertext.
+| Build and test guide | What it covers |
+|---|---|
+| [Native developer guide](../docs/README.md) | Configure, build and test stages, settings, test coverage, local commands, troubleshooting and adding tests. |
+| [Native CI](../docs/native-ci.md) | GitHub Actions triggers, change detection, Ubuntu jobs, reports and the `Native CI result` check. |
+| [Docker guide](DOCKER.md) | Local Linux builds on Ubuntu 22.04 and 24.04, demos, test commands and optional audit sanitizers. |
 
-**Funktioner:**
-```c
-// Kryptera PII-sträng
-int resurs_encrypt_pii(
-    const char* plaintext,
-    const unsigned char* key,       // 32 bytes (AES-256)
-    const unsigned char* nonce,     // 12 bytes (GCM)
-    unsigned char* ciphertext_out,
-    size_t* ciphertext_len
-);
+## Encryption
 
-// Dekryptera PII-sträng
-int resurs_decrypt_pii(
-    const unsigned char* ciphertext,
-    size_t ciphertext_len,
-    const unsigned char* key,
-    const unsigned char* nonce,
-    char* plaintext_out,
-    size_t* plaintext_len
-);
-```
+`resurs_crypto` encrypts and decrypts binary data with AES-256-GCM. Encryption
+generates an IV and authentication tag; decryption checks authenticity before
+the caller can use the result. The application stores the IV and tag alongside
+the ciphertext and manages keys separately.
 
-**JNA Bridge (Java):**
-```java
-public interface ResursCryptoLibrary extends Library {
-    ResursCryptoLibrary INSTANCE = Native.load("resurs_crypto", ResursCryptoLibrary.class);
+The supported native entry points are `aes_256_gcm_encrypt` and
+`aes_256_gcm_decrypt`. See the [Crypto README](resurs_crypto/README.md) for
+behavior and result codes, and the [JNA guide](resurs_crypto/JNA_INTEGRATION.md)
+for Java declarations, binary sizes and buffer handling.
 
-    int resurs_encrypt_pii(
-        String plaintext,
-        byte[] key,
-        byte[] nonce,
-        byte[] ciphertextOut,
-        IntByReference ciphertextLen
-    );
-}
-```
+## Audit
 
-**Nyckellagring:**
-- Nyckel lagras separat från databasen (HashiCorp Vault eller AWS KMS)
-- Nonce genereras per krypteringsoperation och lagras tillsammans med ciphertext
+`resurs_audit` hashes canonical bytes, signs the hash with Ed25519 and verifies
+ordered audit chains. Verification checks previous-hash links, sequence numbers,
+hashes and signatures, stopping at the first failure.
 
-### 2. Audit-signering: `libresurs_audit.so`
+Java constructs and canonicalizes the unsigned audit JSON according to RFC 8785
+and passes its UTF-8 bytes to native. It also owns persistence, chain ordering
+and key management. Native treats the data as opaque bytes.
 
-Säker signering av audit-loggen med hashkedjor, för att upptäcka manipulation i efterhand.
+The supported native entry points are `generate_private_key`, `get_public_key`,
+`wrapper_hash_and_sign` and `wrapper_verify_chain`. See the
+[Audit README](resurs_audit/README.md) for the native contract, and the
+[JNA guide](resurs_audit/JNA_INTEGRATION.md) for structures, memory handling,
+result codes and complete-chain requirements. The guides also explain the
+additional trusted information needed to detect removal of the chain's tail.
 
-**Syfte:** I v1 är audit-loggen osignerad (JSON-blob i en kolumn utan index). En rad kan ändras eller raderas i efterhand utan att det syns. I v2 ska varje audit-post hashas ihop med föregående posts hash (hashkedja) och signeras, så att manipulation av en enskild post eller av kedjans ordning går att upptäcka vid verifiering.
+## Build and test
 
-**Funktioner:**
-```c
-// Beräkna hash för en audit-post och kedja den till föregående post
-int resurs_audit_chain_entry(
-    const unsigned char* prev_hash,     // 32 bytes, SHA-256 av föregående post (NULL för första posten i kedjan)
-    const char* entry_json,             // audit-postens innehåll: tidsstämpel, regel-ID, indata, utfall
-    size_t entry_len,
-    unsigned char* hash_out,            // 32 bytes, SHA-256(prev_hash || entry_json)
-    unsigned char* signature_out,       // digital signatur av hash_out
-    size_t* signature_len
-);
+[CMakeLists.txt](CMakeLists.txt) defines both libraries, optional demos and the
+CTest test executables. A direct native build requires a C++17 compiler,
+CMake 3.20 or later and OpenSSL 3.x development files. The CI commands that produce
+JUnit XML require CMake 3.21 or later.
 
-// Verifiera en kedja av audit-poster, hittar första manipulerade posten om någon
-int resurs_audit_verify_chain(
-    const unsigned char* hashes,        // entry_count * 32 bytes, hashkedjan i ordning
-    const unsigned char* signatures,    // signaturer i samma ordning
-    const size_t* signature_lens,
-    size_t entry_count,
-    const unsigned char* public_key,
-    int* first_invalid_index            // -1 om kedjan är giltig, annars index på första manipulerade posten
-);
-```
-
-**JNA Bridge (Java):**
-```java
-public interface ResursAuditLibrary extends Library {
-    ResursAuditLibrary INSTANCE = Native.load("resurs_audit", ResursAuditLibrary.class);
-
-    int resurs_audit_chain_entry(
-        byte[] prevHash,
-        String entryJson,
-        int entryLen,
-        byte[] hashOut,
-        byte[] signatureOut,
-        IntByReference signatureLen
-    );
-
-    int resurs_audit_verify_chain(
-        byte[] hashes,
-        byte[] signatures,
-        int[] signatureLens,
-        int entryCount,
-        byte[] publicKey,
-        IntByReference firstInvalidIndex
-    );
-}
-```
-
-**Nyckellagring:**
-- Signeringsnyckeln (privat nyckel) lagras separat från databasen, samma princip som för PII-kryptering
-- Publik nyckel kan distribueras fritt för verifiering, t.ex. till revisor eller tillsynsmyndighet
-
-## Kompilering
+For local Linux verification through Docker, run from the repository root with
+Docker available in Git Bash, WSL or Bash:
 
 ```bash
-# PII-kryptering (kräver libssl-dev)
-gcc -shared -fPIC -o libresurs_crypto.so resurs_crypto.c -lssl -lcrypto
-
-# Audit-signering (kräver libssl-dev)
-gcc -shared -fPIC -o libresurs_audit.so resurs_audit.c -lssl -lcrypto
+bash native/test-linux.sh
 ```
 
-## JNA Integration Guide
+The script builds and tests both Ubuntu 22.04 and 24.04 in Debug mode. On Windows,
+start Docker Desktop first. For individual Docker commands that also work in
+PowerShell, see the [Docker guide](DOCKER.md). For direct CMake/CTest commands,
+see the [developer guide](../docs/README.md#run-locally).
+For native Windows builds, see [Windows with Visual Studio](../docs/README.md#windows-with-visual-studio).
 
-1. Lägg till JNA i pom.xml:
-```xml
-<dependency>
-    <groupId>net.java.dev.jna</groupId>
-    <artifactId>jna</artifactId>
-    <version>5.13.0</version>
-</dependency>
+The four CTest registrations cover crypto behavior, audit behavior and required
+exported functions in each built library. Native CI configures, compiles and
+runs them on both Ubuntu versions. Both demos are compiled but are not run as
+CI tests. Read [Native CI](../docs/native-ci.md) for when checks run and how to
+read their results.
+
+Native CI checks newly built Linux libraries. Java/JNA integration, Windows
+DLLs, packaged prebuilt files and deployment need separate verification; a
+passing native run does not validate those parts.
+
+## Source layout
+
+```text
+native/
+  README.md                    Native overview and documentation links
+  CMakeLists.txt               Libraries, demos and test registrations
+  Dockerfile                   Linux build and test image
+  DOCKER.md                    Docker commands and runtime compatibility
+  test-linux.sh                Local verification on both Ubuntu versions
+  resurs_crypto/               Encryption source, API, JNA guide and prebuilts
+  resurs_audit/                Audit source, API, JNA guide and prebuilts
+  tests/                       Behavior and exported-symbol tests
 ```
 
-2. Placera `.so`-filer i `/usr/local/lib/` eller ange sökväg via `-Djna.library.path`
+The calling application owns native-resource packaging and deployment. Use the
+module's JNA guide to select and load the appropriate library for its runtime.
 
-3. Definiera Java-interface som extends `Library`
+## Original documentation
 
-4. Anropa via `Native.load("resurs_crypto", ResursCryptoLibrary.class)` respektive `Native.load("resurs_audit", ResursAuditLibrary.class)`
+The [original native README](../docs/old%20native%20documentation/README.md) and
+[original case documents](../docs/old%20documentation/) are preserved as
+background and requirements material. They describe the original case and its
+targets rather than the current native API or implementation status.
 
-## Status
-
-- [ ] libresurs_crypto.so, ej implementerad (v2)
-- [ ] libresurs_audit.so, ej implementerad (v2)
-- [ ] JNA bridge, ej implementerad (v2)
+Return to the [project README](../README.md).
