@@ -70,7 +70,7 @@ final class MockCompanyData {
                     )
             ),
 
-            // Borderline company: smaller company without cash flow statement
+            // Borderline company: smaller company without negative cash flow
             "556000-5678", new CompanyFinancialApiDTO(
                     new CompanyIncomeStatement(
                             sek("8000000"),
@@ -84,7 +84,10 @@ final class MockCompanyData {
                             sek("2800000"),
                             sek("700000")
                     ),
-                    null
+                    new CompanyCashFlowStatement(
+                            sek("-20000"),    // operatingCashFlow
+                            sek("5000")         // investmentCashFlow
+                    )
             ),
 
             // Economically stable but struggling company which is likely to get stuck in review

@@ -1,4 +1,4 @@
-# Resurs Kreditportal
+mv# Resurs Kreditportal
 
 ### 🏆 #1 – Vinnande bidrag för Resurs Bank
 
@@ -86,12 +86,12 @@ Seed-datan skapas automatiskt första gången appen startar.
 
 ### Företag (BankID-mock)
 
-| Företag | Org.nr | Firmatecknare | Personnr | Finanser |
-|---------|--------|---------------|----------|----------|
-| Fasen Elteknik AB | `556000-1234` | Anders Karlsson | `750312-1234` | Goda |
-| Britt Maries Ögonfransar AB | `556000-5678` | Maria Svensson | `820624-5678` | Inget kassaflöde redovisat |
+| Företag | Org.nr | Firmatecknare | Personnr | Finanser                                      |
+|---------|--------|---------------|----------|-----------------------------------------------|
+| Fasen Elteknik AB | `556000-1234` | Anders Karlsson | `750312-1234` | Goda                                          |
+| Britt Maries Ögonfransar AB | `556000-5678` | Maria Svensson | `820624-5678` | Negativt rörelseresultat. Hard reject         |
 | Gunnar Kruts Dynamit AB | `556000-7777` | Johan Berg | `660930-7777` | Lån över 1 000 000 kr markeras för granskning |
-| Frukt och grönt Göteborg | `556000-9999` | Erik Lindqvist | `681105-9999` | Negativt rörelseresultat. Skyddad identitet |
+| Frukt och grönt Göteborg | `556000-9999` | Erik Lindqvist | `681105-9999` | Skyddad identitet (saknas underlag)           |
 
 ### Handläggare
 
