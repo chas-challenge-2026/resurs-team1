@@ -105,7 +105,13 @@ public class BackofficeController {
             @PathVariable("id") Long id
             ) {
         ApplicationWithDocumentsDTO details = service.application_details(id);
-        Optional<CompanyFinancialApiDTO> finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber());
+        CompanyFinancialApiDTO finances;
+        try{
+            finances =  financeService.fetchLatestAnnualReport(details.application().orgNumber()).orElseThrow();
+        } catch (Exception e) {
+            finances = null;
+        }
+
         /*
         Map<String, Object> application = apps.get(0);
         model.addAttribute("application", application);
@@ -113,7 +119,7 @@ public class BackofficeController {
         model.addAttribute("workerName", session.getAttribute("workerName"));
         */
 
-        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances.orElse(null)));
+        return ResponseEntity.ok(new ApplicationWithFinancesDTO(details,finances));
     }
 
     @PostMapping("/application/{id}/comment")
