@@ -18,7 +18,18 @@ Företag ansöker om kredit med BankID och får ett beslut direkt, baserat på f
 - **Enkelt:** vi visar bara det som behövs i varje steg. Att ansöka om kredit, följa sitt ärende eller hantera det som handläggare ska vara lika enkelt som att swisha.
 - **Säkert:** krypterade personuppgifter (C/C++ via JNA), signerad audit-logg och rollbaserad åtkomst med stöd för skyddad identitet.
 - **Skalbart:** caching, rate limiting och felhantering mot externa register.
-- **Moderniserat:** ombyggt från en äldre v1-portal till v2. Se [docs/v2-targets.md](docs/v2-targets.md).
+- **Moderniserat:** ombyggt från en äldre v1-portal till v2. Se [docs/old documentation/v2-targets.md](docs/old%20documentation/v2-targets.md).
+
+## Slutleverans
+
+| Del | Var |
+|-----|-----|
+| Installation och körning | [Kom igång](#kom-igång) |
+| Testning och teststatus | [Testa](#testa) |
+| Beslutslogg | [docs/beslutslogg.md](docs/beslutslogg.md) ([levande version](https://docs.google.com/document/d/1mBkqaqmbPnAC48q2r7RIx__4Ojy2nNBGFFncHj-Lgas/edit)) |
+| Kända brister och avgränsningar | [docs/kanda-brister.md](docs/kanda-brister.md) |
+| Fallback för demon | [Om demon strular](#om-demon-strular) |
+| Så bearbetade vi feedforward | [docs/feedforward.md](docs/feedforward.md) |
 
 ## Kom igång
 
@@ -42,6 +53,23 @@ npm run dev
 
 ### API-dokumentation
 Swagger UI: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
+
+## Testa
+
+| Del | Kommando | Status |
+|-----|----------|--------|
+| Frontend | `cd frontend && npm test` | ✅ 86/86 |
+| Backend | `cd backend/ResursPortal && mvn test` (kräver Docker för Testcontainers) | TODO (backend) |
+| Native | `cd native && ./test-linux.sh` (Docker, Ubuntu 24.04 och 22.04) | ✅ 4/4 testsviter på båda |
+
+Native byggs och testas automatiskt i GitHub Actions vid varje PR mot `develop` och `main`, se [docs/native-ci.md](docs/native-ci.md).
+Inte testat automatiskt: tillgänglighet (testad manuellt med skärmläsare och tangentbord) och end-to-end-flöden i webbläsaren.
+
+## Om demon strular
+
+1. **Stage nere:** kör appen lokalt enligt [Kom igång](#kom-igång). Seed-datan ger samma testföretag och handläggare.
+2. **Den som demonstrerar kan inte fortsätta:** någon annan i teamet tar över.
+3. **Inget fungerar live:** vi visar förinspelade delar av demon.
 
 ## Miljöer
 
@@ -99,7 +127,7 @@ backend/ResursPortal/      ← Spring Boot (Maven)
 
 infra/                     ← docker-compose och databasschema
 native/                    ← C/C++-moduler för kryptering och audit
-docs/                      ← arkitektur, kända buggar, v2-mål
+docs/                      ← slutleverans, native-guider, v1-underlag
 ```
 
 ## Teamet
