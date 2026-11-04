@@ -28,7 +28,6 @@ const MyApplicationDetailsPage = () => {
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
   const detailedApplication = useDetailedApplication(applicationId)
 
-  console.log(application)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
 

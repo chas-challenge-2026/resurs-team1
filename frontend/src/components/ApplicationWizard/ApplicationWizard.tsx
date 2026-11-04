@@ -199,13 +199,15 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
                   <p className={`${s.badge} ${s.badgeOk}`}><FiCheck />Hämtat från bolagsverket</p>
                 }
               </div>
-              <div className={s.warningBox}>
-                <span className={s.warningIcon}><FiInfo /></span>
-                <div className={s.warningTextWrapper}>
-                  <p className={s.warningTitle}>Vi kunde inte hämta företagsuppgifter från Bolagsverket</p>
-                  <p className={s.warningDesc}>Det hindrar dig inte. Du kan skicka in ansökan som den är, så kompletterar vi uppgifterna i efterhand.</p>
+              {!financials.data &&
+                <div className={s.warningBox}>
+                  <span className={s.warningIcon}><FiInfo /></span>
+                  <div className={s.warningTextWrapper}>
+                    <p className={s.warningTitle}>Vi kunde inte hämta företagsuppgifter från Bolagsverket</p>
+                    <p className={s.warningDesc}>Det hindrar dig inte. Du kan skicka in ansökan som den är, så kompletterar vi uppgifterna i efterhand.</p>
+                  </div>
                 </div>
-              </div>
+              }
               <DataList>
                 <DataListItem label="Företagsnamn" value={user.displayName} />
                 <DataListItem label="Organisationsnummer" value={values.orgNumber} />
