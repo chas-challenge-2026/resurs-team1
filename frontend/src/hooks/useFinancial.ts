@@ -6,5 +6,8 @@ export const useGetFinancial = () => {
   return useQuery<FinancialData, ApiErrorPayload>({
     queryKey: ["financial"],
     queryFn: getFinancials,
+    meta: {
+      preventGlobalToast: true
+    }, 
   })
 }
