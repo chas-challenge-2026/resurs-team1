@@ -52,6 +52,34 @@
   color: var(--text-muted);
 }
 
+.warningBox {
+  display: flex;
+  gap: var(--space-base);
+  border-radius: var(--radius-sm);
+  background-color: var(--status-warning-bg);
+  color: var(--status-warning-text);
+  border: 1px solid var(--status-warning-border);
+  padding: var(--space-base);
+  margin: var(--space-sm) 0;
+  font-size: var(--font-size-sm);
+}
+
+.warningTextWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.warningTitle {
+  font-weight: 500;
+}
+
+.warningIcon {
+  font-size: 16px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 .expandButton {
   display: flex;
   align-items: center;
@@ -69,11 +97,18 @@
   gap: var(--space-xs);
   align-items: center;
   background-color: var(--bg-subtle);
-  color: var(--brand-primary);
   border-radius: var(--radius-pill);
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--font-size-sm);
   font-weight: 500;
+}
+
+.badgeOk {
+  color: var(--status-success-text);
+}
+
+.badgeError {
+  color: var(--status-error-text);
 }
 
 /* borrowed from .formError in login */
@@ -110,4 +145,15 @@
 .checkboxLabel input[type="checkbox"] {
   accent-color: var(--brand-primary);
   cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .warningBox {
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+
+  .warningTextWrapper {
+    gap: 0;
+  }
 }
