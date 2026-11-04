@@ -36,4 +36,6 @@ Vi har inga avtal med de riktiga tjänsterna, så de är mockade bakom interface
 | Bara ljust läge | Antagande för MVP. |
 | Handläggarvyn är byggd för dator | Fungerar på mobil, men är inte optimerad för det. |
 | Tillgänglighet testad manuellt | Skärmläsare och tangentbordsnavigering är testade för hand, inte med automatiska verktyg. |
+| Nyckelrotation för kryptering och audit | Stöd för rotation av krypterings- och signeringsnycklar ingår inte i MVP. Vi använder konfigurerade nycklar utan hantering av flera nyckelversioner. Fortsatt utveckling behöver säkerställa att äldre data kan avkrypteras och äldre auditsignaturer verifieras även efter nyckelbyte. Se [beslutsloggen](beslutslogg.md#gemensamma-beslut). |
+| Automatiska native-tester enbart på Ubuntu 22.04 och 24.04 | Automatiska Windows-byggen och tester avgränsades bort på grund av tidsbrist. När övrig implementation var färdig återstod få kodändringar, och manuell Windows-testning bedömdes räcka för MVP. Linux-tester validerar inte Windows-DLL:erna; separat Windows-verifiering behövs vid relevanta ändringar. Se [beslutsloggen](beslutslogg.md#native-cc). |
 | Extern lagring av checkpoints för hashkedjan | Native ger grunden (hashkedja och signatur), men skydd mot att någon med databasåtkomst skriver om hela kedjan kräver extern lagring. Avgränsat för nu. |
