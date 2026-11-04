@@ -28,6 +28,7 @@ const MyApplicationDetailsPage = () => {
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
   const detailedApplication = useDetailedApplication(applicationId)
 
+  console.log(application)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
 
@@ -98,6 +99,8 @@ const MyApplicationDetailsPage = () => {
       })
     }
   }
+
+  const isCouldNotScore = application?.decision?.toLowerCase().replace(/_/g, " ").trim() === "could not score";
 
   return(
     <div className={s.wrapper}>
@@ -184,13 +187,27 @@ const MyApplicationDetailsPage = () => {
             </div>
             <div className={s.headerText}>
               <h3 className={s.infoTitle}>Vi behöver mer information</h3>
-              <p className={s.infoSubtitle}>Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare.</p>
+              <p className={s.infoSubtitle}>{isCouldNotScore 
+                  ? "Vi kunde inte automatiskt behandla din ansökan utan behöver att du kompletterar med dokument."
+                  : "Din handläggare behöver kompletterande information innan ansökan kan behandlas vidare."
+                }
+              </p>
             </div>
           </CardHeader>
           <CardBody className={s.infoBody}>
             <div className={s.commentBox}>
-              <p className={`subtitle ${s.commentLabel}`}>Meddelande från handläggare:</p>
-              <p className={s.commentText}>{application.comment}</p>
+              <p className={`subtitle ${s.commentLabel}`}>
+                {isCouldNotScore
+                  ? "Meddelande från systemet:"
+                  : "Meddelande från handläggare:"
+                }
+              </p>
+              <p className={s.commentText}>
+                {isCouldNotScore
+                  ? "Vi kan inte säkerställa ett underlag för prövning, vänligen skicka in årsredovisning."
+                  : application.comment
+                }
+              </p>
             </div>
             <Button
               variant="ghost"

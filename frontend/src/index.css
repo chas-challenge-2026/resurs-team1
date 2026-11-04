@@ -17,6 +17,7 @@
   --color-amber-30: #f5f1ee;
   --color-amber-50: #F7F0EB;
   --color-amber-100: #FBF1DF;
+  --color-amber-200: #dccfb5;
   --color-amber-500: #E08E21;
   --color-amber-700: #B4711A;
   --color-amber-900: #82451E;
@@ -145,6 +146,10 @@
 
   /* Globals */
   --status-success-text: var(--color-teal-800);
+
+  --status-warning-bg: var(--color-amber-100);
+  --status-warning-border: var(--color-amber-200);
+  --status-warning-text: var(--color-amber-900);
 
   --status-error-text: var(--color-red-600);
   --status-error-border: var(--color-red-600);

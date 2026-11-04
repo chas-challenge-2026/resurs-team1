@@ -12,9 +12,9 @@ export const queryClient = new QueryClient({
 
   // Global error handler for all GET requests (useQuery)
   queryCache: new QueryCache({
-    onError: (err) => {
+    onError: (err, query) => {
       const error = err as unknown as ApiErrorPayload
-      if (!error.status || error.status >= 500) {
+      if (!query.meta?.preventGlobalToast && (!error.status || error.status >= 500)) {
         toast.error(error.message)
       }
     },

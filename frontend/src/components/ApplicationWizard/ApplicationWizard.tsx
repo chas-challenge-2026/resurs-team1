@@ -16,7 +16,7 @@ import type { CompanyUser } from "../../types/user";
 import { useGetFinancial } from "../../hooks/useFinancial";
 import Button from "../Button/Button";
 import { useUser } from "../../hooks/useUser";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiInfo } from "react-icons/fi";
 
 /** Everything the customer fills in + autofilled*/
 export interface ApplicationFormData {
@@ -192,31 +192,44 @@ const ApplicationWizard = ({ step, values, onChange, isSubmitError, isTermsAccep
               </div>
             </div>
 
-            {financials.data && 
-              <div>
-                <div className={s.titleWrapper}>
-                  <h3 className="subtitle">Företag</h3>
-                  <p className={s.badge}><FiCheck /> Hämtat från bolagsverket</p>
-                </div>
-                <DataList>
-                  <DataListItem label="Företagsnamn" value={user.displayName} />
-                  <DataListItem label="Organisationsnummer" value={values.orgNumber} />
-                  <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
-                  <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
-                  {expanded && (
-                    <>
-                      <DataListItem label="Eget kapital" value={formatCurrency(financials.data.balanceSheet.equity)} />
-                      <DataListItem label="Summa tillgångar" value={formatCurrency(financials.data.balanceSheet.totalAssets)} />
-                      <DataListItem label="Kortfristiga skulder" value={formatCurrency(financials.data.balanceSheet.shortTermLiabilities)} />
-                    </>
-                  )}
-                </DataList>
-                <Button variant="ghost" onClick={() => setExpanded(!expanded)} className={s.expandButton}>
-                  <span className={s.expandIcon}>{expanded ? <BiChevronUp /> : <BiChevronDown />}</span>
-                  {expanded ? "Dölj ekonomiska uppgifter" : "Visa alla ekonomiska uppgifter"}
-                </Button>
+            <div>
+              <div className={s.titleWrapper}>
+                <h3 className="subtitle">Företag</h3>
+                {financials.data &&
+                  <p className={`${s.badge} ${s.badgeOk}`}><FiCheck />Hämtat från bolagsverket</p>
+                }
               </div>
-            }
+              <div className={s.warningBox}>
+                <span className={s.warningIcon}><FiInfo /></span>
+                <div className={s.warningTextWrapper}>
+                  <p className={s.warningTitle}>Vi kunde inte hämta företagsuppgifter från Bolagsverket</p>
+                  <p className={s.warningDesc}>Det hindrar dig inte. Du kan skicka in ansökan som den är, så kompletterar vi uppgifterna i efterhand.</p>
+                </div>
+              </div>
+              <DataList>
+                <DataListItem label="Företagsnamn" value={user.displayName} />
+                <DataListItem label="Organisationsnummer" value={values.orgNumber} />
+              </DataList>
+              {financials.data && (
+                <>
+                  <DataList>
+                    <DataListItem label="Omsättning" value={formatCurrency(financials.data.incomeStatement.revenue)} />
+                    <DataListItem label="Rörelseresultat" value={formatCurrency(financials.data.incomeStatement.operatingResult)} />
+                    {expanded && (
+                      <>
+                        <DataListItem label="Eget kapital" value={formatCurrency(financials.data.balanceSheet.equity)} />
+                        <DataListItem label="Summa tillgångar" value={formatCurrency(financials.data.balanceSheet.totalAssets)} />
+                        <DataListItem label="Kortfristiga skulder" value={formatCurrency(financials.data.balanceSheet.shortTermLiabilities)} />
+                      </>
+                    )}
+                  </DataList>
+                  <Button variant="ghost" onClick={() => setExpanded(!expanded)} className={s.expandButton}>
+                    <span className={s.expandIcon}>{expanded ? <BiChevronUp /> : <BiChevronDown />}</span>
+                    {expanded ? "Dölj ekonomiska uppgifter" : "Visa alla ekonomiska uppgifter"}
+                  </Button>
+                </>
+              )}
+            </div>
 
             <div>
               <h3 className="subtitle">Kontakt</h3>
