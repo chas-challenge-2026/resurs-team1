@@ -59,7 +59,7 @@ Swagger UI: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/
 | Del | Kommando | Status                   |
 |-----|----------|--------------------------|
 | Frontend | `cd frontend && npm test` | ✅ 86/86                  |
-| Backend | `cd backend/ResursPortal && mvn test` (kräver Docker för Testcontainers) | ✅ 311/311                |
+| Backend | `cd backend/ResursPortal && mvn test` (kräver Docker för Testcontainers) | ✅ 311/311 Test täckning: 85% (JaCoCo)  |
 | Native | `cd native && ./test-linux.sh` (Docker, Ubuntu 24.04 och 22.04) | ✅ 4/4 testsviter på båda |
 
 Native byggs och testas automatiskt i GitHub Actions vid varje PR mot `develop` och `main`, se [docs/native-ci.md](docs/native-ci.md).
